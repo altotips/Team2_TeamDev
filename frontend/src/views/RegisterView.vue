@@ -13,11 +13,12 @@
         userName: '',
     })
 
+    
     const submitRegister = async () => {
         try {
             await userStore.register(form)
             alert('登録できました！ログインしてください')
-            router.push('/Temporary')
+            router.push('/login')
         } catch (error) {
             alert('登録に失敗しました')
             console.log(error)
