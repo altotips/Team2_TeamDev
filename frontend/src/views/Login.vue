@@ -2,7 +2,6 @@
     <h1>Hexagram</h1>
     <br>
     <h2>ログイン画面</h2>
-    <br>
   <form @submit.prevent="handleLogin" class="login-form">
     <div>
       <input v-model="fullNameOrEmail" placeholder="ユーザーネームか＠メールアドレス" />
@@ -10,8 +9,10 @@
     <div>
       <input v-model="password" placeholder="パスワード" type="password" />
     </div>
+    <br>
     <button>ログイン</button>
   </form>
+  <br>
   <br>
   <div>
     <span>アカウントを持ってない場合</span>
@@ -47,14 +48,27 @@ const handleLogin = async () => {
 
 
 h1{
+    font-size: 80px;
     text-align: center;
     font-family: 'Dancing Script', cursive;
+    margin-top: 30px;
 }
 h2{
+    font-size: 30px;
+    text-align: center;
+    margin-bottom: 50px;
+    margin-top: 0;
+}
+div{
     text-align: center;
 }
+
+.login-form{
+    margin-top: 0;
+}
+
 .login-form div {
-  margin-bottom: 12px; /* テキストボックスの間にスペース */
+  margin-bottom: 20px; /* テキストボックスの間にスペース */
 }
 
 .login-form input {
