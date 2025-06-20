@@ -47,47 +47,40 @@
 </template>
 
 <script setup>
-// ref をインポートしてリアクティブな変数を作成
 import { ref } from 'vue';
 
-// =============================================================
 // ダミーデータで全てのリアクティブ変数を初期化
-// =============================================================
 const userName = ref('dummy_username');
-const userIconUrl = ref('https://via.placeholder.com/150/0000FF/FFFFFF?text=ICON'); // ダミーのアイコンURL
+// ↓↓↓ ここを修正 ↓↓↓
+const userIconUrl = ref('/images/dummy_icon.png'); // public/images/dummy_icon.png を指す
+// ↑↑↑ ここを修正 ↑↑↑
 const fullName = ref('ダミー ユーザー名');
 const selfIntroduction = ref('これは自己紹介のダミーテキストです。このユーザーの興味や活動について記述されます。');
 const postsCount = ref(123);
 const followingCount = ref(45);
-const isMyProfile = ref(false); // 他人のプロフィールなのでfalse
-const isFollowing = ref(false); // デフォルトではフォローしていない状態
+const isMyProfile = ref(false);
+const isFollowing = ref(false);
 
 // ダミーの投稿データ
 const userPosts = ref([
-  { id: 1, urlPhoto: 'https://via.placeholder.com/300/FF0000/FFFFFF?text=Post1', content: '風景写真' },
-  { id: 2, urlPhoto: 'https://via.placeholder.com/300/00FF00/FFFFFF?text=Post2', content: '食べ物の写真' },
-  { id: 3, urlPhoto: 'https://via.placeholder.com/300/0000FF/FFFFFF?text=Post3', content: 'ペットの写真' },
-  { id: 4, urlPhoto: 'https://via.placeholder.com/300/FFFF00/000000?text=Post4', content: '自撮り' },
-  { id: 5, urlPhoto: 'https://via.placeholder.com/300/FF00FF/FFFFFF?text=Post5', content: 'アート作品' },
-  { id: 6, urlPhoto: 'https://via.placeholder.com/300/00FFFF/000000?text=Post6', content: '日常' },
+  // ↓↓↓ ここを修正 ↓↓↓
+  { id: 1, urlPhoto: '/images/dummy_post1.png', content: '風景写真' }, // public/images/dummy_post1.png を指す
+  { id: 2, urlPhoto: '/images/dummy_post2.png', content: '食べ物の写真' }, // public/images/dummy_post2.png を指す
+  { id: 3, urlPhoto: '/images/dummy_post3.png', content: 'ペットの写真' },
+  { id: 4, urlPhoto: '/images/dummy_post4.png', content: '自撮り' },
+  { id: 5, urlPhoto: '/images/dummy_post5.png', content: 'アート作品' },
+  { id: 6, urlPhoto: '/images/dummy_post6.png', content: '日常' },
+  // ↑↑↑ ここを修正 ↑↑↑
 ]);
 
-// ローディング中やエラーの表示用フラグ（最初はすべてfalseで表示）
 const isLoading = ref(false);
 const error = ref(null);
 
-// =============================================================
-// ダミーのメソッド
-// =============================================================
 const toggleFollow = () => {
-  // フォローボタンがクリックされた時のダミー処理
   isFollowing.value = !isFollowing.value;
   console.log('フォロー状態を切り替えました:', isFollowing.value);
 };
-
-// 実際のAPI連携やルーティングからのデータ取得は、この後のフェーズで実装します。
 </script>
-
 <style scoped>
 /* スタイルは以前の提案と同じで変更なし */
 .profile-page {

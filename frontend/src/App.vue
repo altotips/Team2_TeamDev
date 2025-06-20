@@ -1,11 +1,13 @@
 <script setup>
-import { RouterLink, RouterView } from 'vue-router'
-import UserProfileView from '@/views/UserProfileView.vue' // ここを修正
+ import { RouterLink, RouterView } from 'vue-router'
 </script>
 
 <template>
-<UserProfileView/>
-  <RouterView />
+  <div>
+    <main class="app-main">
+      <RouterView />
+      </main>
+  </div>
 </template>
 
 <style scoped>
