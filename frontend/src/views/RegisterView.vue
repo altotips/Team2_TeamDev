@@ -17,7 +17,7 @@
         try {
             await userStore.register(form)
             alert('登録できました！ログインしてください')
-            router.push('/Temporary')
+            router.push('/')
         } catch (error) {
             alert('登録に失敗しました')
             console.log(error)
@@ -54,7 +54,7 @@
         <br>
         <div class="link">
             <span>アカウントをお持ちの場合</span>
-            <router-link to="/Temporary">
+            <router-link to="/">
                 ログインする
             </router-link>
         </div>
