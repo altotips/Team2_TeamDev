@@ -10,7 +10,8 @@ const router = createRouter({
     {
       path: '/',
       name: 'login',
-     component: () => import('../views/Login.vue')
+     component: () => import('../views/Login.vue'),
+     meta: { hideHeaderFooter: true }
     },
     {
       path: '/UserProfile',
@@ -22,7 +23,7 @@ const router = createRouter({
       path: '/register',
       name: 'register',
       component: () => import('../views/RegisterView.vue'),
-
+meta: { hideHeaderFooter: true }
     },
 
     {
