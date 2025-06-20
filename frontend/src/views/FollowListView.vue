@@ -53,7 +53,7 @@ const followedUsers = ref([
   {
     id: 3,
     userName: 'user_jiro',
-    fullName: '田中 次郎',
+    fullName: '田中 二郎',
     userIconUrl: '/images/dummy_icon3.png'
   },
   {
