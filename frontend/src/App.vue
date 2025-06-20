@@ -6,7 +6,7 @@
   <div>
     <main class="app-main">
       <RouterView />
-      </main>
+    </main>
   </div>
 </template>
 
