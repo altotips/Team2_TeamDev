@@ -7,33 +7,27 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Entity
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
-@Table(name = "comment")
-public class Comment {
-	
+@Table(name = "follows")
+public class Follows {
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-	
+
 	@NotNull
 	@ManyToOne
-	@JoinColumn(name = "userId", nullable = false)
-	private Users user;
+	@JoinColumn(name = "userFollowerId", nullable = false)
+	private Users followerUser;
 
-	@NotBlank
-	private String content;
+	@NotNull
+	@ManyToOne
+	@JoinColumn(name = "userFolloweeId", nullable = false)
+	private Users followeeUser;
+
 }
-	
-	
-
-
