@@ -1,0 +1,88 @@
+<template>
+    <h1>Hexagram</h1>
+    <br>
+    <h2>ログイン画面</h2>
+    <br>
+  <form @submit.prevent="handleLogin" class="login-form">
+    <div>
+      <input v-model="fullNameOrEmail" placeholder="ユーザーネームか＠メールアドレス" />
+    </div>
+    <div>
+      <input v-model="password" placeholder="パスワード" type="password" />
+    </div>
+    <button>ログイン</button>
+  </form>
+  <br>
+  <div>
+    <span>アカウントを持ってない場合</span>
+    <router-link to="/register">登録する</router-link>
+  </div>
+</template>
+
+<!-- <script setup>
+import { ref } from 'vue'
+import{useUserStore} from '@/store'
+import{useRouter} from 'vue-router'
+
+const fullNameOrEmail = ref('')
+const password = ref('')
+
+const userStore = useUserStore()
+const router = useRouter()
+
+const handleLogin = async () => {
+  try {
+    await userStore.login({
+      fullNameOrEmail: fullNameOrEmail.value,
+      password: password.value
+    })
+    router.push('/myProfile')
+  } catch (error) {
+    alert('ログインできませんでした。')
+  }
+}
+</script> -->
+
+<style scoped>
+
+
+h1{
+    text-align: center;
+    font-family: 'Dancing Script', cursive;
+}
+h2{
+    text-align: center;
+}
+.login-form div {
+  margin-bottom: 12px; /* テキストボックスの間にスペース */
+}
+
+.login-form input {
+  width: 300px; /* テキストボックスの幅を統一 */
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+.login-form button {
+  display: block;    /* ブロックにして幅指定を効かせる */
+  width: 100px; /* テキストボックスと同じ幅に */
+    
+  justify-content: center;
+  margin: 0 auto;    /* 左右の余白自動で中央寄せ */
+  padding: 8px;
+  cursor: pointer;
+  background-color: #409eff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+}
+.login-form button:hover {
+  background-color: #66b1ff;
+}
+
+::placeholder{
+    text-align: center;
+}
+</style>
+

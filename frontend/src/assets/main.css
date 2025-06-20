@@ -28,7 +28,11 @@ a,
   }
 
   #app {
+<<<<<<< HEAD
     
+=======
+    /* display: grid; */
+>>>>>>> 71d7e8a3c0d726cc84935e6c45368abe71077311
     grid-template-columns: 1fr 1fr;
     padding: 0 2rem;
   }
