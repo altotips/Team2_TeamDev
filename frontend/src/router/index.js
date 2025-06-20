@@ -11,15 +11,28 @@ const router = createRouter({
       path: '/',
       name: 'login',
      component: () => import('../views/Login.vue')
+    },
+    {
       path: '/UserProfile',
       name: 'UserProfile',
       component: UserProfileView,
     },
-    // {
-    //   // path: '/FollowList',
-    //   name: 'FollowList',
-    //   component: FollowListView,
-    // },
+
+    {
+      path: '/register',
+      name: 'register',
+      component: () => import('../views/RegisterView.vue'),
+
+    },
+
+    {
+      path: '/myProfile',
+      name: 'myProfile',
+         component: () => import('../views/2View.vue')
+      // component: () => import('../views/myProfile.vue'),
+    },
+
+
   ],
 })
 
