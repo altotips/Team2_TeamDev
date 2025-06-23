@@ -66,4 +66,5 @@ INSERT INTO follows (user_follower_id, user_followee_id) VALUES
 (10, 2);  -- さくら🌸 → たろう
 
 -- 投稿の初期化
---INSERT INTO posts (usersId,urlPhoto) VALUES (1,'./uploads/inu.png');
+INSERT INTO posts (users_id,url_photo) VALUES (1,'./uploads/inu.png');
+INSERT INTO posts (users_id,url_photo) VALUES (2,'./uploads/neko.png');
