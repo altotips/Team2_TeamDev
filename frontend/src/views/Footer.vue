@@ -29,9 +29,9 @@ export default {
   border-top: 1px solid #ddd;
   position: fixed;
   bottom: 0;
-  width: 100%; /* ここを100%に */
+  width: 100%;
   height: 60px;
-  left: 0; /* 画面左端に固定 */
+  left: 0;
 }
 
 

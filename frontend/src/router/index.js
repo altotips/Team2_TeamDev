@@ -14,11 +14,15 @@ const router = createRouter({
      meta: { hideHeaderFooter: true }
     },
     {
-      path: '/userprofile',
-      name: 'userprofile',
-      component: UserProfileView,
+      path: '/MyProfile',
+      name: 'MyProfile',
+      component: () => import('../views/MyProfileView.vue')
     },
-
+    {
+      path: '/UserProfile',
+      name: 'UserProfile',
+      component: () => import('../views/UserProfileView.vue')
+    },
     {
       path: '/register',
       name: 'register',
