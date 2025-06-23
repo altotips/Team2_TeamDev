@@ -29,31 +29,37 @@ export const usePostStore = defineStore(
       }
     }
 
-    // 1ユーザの投稿をすべて取得し、userPostsに保存
-    async function fetchfollowersPosts(id) {
+    // 1ユーザのフォローしているすべてのユーザの投稿をすべて取得し、followersPostsに保存
+    async function fetchFollowersPosts(id) {
       try {
         const res = await axios.get('/posts/users/'+id+'follow')
         // console.log('ret : ' + res)
         // console.log('ret : ' + res.data.length)
-        if (allPosts.value.length != res.data.length) {
+        if (followersPosts.value.length != res.data.length) {
           // 最新の投稿を上に表示するため、逆順にする
-          allPosts.value = res.data.reverse()
+          followersPosts.value = res.data.reverse()
         }
-        // console.log('all : ' + allPosts.value)
+        // console.log('followers : ' + followersPosts.value)
       } catch (err) {
         console.error('全投稿の取得に失敗:', err)
       }
     }
 
-    // 1ユーザの投稿をすべて取得し、userPostsに保存
-    async function fetchmyPosts(id) {
+    // 自分の投稿をすべて取得し、myPostsに保存
+    async function fetchMyPosts(id) {
       try {
-        const res = await axios.get('/posts')
+        if (!id) {
+          if (myPosts.value.length > 0) {
+            myPosts.value = []
+          }
+          return
+        }
+        const res = await axios.get('/posts/users/'+id)
         // console.log('ret : ' + res)
         // console.log('ret : ' + res.data.length)
-        if (allPosts.value.length != res.data.length) {
+        if (myPosts.value.length != res.data.length) {
           // 最新の投稿を上に表示するため、逆順にする
-          allPosts.value = res.data.reverse()
+          myPosts.value = res.data.reverse()
         }
         // console.log('all : ' + allPosts.value)
       } catch (err) {
@@ -61,16 +67,16 @@ export const usePostStore = defineStore(
       }
     }
 
-    // 1ユーザの投稿をすべて取得し、userPostsに保存
-    async function fetchPostsByUser(userId) {
+    // ある自分以外の1ユーザの投稿をすべて取得し、userPostsに保存
+    async function fetchUserPosts(id) {
       try {
-        if (!userId) {
+        if (!id) {
           if (userPosts.value.length > 0) {
             userPosts.value = []
           }
           return
         }
-        const res = await axios.get(`/posts/users/${userId}`)
+        const res = await axios.get(`/posts/users/${id}`)
         // console.log(res.data.reverse())
         // console.log(1)
         userPosts.value = res.data.reverse()
@@ -83,27 +89,28 @@ export const usePostStore = defineStore(
     // logout時の処理
     async function logout() {
       // 投稿があるときだけ、リセットif文なくすと多分無限ループする
-      if (userPosts.value.length > 0) {
-        userPosts.value = []
+      if (myPosts.value.length > 0) {
+        myPosts.value = []
       }
     }
 
     // 投稿する
-    async function post(userId, content) {
+    async function post(id, postData) {
+      // 未完成
       try {
-        if (!userId) {
+        if (!id) {
           return
         }
-        const res = await axios.post(`/posts/${userId}`, {
-          content: content,
+        const res = await axios.post(`/posts/${id}`, {
+          image: postData.image,
+          content: postData.content,
         })
-        showToastMessage('投稿しました')
       } catch (err) {
         console.error('ユーザーの投稿に失敗:', err)
       }
     }
 
-    return { allPosts, followersPosts, myPosts, userPosts, fetchAllPosts,fetchfollowersPosts,fetchmyPosts, fetchPostsByUser, logout, post }
+    return { allPosts, followersPosts, myPosts, userPosts, fetchAllPosts, fetchFollowersPosts, fetchMyPosts, fetchUserPosts, logout, post }
   },
   // {
   //   persist: {
