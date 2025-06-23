@@ -32,7 +32,7 @@ export const usePostStore = defineStore(
     // 1ユーザのフォローしているすべてのユーザの投稿をすべて取得し、followersPostsに保存
     async function fetchFollowersPosts(id) {
       try {
-        const res = await axios.get('/posts/users/'+id+'follow')
+        const res = await axios.get('/posts/users/' + id + 'follow')
         // console.log('ret : ' + res)
         // console.log('ret : ' + res.data.length)
         if (followersPosts.value.length != res.data.length) {
@@ -54,7 +54,7 @@ export const usePostStore = defineStore(
           }
           return
         }
-        const res = await axios.get('/posts/users/'+id)
+        const res = await axios.get('/posts/users/' + id)
         // console.log('ret : ' + res)
         // console.log('ret : ' + res.data.length)
         if (myPosts.value.length != res.data.length) {
@@ -101,16 +101,32 @@ export const usePostStore = defineStore(
         if (!id) {
           return
         }
-        const res = await axios.post(`/posts/${id}`, {
-          image: postData.image,
-          content: postData.content,
+        const formData = ref(null)
+        formData.value = new FormData()
+        formData.append('image', postData.image)
+        formData.append('content', postData.content)
+        const res = await axios.post(`/posts/${id}`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
         })
       } catch (err) {
         console.error('ユーザーの投稿に失敗:', err)
       }
     }
 
-    return { allPosts, followersPosts, myPosts, userPosts, fetchAllPosts, fetchFollowersPosts, fetchMyPosts, fetchUserPosts, logout, post }
+    return {
+      allPosts,
+      followersPosts,
+      myPosts,
+      userPosts,
+      fetchAllPosts,
+      fetchFollowersPosts,
+      fetchMyPosts,
+      fetchUserPosts,
+      logout,
+      post,
+    }
   },
   // {
   //   persist: {

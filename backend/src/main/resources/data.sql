@@ -5,7 +5,7 @@
 
 -- 権限テーブル INSERT --
 INSERT INTO Users (
-    urlIcon, full_name, user_name, email, password, salt
+    url_icon, full_name, user_name, email, password, salt
 ) VALUES
 ('default_icon.png', 'かんりしゃさん', 'admin_san', 'admin@example.com', 'd3a8ed876ec9c01c6073e5670532b008eb876db669f3741d4c6a26303a7f2c83', '1'),
 ('default_icon.png', 'たろう', 'taro_yamada', 'taro@example.com', '731d65e0ba8796608b36bc3d317338eb645e2b3dd37f12acb30cf65a0455db33', '2'),

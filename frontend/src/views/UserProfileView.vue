@@ -5,7 +5,7 @@
         <h1 class="username">{{ userName }}</h1>
       </div>
 
-      <div class="profile-details-row">
+      <div class="profile-details-row" v-if="!isLoading && !error">
         <div class="icon-container">
           <img :src="userIconUrl || '/images/default_profile_icon.png'" alt="User Icon" class="profile-icon">
         </div>
@@ -16,7 +16,7 @@
             <button v-if="!isMyProfile" :class="['follow-button', { 'is-following': isFollowing }]" @click="toggleFollow">
               {{ isFollowing ? 'フォロー中' : 'フォロー' }}
             </button>
-            </div>
+          </div>
 
           <div class="user-stats">
             <div class="stat-item">
@@ -29,7 +29,7 @@
                 <span class="stat-label">フォロー中</span>
               </router-link>
             </div>
-            </div>
+          </div>
         </div>
       </div>
 
@@ -49,41 +49,67 @@
         <div v-if="isLoading" class="loading-message">
           読み込み中...
         </div>
+
+        <div v-if="error" class="error-message">
+          プロフィールの読み込み中にエラーが発生しました。
+        </div>
       </div>
     </main>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
-// router-linkを使うために、vue-routerからのインポートは不要ですが、
-// コンポーネント内でuseRouterなどの関数を使う場合は必要になります。
-// 今回はrouter-linkのみなので、このスクリプト部分の変更は不要です。
+import { ref, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 
-const userName = ref('dummy_username');
-const userIconUrl = ref('/images/dummy_icon.png');
-const fullName = ref('ダミー ユーザー名');
-const selfIntroduction = ref('これは自己紹介のダミーテキストです。このユーザーの興味や活動について記述されます。');
-const postsCount = ref(123);
-const followingCount = ref(45);
+// ユーザー名（URLから取得）
+const route = useRoute();
+const userName = ref(route.params.userName);
+
+// プロフィール情報
+const userIconUrl = ref('');
+const fullName = ref('');
+const selfIntroduction = ref('');
+const postsCount = ref(0);
+const followingCount = ref(0);
 const isMyProfile = ref(false);
 const isFollowing = ref(false);
-
-const userPosts = ref([
-  { id: 1, urlPhoto: '/images/dummy_post1.png', content: '風景写真' },
-  { id: 2, urlPhoto: '/images/dummy_post2.png', content: '食べ物の写真' },
-  { id: 3, urlPhoto: '/images/dummy_post3.png', content: 'ペットの写真' },
-  { id: 4, urlPhoto: '/images/dummy_post4.png', content: '自撮り' },
-  { id: 5, urlPhoto: '/images/dummy_post5.png', content: 'アート作品' },
-  { id: 6, urlPhoto: '/images/dummy_post6.png', content: '日常' },
-]);
-
-const isLoading = ref(false);
+const userPosts = ref([]);
+const isLoading = ref(true);
 const error = ref(null);
 
+// 仮のAPI関数（あなたのバックエンドに応じて置き換えてください）
+async function fetchUserProfile(userName) {
+  // 例: 実際のAPIエンドポイントに変更する
+  const response = await fetch(`/api/users/${userName}`);
+  if (!response.ok) throw new Error('ユーザー情報の取得に失敗しました');
+  return await response.json();
+}
+
+// 初期化処理
+onMounted(async () => {
+  try {
+    isLoading.value = true;
+    const data = await fetchUserProfile(userName.value);
+    userIconUrl.value = data.iconUrl;
+    fullName.value = data.fullName;
+    selfIntroduction.value = data.selfIntroduction;
+    postsCount.value = data.postsCount;
+    followingCount.value = data.followingCount;
+    isFollowing.value = data.isFollowing;
+    isMyProfile.value = data.isMyProfile;
+    userPosts.value = data.posts;
+  } catch (err) {
+    error.value = err.message;
+  } finally {
+    isLoading.value = false;
+  }
+});
+
+// フォローボタン切り替え
 const toggleFollow = () => {
   isFollowing.value = !isFollowing.value;
-  console.log('フォロー状態を切り替えました:', isFollowing.value);
+  // TODO: APIでフォロー状態を更新
 };
 </script>
 

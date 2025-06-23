@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import FollowListView from '@/views/FollowListView.vue'
+
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -48,7 +48,12 @@ const router = createRouter({
     {
       path: '/followlist',
       name: 'followlist',
-      component: FollowListView,
+      component: () => import('../views/FollowListView.vue'),
+    },
+    {
+    path: '/user/:userName',
+    name: 'UserProfile',
+    component: () => import('@/views/UserProfileView.vue')
     },
   ],
 })
