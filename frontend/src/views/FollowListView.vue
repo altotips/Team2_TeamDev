@@ -23,9 +23,9 @@
 
     <ul v-else class="follow-list">
       <li v-for="user in followedUsers" :key="user.id" class="follow-item">
-        <div class="user-info">
+        <div class="user-info" @click="goToUserProfile(user.id)">
           <div class="icon-container">
-            <img :src="user.userIconUrl || '/images/default_profile_icon.png'" alt="User Icon" class="user-icon">
+            <img :src="user.urlIcon || '/images/default_profile_icon.png'" alt="User Icon" class="user-icon">
           </div>
           <div class="text-info">
             <span class="username">{{ user.userName }}</span>
@@ -39,60 +39,114 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue'; // watchをインポート
 import { useRoute, useRouter } from 'vue-router';
+import { useUserStore } from '@/stores/userStore.js'; // userStoreをインポート
 
 const route = useRoute();
 const router = useRouter();
+const userStore = useUserStore(); // userStoreインスタンスを作成
 
 const isLoading = ref(false);
 const error = ref(null);
-const followedUsers = ref([]);
-const currentUserName = ref('');
-const showUnfollowButton = ref(false); // ★新しいリアクティブ変数
-//★showUnfollowButton をtureにすることでフォロー解除ボタンを表示します。
-// MyProfileViewから遷移した場合：isMyProfile: trueクエリパラメータを渡して、FollowListViewの解除ボタンを表示。
+const followedUsers = ref([]); // 表示するフォローユーザーのリスト
+const currentUserName = ref(''); // 現在表示しているフォローリストの所有者名
+const showUnfollowButton = ref(false); // フォロー解除ボタンの表示/非表示を制御
+
+// プロフィールページへの遷移
+const goToUserProfile = (userId) => {
+  router.push(`/profile/${userId}`);
+};
+
+
+// フォローリストのデータを取得する関数
+const fetchFollowedUsers = async () => {
+  isLoading.value = true;
+  error.value = null; // エラーをリセット
+
+  const routeUserId = parseInt(route.params.userId); // URLパラメータのuserId (他者のプロフィールの場合)
+  const isMyProfileRoute = route.query.isMyProfile === 'true'; // クエリパラメータのisMyProfile
+
+  try {
+    if (isMyProfileRoute && userStore.id) {
+      // 自分のフォローリストを表示する場合
+      currentUserName.value = userStore.userName || 'あなた'; // ログインユーザー名
+      showUnfollowButton.value = true; // 自分のリストなので解除ボタン表示
+
+      // userStore.follows が既にロードされているか確認
+      if (userStore.follows && userStore.follows.length > 0) {
+        followedUsers.value = userStore.follows;
+      } else {
+        // ロードされていなければフェッチ（ログイン時などに自動でロードされる場合もあるのでここでの再フェッチは念のため）
+        const success = await userStore.followers();
+        if (success) {
+          followedUsers.value = userStore.follows;
+        } else {
+          error.value = new Error('自分のフォローリストの取得に失敗しました。');
+          followedUsers.value = [];
+        }
+      }
+    } else if (routeUserId) {
+      // 他のユーザーのフォローリストを表示する場合
+      showUnfollowButton.value = false; // 他者のリストなので解除ボタン非表示
+
+      const res = await userStore.getUser(routeUserId); // 指定されたIDのユーザー情報を取得
+      if (res && res.data) {
+        currentUserName.value = res.data.userName; // そのユーザーのユーザー名
+        // そのユーザーのフォローリストを直接取得（APIが提供している場合）
+        // userStore.jsのgetUserメソッドが、ユーザー自身の情報だけでなく、そのユーザーのフォローリストも返すようにする必要があるかもしれません
+        // 現在のuserStore.getUserはfollowsを返していないので、もしAPIが返すならres.data.followsを使う
+        // 仮にAPIがユーザー情報と一緒にフォローリストを返さない場合、別のAPIコールが必要になる
+        // 現状、userStore.jsのgetUserはfollowsを返していません。そのため、APIレスポンスの構造次第で以下の行は修正が必要です。
+        followedUsers.value = res.data.follows || []; // ここはAPIのレスポンス構造に依存
+      } else {
+        error.value = new Error('ユーザーが見つからないか、フォローリストを取得できませんでした。');
+        followedUsers.value = [];
+        currentUserName.value = 'ユーザー不明';
+      }
+    } else {
+      error.value = new Error('表示するフォローリストのユーザー情報が特定できません。');
+      followedUsers.value = [];
+      currentUserName.value = '不明なユーザー';
+    }
+  } catch (err) {
+    console.error('フォローリストのフェッチ中にエラー:', err);
+    error.value = err;
+    followedUsers.value = [];
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+// フォロー解除処理
+const unfollow = async (userIdToUnfollow) => {
+  if (!userStore.id) {
+    alert('ログインしていません。フォロー解除できません。');
+    return;
+  }
+  if (!confirm(`${userIdToUnfollow} 番のユーザーのフォローを解除しますか？`)) {
+    return;
+  }
+
+  const success = await userStore.unfollow(userIdToUnfollow);
+  if (success) {
+    alert(`${userIdToUnfollow} 番のユーザーのフォローを解除しました。`);
+    // フォロー解除後、自分のフォローリストを再取得して表示を更新
+    await userStore.followers(); // userStoreのfollowsを更新
+    followedUsers.value = userStore.follows; // 表示リストも更新
+  } else {
+    alert('フォロー解除に失敗しました。');
+  }
+};
 
 onMounted(() => {
-  // ユーザーネームの取得 (既存ロジック)
-  if (route.query.userName) {
-    currentUserName.value = route.query.userName;
-  } else {
-    currentUserName.value = 'ユーザーネーム';
-  }
-
-  // ★isMyProfile クエリパラメータをチェックします
-  // クエリパラメータは文字列として渡されるため、'true' と比較
-  if (route.query.isMyProfile === 'true') {
-    showUnfollowButton.value = true;
-  } else {
-    showUnfollowButton.value = false;
-  }
-
-  // ダミーのフォローしているユーザーリスト
-  followedUsers.value = [
-    { id: 1, userName: 'user_taro', fullName: '山田 太郎', userIconUrl: '/images/dummy_icon1.png' },
-    { id: 2, userName: 'user_hanako', fullName: '鈴木 花子', userIconUrl: '/images/dummy_icon2.png' },
-    { id: 3, userName: 'user_jiro', fullName: '田中 次郎', userIconUrl: '/images/dummy_icon3.png' },
-    { id: 4, userName: 'user_yumi', fullName: '佐藤 友美', userIconUrl: '/images/dummy_icon4.png' },
-    { id: 5, userName: 'user_ken', fullName: '高橋 健太', userIconUrl: '/images/dummy_icon5.png' },
-    { id: 6, userName: 'user_taro2', fullName: '山田 太郎2', userIconUrl: '/images/dummy_icon1.png' },
-    { id: 7, userName: 'user_hanako2', fullName: '鈴木 花子2', userIconUrl: '/images/dummy_icon2.png' },
-    { id: 8, userName: 'user_jiro2', fullName: '田中 次郎2', userIconUrl: '/images/dummy_icon3.png' },
-    { id: 9, userName: 'user_yumi2', fullName: '佐藤 友美2', userIconUrl: '/images/dummy_icon4.png' },
-    { id: 10, userName: 'user_ken2', fullName: '高橋 健太2', userIconUrl: '/images/dummy_icon5.png' }
-  ];
-
-  // console.log を追加して、showUnfollowButton の値と followedUsers の中身を確認
-  console.log('FollowListView mounted. showUnfollowButton:', showUnfollowButton.value);
-  console.log('Followed Users Data:', followedUsers.value);
+  fetchFollowedUsers();
 });
 
-const unfollow = (userIdToUnfollow) => {
-  console.log(`${userIdToUnfollow} 番のユーザーのフォローを解除します。`);
-  followedUsers.value = followedUsers.value.filter(user => user.id !== userIdToUnfollow);
-  alert(`${userIdToUnfollow} 番のユーザーのフォローを解除しました。`);
-};
+// URLパラメータが変更されたときにフォローリストを再フェッチ
+watch(() => [route.params.userId, route.query.isMyProfile], () => {
+  fetchFollowedUsers();
+});
 </script>
 
 <style scoped>
