@@ -32,7 +32,7 @@ export const usePostStore = defineStore(
     // 1ユーザのフォローしているすべてのユーザの投稿をすべて取得し、followersPostsに保存
     async function fetchFollowersPosts(id) {
       try {
-        const res = await axios.get('/posts/users/'+id+'follow')
+        const res = await axios.get('/posts/users/' + id + 'follow')
         // console.log('ret : ' + res)
         // console.log('ret : ' + res.data.length)
         if (followersPosts.value.length != res.data.length) {
@@ -54,7 +54,7 @@ export const usePostStore = defineStore(
           }
           return
         }
-        const res = await axios.get('/posts/users/'+id)
+        const res = await axios.get('/posts/users/' + id)
         // console.log('ret : ' + res)
         // console.log('ret : ' + res.data.length)
         if (myPosts.value.length != res.data.length) {
@@ -96,7 +96,6 @@ export const usePostStore = defineStore(
 
     // 投稿する
     async function post(id, postData) {
-      // 未完成
       try {
         if (!id) {
           return
@@ -110,7 +109,18 @@ export const usePostStore = defineStore(
       }
     }
 
-    return { allPosts, followersPosts, myPosts, userPosts, fetchAllPosts, fetchFollowersPosts, fetchMyPosts, fetchUserPosts, logout, post }
+    return {
+      allPosts,
+      followersPosts,
+      myPosts,
+      userPosts,
+      fetchAllPosts,
+      fetchFollowersPosts,
+      fetchMyPosts,
+      fetchUserPosts,
+      logout,
+      post,
+    }
   },
   // {
   //   persist: {

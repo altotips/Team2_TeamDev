@@ -26,11 +26,11 @@ public class Comments {
 	
 	@NotNull
 	@ManyToOne
-	@JoinColumn(name = "commentFollowerId", nullable = false)
-	private Users followerUser;
+	@JoinColumn(name = "commentFromId", nullable = false)
+	private Users fromUser;
 	
 	@NotNull
 	@ManyToOne
-	@JoinColumn(name = "commentFolloweeId", nullable = false)
-	private Users followeeUser;
+	@JoinColumn(name = "commentToId", nullable = false)
+	private Users toUser;
 }

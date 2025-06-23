@@ -22,12 +22,12 @@ public class Follows {
 
 	@NotNull
 	@ManyToOne
-	@JoinColumn(name = "userFollowerId", nullable = false)
-	private Users followerUser;
+	@JoinColumn(name = "userFromId", nullable = false)
+	private Users fromUser;
 
 	@NotNull
 	@ManyToOne
-	@JoinColumn(name = "userFolloweeId", nullable = false)
-	private Users followeeUser;
+	@JoinColumn(name = "userToId", nullable = false)
+	private Users toUser;
 
 }

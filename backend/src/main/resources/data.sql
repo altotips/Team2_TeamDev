@@ -20,7 +20,7 @@ INSERT INTO Users (
 
  -- フォローテーブル INSERT --
  -- たろう (ID: 2) → 全員をフォロー
-INSERT INTO follows (user_follower_id, user_followee_id) VALUES
+INSERT INTO follows (user_from_id, user_to_id) VALUES
 (2, 1),   -- たろう → かんりしゃさん
 (2, 3),   -- たろう → さくらんぼ🍒
 (2, 4),   -- たろう → タケシ🪨
@@ -32,37 +32,37 @@ INSERT INTO follows (user_follower_id, user_followee_id) VALUES
 (2, 10);  -- たろう → さくら🌸
 
 -- さくらんぼ🍒 (ID: 3) → 一部をフォロー
-INSERT INTO follows (user_follower_id, user_followee_id) VALUES
+INSERT INTO follows (user_from_id, user_to_id) VALUES
 (3, 2),   -- さくらんぼ🍒 → たろう
 (3, 4),   -- さくらんぼ🍒 → タケシ🪨
 (3, 5);   -- さくらんぼ🍒 → ゆかり
 
 -- タケシ🪨 (ID: 4) → たろうをフォロー
-INSERT INTO follows (user_follower_id, user_followee_id) VALUES
+INSERT INTO follows (user_from_id, user_to_id) VALUES
 (4, 2);   -- タケシ🪨 → たろう
 
 -- ゆかり (ID: 5) → たろうをフォロー
-INSERT INTO follows (user_follower_id, user_followee_id) VALUES
+INSERT INTO follows (user_from_id, user_to_id) VALUES
 (5, 2);   -- ゆかり → たろう
 
 -- まこ (ID: 6) → たろうをフォロー
-INSERT INTO follows (user_follower_id, user_followee_id) VALUES
+INSERT INTO follows (user_from_id, user_to_id) VALUES
 (6, 2);   -- まこ → たろう
 
 -- しんのすけ (ID: 7) → さくら🌸をフォロー
-INSERT INTO follows (user_follower_id, user_followee_id) VALUES
+INSERT INTO follows (user_from_id, user_to_id) VALUES
 (7, 10);  -- しんのすけ → さくら🌸
 
 -- あゆみ (ID: 8) → たろうをフォロー
-INSERT INTO follows (user_follower_id, user_followee_id) VALUES
+INSERT INTO follows (user_from_id, user_to_id) VALUES
 (8, 2);   -- あゆみ → たろう
 
 -- ひろと (ID: 9) → たろうをフォロー
-INSERT INTO follows (user_follower_id, user_followee_id) VALUES
+INSERT INTO follows (user_from_id, user_to_id) VALUES
 (9, 2);   -- ひろと → たろう
 
 -- さくら🌸 (ID: 10) → たろうをフォロー
-INSERT INTO follows (user_follower_id, user_followee_id) VALUES
+INSERT INTO follows (user_from_id, user_to_id) VALUES
 (10, 2);  -- さくら🌸 → たろう
 
 -- 投稿の初期化
