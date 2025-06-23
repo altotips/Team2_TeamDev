@@ -4,11 +4,10 @@
       <!-- ユーザー情報 -->
       <div class="post-header">
         <img class="user-icon" :src="post.user.urlIcon" alt="User Icon" />
-        <router-link
-  :to="{ name: 'UserProfile', params: { userName: post.user.userName } }"
+        <router-link :to="{ name: 'UserProfile', params: { userName: post.user.userName } }"
   class="user-name"
 >
-  {{ post.user.userName }}
+{{ post.user.userName }}
 </router-link>
       </div>
 
@@ -168,6 +167,7 @@ const submitComment = async (postId) => {
 
 .timeline{
 padding-bottom: 60px; 
+
 }
 </style>
 
