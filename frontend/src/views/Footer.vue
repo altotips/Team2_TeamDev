@@ -1,6 +1,6 @@
 <template>
   <footer class="footer-nav">
-    <RouterLink to="/home" class="nav-item">
+    <RouterLink to="/TimeLine" class="nav-item">
       <span class="icon">⌂</span>
     </RouterLink>
 
@@ -8,7 +8,7 @@
       <span class="icon">＋</span>
     </RouterLink>
 
-    <RouterLink to="/profile" class="nav-item">
+    <RouterLink to="/MyProfile" class="nav-item">
       <span class="icon">〇</span>
     </RouterLink>
   </footer>
@@ -29,9 +29,11 @@ export default {
   border-top: 1px solid #ddd;
   position: fixed;
   bottom: 0;
-  width: 80%;
+  width: 100%;
   height: 60px;
+  left: 0;
 }
+
 
 .nav-item {
   flex: 1; /* 各ボタンを均等に広げる */

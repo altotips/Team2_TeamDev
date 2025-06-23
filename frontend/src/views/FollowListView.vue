@@ -1,5 +1,12 @@
 <template>
   <div class="follow-list-page">
+    <div class="header">
+      <button class="back-button" @click="$router.go(-1)">
+        ＜
+      </button>
+      <h2 class="followed-user-name">{{ currentUserName }}</h2>
+    </div>
+
     <h1 class="page-title">フォロー一覧</h1>
 
     <div v-if="isLoading" class="loading-message">
@@ -25,87 +32,67 @@
             <span class="fullname">{{ user.fullName }}</span>
           </div>
         </div>
-        <button class="unfollow-button" @click="unfollow(user.id)">解除ボタン</button>
+        <button v-if="showUnfollowButton" class="unfollow-button" @click="unfollow(user.id)">解除</button>
       </li>
     </ul>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+
+const route = useRoute();
+const router = useRouter();
 
 const isLoading = ref(false);
 const error = ref(null);
+const followedUsers = ref([]);
+const currentUserName = ref('');
+const showUnfollowButton = ref(false); // ★新しいリアクティブ変数
+//★showUnfollowButton をtureにすることでフォロー解除ボタンを表示します。
+// MyProfileViewから遷移した場合：isMyProfile: trueクエリパラメータを渡して、FollowListViewの解除ボタンを表示。
 
-const followedUsers = ref([
-  {
-    id: 1,
-    userName: 'user_taro',
-    fullName: '山田 太郎',
-    userIconUrl: '/images/dummy_icon1.png'
-  },
-  {
-    id: 2,
-    userName: 'user_hanako',
-    fullName: '鈴木 花子',
-    userIconUrl: '/images/dummy_icon2.png'
-  },
-  {
-    id: 3,
-    userName: 'user_jiro',
-    fullName: '田中 二郎',
-    userIconUrl: '/images/dummy_icon3.png'
-  },
-  {
-    id: 4,
-    userName: 'user_yumi',
-    fullName: '佐藤 友美',
-    userIconUrl: '/images/dummy_icon4.png'
-  },
-  {
-    id: 5,
-    userName: 'user_ken',
-    fullName: '高橋 健太',
-    userIconUrl: '/images/dummy_icon5.png'
-  },
-  {
-    id: 6,
-    userName: 'user_taro',
-    fullName: '山田 太郎',
-    userIconUrl: '/images/dummy_icon1.png'
-  },
-  {
-    id: 7,
-    userName: 'user_hanako',
-    fullName: '鈴木 花子',
-    userIconUrl: '/images/dummy_icon2.png'
-  },
-  {
-    id: 8,
-    userName: 'user_jiro',
-    fullName: '田中 次郎',
-    userIconUrl: '/images/dummy_icon3.png'
-  },
-  {
-    id: 9,
-    userName: 'user_yumi',
-    fullName: '佐藤 友美',
-    userIconUrl: '/images/dummy_icon4.png'
-  },
-  {
-    id: 10,
-    userName: 'user_ken',
-    fullName: '高橋 健太',
-    userIconUrl: '/images/dummy_icon5.png'
+onMounted(() => {
+  // ユーザーネームの取得 (既存ロジック)
+  if (route.query.userName) {
+    currentUserName.value = route.query.userName;
+  } else {
+    currentUserName.value = 'ユーザーネーム';
   }
-]);
+
+  // ★isMyProfile クエリパラメータをチェックします
+  // クエリパラメータは文字列として渡されるため、'true' と比較
+  if (route.query.isMyProfile === 'true') {
+    showUnfollowButton.value = true;
+  } else {
+    showUnfollowButton.value = false;
+  }
+
+  // ダミーのフォローしているユーザーリスト
+  followedUsers.value = [
+    { id: 1, userName: 'user_taro', fullName: '山田 太郎', userIconUrl: '/images/dummy_icon1.png' },
+    { id: 2, userName: 'user_hanako', fullName: '鈴木 花子', userIconUrl: '/images/dummy_icon2.png' },
+    { id: 3, userName: 'user_jiro', fullName: '田中 次郎', userIconUrl: '/images/dummy_icon3.png' },
+    { id: 4, userName: 'user_yumi', fullName: '佐藤 友美', userIconUrl: '/images/dummy_icon4.png' },
+    { id: 5, userName: 'user_ken', fullName: '高橋 健太', userIconUrl: '/images/dummy_icon5.png' },
+    { id: 6, userName: 'user_taro2', fullName: '山田 太郎2', userIconUrl: '/images/dummy_icon1.png' },
+    { id: 7, userName: 'user_hanako2', fullName: '鈴木 花子2', userIconUrl: '/images/dummy_icon2.png' },
+    { id: 8, userName: 'user_jiro2', fullName: '田中 次郎2', userIconUrl: '/images/dummy_icon3.png' },
+    { id: 9, userName: 'user_yumi2', fullName: '佐藤 友美2', userIconUrl: '/images/dummy_icon4.png' },
+    { id: 10, userName: 'user_ken2', fullName: '高橋 健太2', userIconUrl: '/images/dummy_icon5.png' }
+  ];
+
+  // console.log を追加して、showUnfollowButton の値と followedUsers の中身を確認
+  console.log('FollowListView mounted. showUnfollowButton:', showUnfollowButton.value);
+  console.log('Followed Users Data:', followedUsers.value);
+});
 
 const unfollow = (userIdToUnfollow) => {
   console.log(`${userIdToUnfollow} 番のユーザーのフォローを解除します。`);
   followedUsers.value = followedUsers.value.filter(user => user.id !== userIdToUnfollow);
   alert(`${userIdToUnfollow} 番のユーザーのフォローを解除しました。`);
 };
-
 </script>
 
 <style scoped>

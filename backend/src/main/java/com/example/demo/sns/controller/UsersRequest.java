@@ -20,7 +20,7 @@ public class UsersRequest {
 
 //	ユーザ名またはメールアドレスを入れる変数
 	@NotBlank
-	private String UserNameOrMailAddress;
+	private String userNameOrMailAddress;
 
 	@NotBlank
 	private String password;
