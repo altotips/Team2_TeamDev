@@ -1,6 +1,6 @@
 <template>
   <footer class="footer-nav">
-    <RouterLink to="/home" class="nav-item">
+    <RouterLink to="/TimeLine" class="nav-item">
       <span class="icon">⌂</span>
     </RouterLink>
 
@@ -8,7 +8,7 @@
       <span class="icon">＋</span>
     </RouterLink>
 
-    <RouterLink to="/profile" class="nav-item">
+    <RouterLink to="/MyProfile" class="nav-item">
       <span class="icon">〇</span>
     </RouterLink>
   </footer>
