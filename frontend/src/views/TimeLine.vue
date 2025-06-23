@@ -1,53 +1,42 @@
 <template>
-  <!-- プルリクエスト用コメント -->
   <div class="timeline">
-    <div
-      v-for="post in posts"
-      :key="post.id"
-      class="post-card"
-    >
+    <div v-for="post in posts" :key="post.id" class="post-card">
       <!-- ユーザー情報 -->
       <div class="post-header">
         <img class="user-icon" :src="post.user.urlIcon" alt="User Icon" />
-        <span class="user-name">{{ post.user.userName }}</span>
+        <router-link
+  :to="{ name: 'UserProfile', params: { userName: post.user.userName } }"
+  class="user-name"
+>
+  {{ post.user.userName }}
+</router-link>
       </div>
 
       <!-- 投稿画像 -->
       <img class="post-image" :src="post.urlPhoto" alt="投稿画像" />
 
-
       <!-- アクション -->
       <div class="post-actions">
-        <!-- いいねボタン -->
-        <button @click="toggleLike(post.id)" class="icon-button">
-         <span :style="{ color: post.liked ? 'red' : '#aaa' }">
-           {{ post.liked ? '❤️' : '♡' }}
-         </span>
-       </button>
-
-
-        <!-- コメントボタン -->
-        <button @click="toggleComment(post.id)" class="icon-button">💬 コメント</button>
+        <button @click="toggleLike(post)" class="icon-button">
+          <span :style="{ color: post.liked ? 'red' : '#aaa' }">
+            {{ post.liked ? '❤️' : '♡' }}
+          </span>
+        </button>
+        <button @click="toggleComment(post.id)" class="icon-button">
+          💬 コメント
+        </button>
       </div>
-      <!-- コンテント表示 -->
-      <p class="post-content">{{ post.content }}</p> 
+
+      <!-- 投稿テキスト -->
+      <p class="post-content">{{ post.content }}</p>
 
       <!-- コメント欄 -->
       <div v-if="showComment[post.id]" class="comment-section">
-        <div
-          v-for="comment in post.comments"
-          :key="comment.id"
-          class="comment"
-        >
+        <div v-for="comment in post.comments" :key="comment.id" class="comment">
           <strong>{{ comment.user.userName }}:</strong> {{ comment.content }}
         </div>
-
         <form @submit.prevent="submitComment(post.id)" class="comment-form">
-          <input
-            v-model="newComments[post.id]"
-            type="text"
-            placeholder="コメントを入力..."
-          />
+          <input v-model="newComments[post.id]" type="text" placeholder="コメント..." />
           <button type="submit">送信</button>
         </form>
       </div>
@@ -56,72 +45,50 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
+import { usePostStore } from '@/stores/postStore'
+import { useUserStore } from '@/stores/userStore'
 
-// ★ダミーデータ（実際はpostStoreから取得）
-const posts = ref([
-  {
-    id: 1,
-    urlPhoto: 'https://placehold.jp/500x300.png',
-    user: {
-      id: 101,
-      userName: 'yamada_taro',
-      urlIcon: 'https://placehold.jp/30x30.png',
-    },
-     content: '今日は美味しいランチを食べました！',
-    comments: [
-      {
-        id: 1,
-        user: { userName: 'suzuki_hanako' },
-        content: 'いいね！',
-      },
-    ],
-    liked: false,
-  },
-  {
-    id: 2,
-    urlPhoto: 'https://placehold.jp/500x300.png',
-    user: {
-      id: 102,
-      userName: 'tanaka_jiro',
-      urlIcon: 'https://placehold.jp/30x30.png',
-    },
-     content: '今日のわんこ🐶！',
-    comments: [],
-    liked: true,
-  },
-])
+// ストア読み込み
+const postStore = usePostStore()
+const userStore = useUserStore()
 
-// コメント欄表示管理
+// 投稿リストは followersPosts（フォロー中）か allPosts に差し替え
+const posts = computed(() => postStore.allPosts) // or postStore.followersPosts
+
 const showComment = reactive({})
-// コメント入力内容管理
 const newComments = reactive({})
 
-// いいねトグル（APIなしのローカル更新バージョン）
-const toggleLike = (postId) => {
-  const post = posts.value.find(p => p.id === postId)
-  if (!post) return
+// データ取得
+onMounted(async () => {
+  await postStore.fetchAllPosts()
+})
+
+// いいね処理（API呼び出し付き）
+const toggleLike = async (post) => {
   post.liked = !post.liked
-  // ★将来的にはここで postStore.addGood / subGood を呼ぶ
-  console.log(`Post ${postId} liked:`, post.liked)
-    posts.value = [...posts.value]
+  if (post.liked) {
+    await postStore.addGood(post.id)
+  } else {
+    await postStore.subGood(post.id)
+  }
 }
 
-// コメント欄の開閉
+// コメント欄トグル
 const toggleComment = (postId) => {
   showComment[postId] = !showComment[postId]
 }
 
-// コメント送信（API未実装のためalertのみ）
-const submitComment = (postId) => {
-  if (!newComments[postId] || !newComments[postId].trim()) {
-    alert('コメントを入力してください')
-    return
-  }
-  alert(`コメント送信機能はまだです。\n送信予定コメント: ${newComments[postId]}`)
-  // コメントフォームクリア
+// コメント送信
+const submitComment = async (postId) => {
+  const text = (newComments[postId] || '').trim()
+  if (!text) return alert('コメントを入力してください')
+  await postStore.addComment(postId, {
+    user: await userStore.getUser(userStore.id),
+    content: text,
+  })
   newComments[postId] = ''
-  // 本来はここで postStore.addComment を呼ぶ
+  await postStore.fetchAllPosts()
 }
 </script>
 
