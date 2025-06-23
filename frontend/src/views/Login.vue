@@ -1,19 +1,19 @@
 <template>
-    <h1>Hexagram</h1>
-    <br>
-    <h2>ログイン画面</h2>
+  <h1>Hexagram</h1>
+  <br />
+  <h2>ログイン画面</h2>
   <form @submit.prevent="handleLogin" class="login-form">
     <div>
-      <input v-model="fullNameOrEmail" placeholder="ユーザーネームか＠メールアドレス" />
+      <input v-model="userNameOrMailAddress" placeholder="ユーザーネームか＠メールアドレス" />
     </div>
     <div>
       <input v-model="password" placeholder="パスワード" type="password" />
     </div>
-    <br>
+    <br />
     <button>ログイン</button>
   </form>
-  <br>
-  <br>
+  <br />
+  <br />
   <div>
     <span>アカウントを持ってない場合</span>
     <router-link to="/register">登録する</router-link>
@@ -22,10 +22,10 @@
 
 <script setup>
 import { ref } from 'vue'
-import{useUserStore} from '../stores/userStore'
-import{useRouter} from 'vue-router'
+import { useUserStore } from '@/stores/userStore'
+import { useRouter } from 'vue-router'
 
-const fullNameOrEmail = ref('')
+const userNameOrMailAddress = ref('')
 const password = ref('')
 
 const userStore = useUserStore()
@@ -33,11 +33,16 @@ const router = useRouter()
 
 const handleLogin = async () => {
   try {
-    await userStore.login({
-      fullNameOrEmail: fullNameOrEmail.value,
-      password: password.value
+    const res = await userStore.login({
+      userNameOrMailAddress: userNameOrMailAddress.value,
+      password: password.value,
     })
-    router.push('/myProfile')
+    if (!res) {
+      alert('ログインできませんでした。')
+    } else {
+      alert('ログインできました。')
+      router.push('/myProfile')
+    }
   } catch (error) {
     alert('ログインできませんでした。')
   }
@@ -45,26 +50,24 @@ const handleLogin = async () => {
 </script>
 
 <style scoped>
-
-
-h1{
-    font-size: 80px;
-    text-align: center;
-    font-family: 'Dancing Script', cursive;
-    margin-top: 30px;
+h1 {
+  font-size: 80px;
+  text-align: center;
+  font-family: 'Dancing Script', cursive;
+  margin-top: 30px;
 }
-h2{
-    font-size: 30px;
-    text-align: center;
-    margin-bottom: 50px;
-    margin-top: 0;
+h2 {
+  font-size: 30px;
+  text-align: center;
+  margin-bottom: 50px;
+  margin-top: 0;
 }
-div{
-    text-align: center;
+div {
+  text-align: center;
 }
 
-.login-form{
-    margin-top: 0;
+.login-form {
+  margin-top: 0;
 }
 
 .login-form div {
@@ -78,11 +81,11 @@ div{
 }
 
 .login-form button {
-  display: block;    /* ブロックにして幅指定を効かせる */
+  display: block; /* ブロックにして幅指定を効かせる */
   width: 100px; /* テキストボックスと同じ幅に */
-    
+
   justify-content: center;
-  margin: 0 auto;    /* 左右の余白自動で中央寄せ */
+  margin: 0 auto; /* 左右の余白自動で中央寄せ */
   padding: 8px;
   cursor: pointer;
   background-color: #409eff;
@@ -95,8 +98,7 @@ div{
   background-color: #66b1ff;
 }
 
-::placeholder{
-    text-align: center;
+::placeholder {
+  text-align: center;
 }
 </style>
-
