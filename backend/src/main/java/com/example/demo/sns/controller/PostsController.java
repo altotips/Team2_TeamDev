@@ -23,7 +23,6 @@ import com.example.demo.sns.entity.Users;
 import com.example.demo.sns.repository.PostsRepository;
 import com.example.demo.sns.repository.UsersRepository;
 
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import lombok.RequiredArgsConstructor;
 
 /*
@@ -63,7 +62,7 @@ public class PostsController {
 		if (user == null || user.getDelFlag() == true) {
 			return null;
 		}
-		List<Posts> posts = postsrepository.findByUsers(user);
+		List<Posts> posts = postsrepository.findByUser(user);
 		return posts;
 	}
 
@@ -84,7 +83,7 @@ public class PostsController {
 //		content : String
 //	}
 	@PostMapping("/{id}")
-	public Posts post(@PathVariable Long id, @RequestBody Posts postRequest, @RequestParam("image") MultipartFile file) throws IOException {
+	public Posts post(@PathVariable Long id, @RequestParam("image") MultipartFile photo, @RequestParam("content") String content) throws IOException {
 
 		// オブジェクトのテストが必要
 		// 
@@ -99,15 +98,16 @@ public class PostsController {
 			dir.mkdirs();
 		}
 
-		String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+		String fileName = System.currentTimeMillis() + "_" + photo.getOriginalFilename();
 		Path filePath = Paths.get(uploadDir, fileName);
+//		System.out.println(filePath);
 
-		Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+		Files.copy(photo.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
 		// ここからデータべースにファイル名を保存
-//		Posts post = postsrepository.findById(id).orElse(null);
-		postRequest.setUrlPhoto(fileName);
-		postsrepository.save(postRequest);
-		return postRequest;
+		Posts post = postsrepository.findById(id).orElse(null);
+		post.setUrlPhoto(fileName);
+		postsrepository.save(post);
+		return post;
 	}
 }
