@@ -1,13 +1,21 @@
 <template>
   <header class="header">
     <h1 class="title">Hexagram</h1>
-    <span class="username">username</span>
+    <span class="username">{{ userName }}</span>
   </header>
 </template>
 
 <script>
+import { useUserStore } from '@/stores/userStore'
+import { computed } from 'vue'
+
 export default {
-  name: 'Header'
+  name: 'Header',
+  setup() {
+    const userStore = useUserStore()
+    const userName = computed(() => userStore.userName)
+    return { userName }
+  }
 }
 </script>
 
