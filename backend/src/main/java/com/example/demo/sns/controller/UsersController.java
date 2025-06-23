@@ -50,11 +50,12 @@ public class UsersController {
 	// 1ユーザの情報を取得
 	@GetMapping("/{id}")
 	public Users getOne(@PathVariable Long id) {
-		Users response = usersrepository.findById(id).orElse(null);
-		if (response == null || response.getDelFlag() == false) {
+		Users user = usersrepository.findById(id).orElse(null);
+		if (user == null || user.getDelFlag() == false) {
 			return null;
 		}
-		return response;
+		System.out.println(user);
+		return user;
 	}
 
 	// ユーザ新規登録
@@ -76,10 +77,10 @@ public class UsersController {
 	@PostMapping("/login")
 	public Users login(@RequestBody UsersRequest request) {
 		Users user;
-		//		入力が@から始まるときはユーザIDとしてみなす
+		//		入力に@が入っている場合始はメールアドレスとしてみなす
 		if (request.getUserNameOrMailAddress().contains("@")) {
 			user = usersrepository.findByEmail(request.getUserNameOrMailAddress()).orElse(null);
-			//		入力が@から始まらないときはユーザ名としてみなす
+			//		入力に@がない場合はユーザ名としてみなす
 		} else {
 			user = usersrepository.findByUserName(request.getUserNameOrMailAddress()).orElse(null);
 		}

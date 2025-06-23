@@ -12,5 +12,5 @@ import com.example.demo.sns.entity.Users;
 public interface PostsRepository extends JpaRepository<Posts, Long> {
 	List<Posts> findByDelFlagFalse();
 
-	List<Posts> findByUsers(Users user);
+	List<Posts> findByUser(Users user);
 }

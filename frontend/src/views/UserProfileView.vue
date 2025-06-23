@@ -25,7 +25,9 @@
             </div>
             <div class="stat-item">
               <span class="stat-value">{{ followingCount }}</span>
-              <span class="stat-label">フォロー中</span>
+              <router-link to="/followlist" class="stat-label-link">
+                <span class="stat-label">フォロー中</span>
+              </router-link>
             </div>
             </div>
         </div>
@@ -53,8 +55,10 @@
 </template>
 
 <script setup>
-// スクリプト部分は変更なし
 import { ref } from 'vue';
+// router-linkを使うために、vue-routerからのインポートは不要ですが、
+// コンポーネント内でuseRouterなどの関数を使う場合は必要になります。
+// 今回はrouter-linkのみなので、このスクリプト部分の変更は不要です。
 
 const userName = ref('dummy_username');
 const userIconUrl = ref('/images/dummy_icon.png');
