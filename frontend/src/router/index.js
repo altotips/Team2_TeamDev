@@ -6,12 +6,12 @@ import UserProfileView from '@/views/UserProfileView.vue'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    
+
     {
       path: '/',
       name: 'login',
-     component: () => import('../views/Login.vue'),
-     meta: { hideHeaderFooter: true }
+      component: () => import('../views/Login.vue'),
+      meta: { hideHeaderFooter: true }
     },
     {
       path: '/UserProfile',
@@ -23,15 +23,22 @@ const router = createRouter({
       path: '/register',
       name: 'register',
       component: () => import('../views/RegisterView.vue'),
-meta: { hideHeaderFooter: true }
+      meta: { hideHeaderFooter: true }
     },
 
     {
       path: '/myProfile',
       name: 'myProfile',
-         component: () => import('../views/2View.vue')
+      component: () => import('../views/2View.vue')
       // component: () => import('../views/myProfile.vue'),
     },
+
+    {
+      path: '/myPost',
+      name: 'myPost',
+       component: () => import('../views/MyPost.vue')
+    },
+
 
 
   ],
