@@ -99,6 +99,7 @@ public class UsersController {
 			System.out.println("This user is not exist.");
 			return null;
 		}
+		System.out.println(1);
 		//		データベースからパスワード(ハッシュ化済み)を受け取り一致判定を行う
 		//		ソルトをデータベースから受け取り、それを判定するパスワードに加えて登録時と同じ文字列になるか確認する
 		String hashedPassword = hashWithSalt(request.getPassword(), user.getSalt());

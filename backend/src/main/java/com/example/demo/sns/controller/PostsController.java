@@ -42,6 +42,9 @@ public class PostsController {
 	@GetMapping
 	public List<Posts> getAll() {
 		List<Posts> response = postsrepository.findByDelFlagFalse();
+		if (response == null) {
+			System.out.println(1);
+		}
 		return response;
 	}
 
@@ -83,7 +86,9 @@ public class PostsController {
 //		content : String
 //	}
 	@PostMapping("/{id}")
-	public Posts post(@PathVariable Long id, @RequestParam("image") MultipartFile photo, @RequestParam("content") String content) throws IOException {
+	public Posts post(@PathVariable Long id,
+			@RequestParam("image") MultipartFile photo,
+			@RequestParam("content") String content) throws IOException {
 
 		// オブジェクトのテストが必要
 		// 

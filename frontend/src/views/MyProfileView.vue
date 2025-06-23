@@ -2,20 +2,22 @@
   <div class="profile-page">
     <header class="profile-header">
       <div class="header-top">
-        <h1 class="username">{{ userName }}</h1>
+        <h1 class="username">{{ userStore.userName }}</h1>
       </div>
 
-      <div class="profile-details-row" v-if="!isLoading && !error">
+      <div class="profile-details-row">
         <div class="icon-container">
-          <img :src="userIconUrl || '/images/default_profile_icon.png'" alt="User Icon" class="profile-icon">
+          <img :src="displayIconUrl" alt="User Icon" class="profile-icon">
         </div>
 
         <div class="right-of-icon-info">
           <div class="name-and-button">
-            <div class="full-name">{{ fullName }}</div>
-            <button v-if="!isMyProfile" :class="['follow-button', { 'is-following': isFollowing }]" @click="toggleFollow">
-              {{ isFollowing ? 'フォロー中' : 'フォロー' }}
-            </button>
+            <div class="full-name">{{ userStore.fullName }}</div>
+            <!-- 編集ボタンとログアウトボタン -->
+            <div class="my-profile-buttons">
+              <button class="edit-profile-button" @click="editProfile">プロフィール編集</button>
+              <button class="logout-button" @click="logout">ログアウト</button>
+            </div>
           </div>
 
           <div class="user-stats">
@@ -25,21 +27,19 @@
             </div>
             <div class="stat-item">
               <span class="stat-value">{{ followingCount }}</span>
-              <router-link to="/followlist" class="stat-label-link">
-                <span class="stat-label">フォロー中</span>
-              </router-link>
+              <span class="stat-label">フォロー中</span>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="self-introduction">{{ selfIntroduction }}</div>
+      <div class="self-introduction">{{ userStore.selfIntroduction }}</div>
     </header>
 
     <main class="profile-content">
       <div class="posts-grid">
         <div v-for="post in userPosts" :key="post.id" class="post-thumbnail">
-          <img :src="post.urlPhoto || '/images/default_post_image.png'" :alt="post.content" class="post-image">
+          <img :src="post.urlPhoto || '/images/default_post_image.png'" :alt="post.content" class="post-image" loading="lazy">
         </div>
 
         <div v-if="userPosts.length === 0 && !isLoading" class="no-posts-message">
@@ -49,68 +49,47 @@
         <div v-if="isLoading" class="loading-message">
           読み込み中...
         </div>
-
-        <div v-if="error" class="error-message">
-          プロフィールの読み込み中にエラーが発生しました。
-        </div>
       </div>
     </main>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { ref } from 'vue';
+import { useUserStore } from '@/stores/userStore';
+import defaultIcon from '@/images/default_icon.png';
 
-// ユーザー名（URLから取得）
-const route = useRoute();
-const userName = ref(route.params.userName);
+const userName = ref('my_username');
+const userIconUrl = ref(null); // ユーザーがアップロードしていない場合 null
+const fullName = ref('自分のユーザー名');
+const selfIntroduction = ref('これは自分のプロフィールの自己紹介文です。');
+const postsCount = ref(123);
+const followingCount = ref(45);
 
-// プロフィール情報
-const userIconUrl = ref('');
-const fullName = ref('');
-const selfIntroduction = ref('');
-const postsCount = ref(0);
-const followingCount = ref(0);
-const isMyProfile = ref(false);
-const isFollowing = ref(false);
-const userPosts = ref([]);
-const isLoading = ref(true);
-const error = ref(null);
+const userPosts = ref([
+  { id: 1, urlPhoto: 'https://picsum.photos/seed/landscape/300', content: '風景写真' },
+  { id: 2, urlPhoto: 'https://picsum.photos/seed/food/300', content: '食べ物の写真' },
+  { id: 3, urlPhoto: 'https://picsum.photos/seed/pet/300', content: 'ペットの写真' },
+  { id: 4, urlPhoto: 'https://picsum.photos/seed/selfie/300', content: '自撮り' },
+  { id: 5, urlPhoto: 'https://picsum.photos/seed/art/300', content: 'アート作品' },
+  { id: 6, urlPhoto: 'https://picsum.photos/seed/daily/300', content: '日常' },
+]);
 
-// 仮のAPI関数（あなたのバックエンドに応じて置き換えてください）
-async function fetchUserProfile(userName) {
-  // 例: 実際のAPIエンドポイントに変更する
-  const response = await fetch(`/api/users/${userName}`);
-  if (!response.ok) throw new Error('ユーザー情報の取得に失敗しました');
-  return await response.json();
-}
+const isLoading = ref(false);
 
-// 初期化処理
-onMounted(async () => {
-  try {
-    isLoading.value = true;
-    const data = await fetchUserProfile(userName.value);
-    userIconUrl.value = data.iconUrl;
-    fullName.value = data.fullName;
-    selfIntroduction.value = data.selfIntroduction;
-    postsCount.value = data.postsCount;
-    followingCount.value = data.followingCount;
-    isFollowing.value = data.isFollowing;
-    isMyProfile.value = data.isMyProfile;
-    userPosts.value = data.posts;
-  } catch (err) {
-    error.value = err.message;
-  } finally {
-    isLoading.value = false;
-  }
-});
+const displayIconUrl = ref(userIconUrl.value || defaultIcon);
 
-// フォローボタン切り替え
-const toggleFollow = () => {
-  isFollowing.value = !isFollowing.value;
-  // TODO: APIでフォロー状態を更新
+const editProfile = () => {
+  console.log('プロフィール編集ボタンが押されました');
+  // 例：router.push('/edit-profile');
 };
+
+const logout = () => {
+  console.log('ログアウト処理を実行します');
+  // 例：ログアウト処理 + router.push('/login');
+};
+
+const userStore = useUserStore();
 </script>
 
 <style scoped>
@@ -281,6 +260,29 @@ const toggleFollow = () => {
   color: #8e8e8e;
   font-size: 18px;
 }
+.my-profile-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.edit-profile-button,
+.logout-button {
+  background-color: #fff;
+  color: #262626;
+  border: 1px solid #dbdbdb;
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.edit-profile-button:hover,
+.logout-button:hover {
+  background-color: #fafafa;
+}
+
 
 /* レスポンシブ対応 */
 @media (max-width: 768px) {

@@ -7,6 +7,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 
 import lombok.AllArgsConstructor;
@@ -21,10 +22,12 @@ import lombok.NoArgsConstructor;
  * 内容
  * 
 */
+
 @Entity
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Table(name = "posts")
 public class Posts {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,9 +41,11 @@ public class Posts {
 	@NotNull
 	private String urlPhoto;
 
-	private String content;
+	@Column(columnDefinition = "VARCHAR DEFAULT ''")
+	private String content = "";
 
-	private Long good;
+	@Column(columnDefinition = "LONG DEFAULT 0")
+	private Long good = 0l;
 
 //	@ManyToOne
 //	@JoinColumn(name = "commentsId", nullable = false)
