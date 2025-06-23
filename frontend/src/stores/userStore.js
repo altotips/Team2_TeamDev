@@ -319,7 +319,7 @@ export const useUserStore = defineStore(
     // ログインが維持される。
     persist: {
       storage: sessionStorage, // セッション中だけ保存
-      paths: ['id', 'urlIcon', 'fullName','userName', 'email', 'salfIntroduction','follows','authId'], // 保存するキーの指定
+      paths: ['id', 'urlIcon', 'fullName','userName', 'email', 'selfIntroduction','follows','authId'], // 保存するキーの指定
     },
   },
 )

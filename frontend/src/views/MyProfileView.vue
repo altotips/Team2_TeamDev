@@ -2,7 +2,7 @@
   <div class="profile-page">
     <header class="profile-header">
       <div class="header-top">
-        <h1 class="username">{{ userName }}</h1>
+        <h1 class="username">{{ userStore.userName }}</h1>
       </div>
 
       <div class="profile-details-row">
@@ -12,7 +12,7 @@
 
         <div class="right-of-icon-info">
           <div class="name-and-button">
-            <div class="full-name">{{ fullName }}</div>
+            <div class="full-name">{{ userStore.fullName }}</div>
             <!-- 編集ボタンとログアウトボタン -->
             <div class="my-profile-buttons">
               <button class="edit-profile-button" @click="editProfile">プロフィール編集</button>
@@ -33,7 +33,7 @@
         </div>
       </div>
 
-      <div class="self-introduction">{{ selfIntroduction }}</div>
+      <div class="self-introduction">{{ userStore.selfIntroduction }}</div>
     </header>
 
     <main class="profile-content">
@@ -56,6 +56,7 @@
 
 <script setup>
 import { ref } from 'vue';
+import { useUserStore } from '@/stores/userStore';
 import defaultIcon from '@/images/default_icon.png';
 
 const userName = ref('my_username');
@@ -87,6 +88,8 @@ const logout = () => {
   console.log('ログアウト処理を実行します');
   // 例：ログアウト処理 + router.push('/login');
 };
+
+const userStore = useUserStore();
 </script>
 
 <style scoped>
