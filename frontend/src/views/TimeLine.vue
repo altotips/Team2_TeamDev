@@ -80,6 +80,8 @@ const toggleComment = (postId) => {
 
 // コメント送信
 const submitComment = async (postId) => {
+  console.log('✅ submitComment 呼ばれました: ', postId)
+
   const text = (newComments[postId] || '').trim()
   if (!text) return alert('コメントを入力してください')
   await postStore.addComment(postId, {
