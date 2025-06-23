@@ -62,7 +62,7 @@ public class PostsController {
 		if (user == null || user.getDelFlag() == true) {
 			return null;
 		}
-		List<Posts> posts = postsrepository.findByUsers(user);
+		List<Posts> posts = postsrepository.findByUser(user);
 		return posts;
 	}
 
