@@ -28,7 +28,7 @@
         <!-- コメントボタン -->
         <button @click="toggleComment(post.id)" class="icon-button">💬 コメント</button>
       </div>
-
+      <!-- コンテント表示 -->
       <p class="post-content">{{ post.content }}</p>
 
       <!-- コメント欄 -->
@@ -67,6 +67,7 @@ const posts = ref([
       userName: 'yamada_taro',
       urlIcon: 'https://placehold.jp/30x30.png',
     },
+     content: '今日は美味しいランチを食べました！',
     comments: [
       {
         id: 1,
@@ -84,6 +85,7 @@ const posts = ref([
       userName: 'tanaka_jiro',
       urlIcon: 'https://placehold.jp/30x30.png',
     },
+     content: '今日のわんこ🐶！',
     comments: [],
     liked: true,
   },
