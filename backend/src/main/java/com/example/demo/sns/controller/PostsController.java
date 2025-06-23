@@ -94,7 +94,7 @@ public class PostsController {
 		// 
 		// 
 		// 
-//		System.out.println(postRequest);
+		System.out.println(1);
 
 		// ファイルの保存
 		String uploadDir = "./uploads/";
@@ -113,6 +113,7 @@ public class PostsController {
 		Posts post = postsrepository.findById(id).orElse(null);
 		post.setUrlPhoto(fileName);
 		postsrepository.save(post);
+		System.out.println(2);
 		return post;
 	}
 }
