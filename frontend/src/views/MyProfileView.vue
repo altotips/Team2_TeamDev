@@ -39,7 +39,7 @@
     <main class="profile-content">
       <div class="posts-grid">
         <div v-for="post in userPosts" :key="post.id" class="post-thumbnail">
-          <img :src="post.urlPhoto || '/images/default_post_image.png'" :alt="post.content" class="post-image">
+          <img :src="post.urlPhoto || '/images/default_post_image.png'" :alt="post.content" class="post-image" loading="lazy">
         </div>
 
         <div v-if="userPosts.length === 0 && !isLoading" class="no-posts-message">
@@ -66,12 +66,12 @@ const postsCount = ref(123);
 const followingCount = ref(45);
 
 const userPosts = ref([
-  { id: 1, urlPhoto: '/images/dummy_post1.png', content: '風景写真' },
-  { id: 2, urlPhoto: '/images/dummy_post2.png', content: '食べ物の写真' },
-  { id: 3, urlPhoto: '/images/dummy_post3.png', content: 'ペットの写真' },
-  { id: 4, urlPhoto: '/images/dummy_post4.png', content: '自撮り' },
-  { id: 5, urlPhoto: '/images/dummy_post5.png', content: 'アート作品' },
-  { id: 6, urlPhoto: '/images/dummy_post6.png', content: '日常' },
+  { id: 1, urlPhoto: 'https://picsum.photos/seed/landscape/300', content: '風景写真' },
+  { id: 2, urlPhoto: 'https://picsum.photos/seed/food/300', content: '食べ物の写真' },
+  { id: 3, urlPhoto: 'https://picsum.photos/seed/pet/300', content: 'ペットの写真' },
+  { id: 4, urlPhoto: 'https://picsum.photos/seed/selfie/300', content: '自撮り' },
+  { id: 5, urlPhoto: 'https://picsum.photos/seed/art/300', content: 'アート作品' },
+  { id: 6, urlPhoto: 'https://picsum.photos/seed/daily/300', content: '日常' },
 ]);
 
 const isLoading = ref(false);
