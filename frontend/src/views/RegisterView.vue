@@ -13,6 +13,7 @@
         userName: '',
     })
 
+
     const submitRegister = async () => {
         try {
             await userStore.register(form)
@@ -27,42 +28,55 @@
 </script>
 
 <template>
-    <h1>Hexagram</h1>
-    <br>
-    <h2>新規登録画面</h2>
-    <br>
+    <div>
 
-    <h4>登録して友達の写真や動画をチェックしよう</h4>
-    <br>
-    <form @submit.prevent="submitRegister" class="register-form">
-        <div>
-            <input v-model="form.email" type="email" placeholder="＠メールアドレス" />
-        </div>
-        <div>
-            <input v-model="form.password" type="password" placeholder="パスワード" required />
-        </div>
-        <div>
-            <input v-model="form.fullName" type="text" placeholder="フルネーム" required />
-        </div>
-        <div>
-            <input v-model="form.userName" type="text" placeholder="ユーザーネーム" required />
-        </div>
-        <div class="button-wrapper">
-            <button type="submit">登録する</button>
-        </div>
-
+        <h1>Hexagram</h1>
         <br>
-        <div class="link">
-            <span>アカウントをお持ちの場合</span>
-            <router-link to="/">
-                ログインする
-            </router-link>
-        </div>
-    </form>
+        <h2>新規登録画面</h2>
+        <br>
 
+        <h4>登録して友達の写真や動画をチェックしよう</h4>
+        <br>
+        <form @submit.prevent="submitRegister" class="register-form">
+            <div>
+                <input v-model="form.email" type="email" placeholder="＠メールアドレス" />
+            </div>
+            <div>
+                <input v-model="form.password" type="password" placeholder="パスワード" required />
+            </div>
+            <div>
+                <input v-model="form.fullName" type="text" placeholder="フルネーム" required />
+            </div>
+            <div>
+                <input v-model="form.userName" type="text" placeholder="ユーザーネーム" required />
+            </div>
+
+            <div class="button-wrapper">
+                <button type="submit">登録する</button>
+            </div>
+
+            <br>
+            <div class="link">
+                <span>アカウントをお持ちの場合</span>
+                <router-link to="/">
+                    ログインする
+                </router-link>
+            </div>
+        </form>
+    </div>
 </template>
 
 <style scoped>
+    div {
+        text-align: center;
+    }
+
+    .abc {
+        justify-self: center;
+        align-items: center;
+        margin: 0 auto;
+    }
+
     h1 {
         text-align: center;
         font-family: 'Dancing Script', cursive;
