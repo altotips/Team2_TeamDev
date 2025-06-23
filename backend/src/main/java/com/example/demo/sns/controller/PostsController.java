@@ -42,6 +42,9 @@ public class PostsController {
 	@GetMapping
 	public List<Posts> getAll() {
 		List<Posts> response = postsrepository.findByDelFlagFalse();
+		if (response == null) {
+			System.out.println(1);
+		}
 		return response;
 	}
 
