@@ -7,16 +7,18 @@
 
       <div class="profile-details-row">
         <div class="icon-container">
-          <img :src="userIconUrl || '/images/default_profile_icon.png'" alt="User Icon" class="profile-icon">
+          <img :src="displayIconUrl" alt="User Icon" class="profile-icon">
         </div>
 
         <div class="right-of-icon-info">
           <div class="name-and-button">
             <div class="full-name">{{ fullName }}</div>
-            <button v-if="!isMyProfile" :class="['follow-button', { 'is-following': isFollowing }]" @click="toggleFollow">
-              {{ isFollowing ? 'フォロー中' : 'フォロー' }}
-            </button>
+            <!-- 編集ボタンとログアウトボタン -->
+            <div class="my-profile-buttons">
+              <button class="edit-profile-button" @click="editProfile">プロフィール編集</button>
+              <button class="logout-button" @click="logout">ログアウト</button>
             </div>
+          </div>
 
           <div class="user-stats">
             <div class="stat-item">
@@ -25,11 +27,9 @@
             </div>
             <div class="stat-item">
               <span class="stat-value">{{ followingCount }}</span>
-              <router-link to="/followlist" class="stat-label-link">
-                <span class="stat-label">フォロー中</span>
-              </router-link>
+              <span class="stat-label">フォロー中</span>
             </div>
-            </div>
+          </div>
         </div>
       </div>
 
@@ -39,7 +39,7 @@
     <main class="profile-content">
       <div class="posts-grid">
         <div v-for="post in userPosts" :key="post.id" class="post-thumbnail">
-          <img :src="post.urlPhoto || '/images/default_post_image.png'" :alt="post.content" class="post-image">
+          <img :src="post.urlPhoto || '/images/default_post_image.png'" :alt="post.content" class="post-image" loading="lazy">
         </div>
 
         <div v-if="userPosts.length === 0 && !isLoading" class="no-posts-message">
@@ -56,34 +56,36 @@
 
 <script setup>
 import { ref } from 'vue';
-// router-linkを使うために、vue-routerからのインポートは不要ですが、
-// コンポーネント内でuseRouterなどの関数を使う場合は必要になります。
-// 今回はrouter-linkのみなので、このスクリプト部分の変更は不要です。
+import defaultIcon from '@/images/default_icon.png';
 
-const userName = ref('dummy_username');
-const userIconUrl = ref('/images/dummy_icon.png');
-const fullName = ref('ダミー ユーザー名');
-const selfIntroduction = ref('これは自己紹介のダミーテキストです。このユーザーの興味や活動について記述されます。');
+const userName = ref('my_username');
+const userIconUrl = ref(null); // ユーザーがアップロードしていない場合 null
+const fullName = ref('自分のユーザー名');
+const selfIntroduction = ref('これは自分のプロフィールの自己紹介文です。');
 const postsCount = ref(123);
 const followingCount = ref(45);
-const isMyProfile = ref(false);
-const isFollowing = ref(false);
 
 const userPosts = ref([
-  { id: 1, urlPhoto: '/images/dummy_post1.png', content: '風景写真' },
-  { id: 2, urlPhoto: '/images/dummy_post2.png', content: '食べ物の写真' },
-  { id: 3, urlPhoto: '/images/dummy_post3.png', content: 'ペットの写真' },
-  { id: 4, urlPhoto: '/images/dummy_post4.png', content: '自撮り' },
-  { id: 5, urlPhoto: '/images/dummy_post5.png', content: 'アート作品' },
-  { id: 6, urlPhoto: '/images/dummy_post6.png', content: '日常' },
+  { id: 1, urlPhoto: 'https://picsum.photos/seed/landscape/300', content: '風景写真' },
+  { id: 2, urlPhoto: 'https://picsum.photos/seed/food/300', content: '食べ物の写真' },
+  { id: 3, urlPhoto: 'https://picsum.photos/seed/pet/300', content: 'ペットの写真' },
+  { id: 4, urlPhoto: 'https://picsum.photos/seed/selfie/300', content: '自撮り' },
+  { id: 5, urlPhoto: 'https://picsum.photos/seed/art/300', content: 'アート作品' },
+  { id: 6, urlPhoto: 'https://picsum.photos/seed/daily/300', content: '日常' },
 ]);
 
 const isLoading = ref(false);
-const error = ref(null);
 
-const toggleFollow = () => {
-  isFollowing.value = !isFollowing.value;
-  console.log('フォロー状態を切り替えました:', isFollowing.value);
+const displayIconUrl = ref(userIconUrl.value || defaultIcon);
+
+const editProfile = () => {
+  console.log('プロフィール編集ボタンが押されました');
+  // 例：router.push('/edit-profile');
+};
+
+const logout = () => {
+  console.log('ログアウト処理を実行します');
+  // 例：ログアウト処理 + router.push('/login');
 };
 </script>
 
@@ -255,6 +257,29 @@ const toggleFollow = () => {
   color: #8e8e8e;
   font-size: 18px;
 }
+.my-profile-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.edit-profile-button,
+.logout-button {
+  background-color: #fff;
+  color: #262626;
+  border: 1px solid #dbdbdb;
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.edit-profile-button:hover,
+.logout-button:hover {
+  background-color: #fafafa;
+}
+
 
 /* レスポンシブ対応 */
 @media (max-width: 768px) {

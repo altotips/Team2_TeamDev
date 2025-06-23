@@ -29,9 +29,11 @@ export default {
   border-top: 1px solid #ddd;
   position: fixed;
   bottom: 0;
-  width: 80%;
+  width: 100%;
   height: 60px;
+  left: 0;
 }
+
 
 .nav-item {
   flex: 1; /* 各ボタンを均等に広げる */
