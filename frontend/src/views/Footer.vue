@@ -34,6 +34,7 @@ export default {
   left: 0;
 }
 
+
 .nav-item {
   flex: 1; /* 各ボタンを均等に広げる */
   text-align: center;

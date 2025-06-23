@@ -36,6 +36,12 @@ meta: { hideHeaderFooter: true }
          component: () => import('../views/2View.vue')
       // component: () => import('../views/myProfile.vue'),
     },
+    {
+      path: '/TimeLine',
+      name: 'TimeLine',
+         component: () => import('../views/TimeLine.vue')
+      // component: () => import('../views/myProfile.vue'),
+    },
 {
       path: '/followlist',
       name: 'followlist',
