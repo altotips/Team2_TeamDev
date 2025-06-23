@@ -41,7 +41,7 @@ const handleLogin = async () => {
       alert('ログインできませんでした。')
     } else {
       alert('ログインできました。')
-      router.push('/myProfile')
+      router.push('/MyProfile')
     }
   } catch (error) {
     alert('ログインできませんでした。')
