@@ -5,18 +5,18 @@
 
 -- 権限テーブル INSERT --
 INSERT INTO Users (
-    full_name, user_name, email, password, salt
+    urlIcon, full_name, user_name, email, password, salt
 ) VALUES
-('かんりしゃさん', 'admin_san', 'admin@example.com', 'd3a8ed876ec9c01c6073e5670532b008eb876db669f3741d4c6a26303a7f2c83', '1'),
-('たろう', 'taro_yamada', 'taro@example.com', '731d65e0ba8796608b36bc3d317338eb645e2b3dd37f12acb30cf65a0455db33', '2'),
-('さくらんぼ🍒', 'cherry_bomb', 'sakurambo@example.com', 'f8192bb671d95229d9bac5a5cba1d2541935d489bac766ce8e429b57784eb694', '3'),
-('タケシ🪨', 'takeshi_rock', 'takeshi@example.com', '59aaff349d9085bfdfff6e501664e0da6e56aa8884876bf723c90de67287c454', '4'),
-('ゆかり', 'yukari_purple', 'yukari@example.com', 'db9809c98353a819911a56ed811d57b6977a87448d11666477ffbc408c7d7b02', '5'),
-('まこ', 'mako_hello', 'mako@example.com', 'b234a74ac4fdeb6777ff530573dc4c11fe8ace4ba253c42957a00bdd69ccef10', '6'),
-('しんのすけ', 'shin_chan', 'shinnosuke@example.com', '7027f7b81a9443d29c909f59ccb7476bbeadcb1b2c5968342b90840599d5486c', '7'),
-('あゆみ', 'ayumi_walk', 'ayumi@example.com', '88560bc7b2444795bbe9a5e022020db8a1c997f74e704e35fa6ae4ce4af3f937', '8'),
-('ひろと', 'hiroto_sky', 'hiroto@example.com', '0bcfaa27d0461a0088a640df4559fbeb9ba52e4311c4e548a84fa1bfc7c7c430', '9'),
-('さくら🌸', 'sakura_blossom', 'sakura@example.com', 'ffc900f669443f5d8cbd8165a1dfc49a53830f806cab28f775cd22a09eda7853', '10');
+('default_icon.png', 'かんりしゃさん', 'admin_san', 'admin@example.com', 'd3a8ed876ec9c01c6073e5670532b008eb876db669f3741d4c6a26303a7f2c83', '1'),
+('default_icon.png', 'たろう', 'taro_yamada', 'taro@example.com', '731d65e0ba8796608b36bc3d317338eb645e2b3dd37f12acb30cf65a0455db33', '2'),
+('default_icon.png', 'さくらんぼ🍒', 'cherry_bomb', 'sakurambo@example.com', 'f8192bb671d95229d9bac5a5cba1d2541935d489bac766ce8e429b57784eb694', '3'),
+('default_icon.png', 'タケシ🪨', 'takeshi_rock', 'takeshi@example.com', '59aaff349d9085bfdfff6e501664e0da6e56aa8884876bf723c90de67287c454', '4'),
+('default_icon.png', 'ゆかり', 'yukari_purple', 'yukari@example.com', 'db9809c98353a819911a56ed811d57b6977a87448d11666477ffbc408c7d7b02', '5'),
+('default_icon.png', 'まこ', 'mako_hello', 'mako@example.com', 'b234a74ac4fdeb6777ff530573dc4c11fe8ace4ba253c42957a00bdd69ccef10', '6'),
+('default_icon.png', 'しんのすけ', 'shin_chan', 'shinnosuke@example.com', '7027f7b81a9443d29c909f59ccb7476bbeadcb1b2c5968342b90840599d5486c', '7'),
+('default_icon.png', 'あゆみ', 'ayumi_walk', 'ayumi@example.com', '88560bc7b2444795bbe9a5e022020db8a1c997f74e704e35fa6ae4ce4af3f937', '8'),
+('default_icon.png', 'ひろと', 'hiroto_sky', 'hiroto@example.com', '0bcfaa27d0461a0088a640df4559fbeb9ba52e4311c4e548a84fa1bfc7c7c430', '9'),
+('default_icon.png', 'さくら🌸', 'sakura_blossom', 'sakura@example.com', 'ffc900f669443f5d8cbd8165a1dfc49a53830f806cab28f775cd22a09eda7853', '10');
 
  -- フォローテーブル INSERT --
  -- たろう (ID: 2) → 全員をフォロー
