@@ -15,11 +15,17 @@ const router = createRouter({
       name: 'MyProfile',
       component: () => import('../views/MyProfileView.vue')
     },
-    // {
-    //   path: '/UserProfile',
-    //   name: 'UserProfile',
-    //   component: () => import('../views/UserProfileView.vue')
-    // },
+    {
+      path: '/ProfileEdit',
+      name: 'ProfileEdit',
+      component: () => import('../views/ProfileEdit.vue')
+    },
+    {
+      path: '/UserProfile',
+      name: 'UserProfile',
+      component: () => import('../views/UserProfileView.vue')
+    },
+
 
 
     {
