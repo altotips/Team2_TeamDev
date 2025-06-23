@@ -33,6 +33,7 @@ export const usePostStore = defineStore(
     async function fetchFollowersPosts(id) {
       try {
         const res = await axios.get('/posts/users/' + id + 'follow')
+        const res = await axios.get('/posts/users/' + id + 'follow')
         // console.log('ret : ' + res)
         // console.log('ret : ' + res.data.length)
         if (followersPosts.value.length != res.data.length) {
@@ -96,19 +97,13 @@ export const usePostStore = defineStore(
 
     // 投稿する
     async function post(id, postData) {
-      // 未完成
       try {
         if (!id) {
           return
         }
-        const formData = ref(null)
-        formData.value = new FormData()
-        formData.append('image', postData.image)
-        formData.append('content', postData.content)
-        const res = await axios.post(`/posts/${id}`, formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
+        const res = await axios.post(`/posts/${id}`, {
+          image: postData.image,
+          content: postData.content,
         })
       } catch (err) {
         console.error('ユーザーの投稿に失敗:', err)
