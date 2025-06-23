@@ -86,7 +86,9 @@ public class PostsController {
 //		content : String
 //	}
 	@PostMapping("/{id}")
-	public Posts post(@PathVariable Long id, @RequestParam("image") MultipartFile photo, @RequestParam("content") String content) throws IOException {
+	public Posts post(@PathVariable Long id,
+			@RequestParam("image") MultipartFile photo,
+			@RequestParam("content") String content) throws IOException {
 
 		// オブジェクトのテストが必要
 		// 

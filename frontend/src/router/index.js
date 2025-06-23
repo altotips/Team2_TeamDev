@@ -4,7 +4,6 @@ import { createRouter, createWebHistory } from 'vue-router'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    
     {
       path: '/',
       name: 'login',
@@ -25,27 +24,19 @@ const router = createRouter({
       path: '/register',
       name: 'register',
       component: () => import('../views/RegisterView.vue'),
-meta: { hideHeaderFooter: true }
-    },
-
-    {
-      path: '/myProfile',
-      name: 'myProfile',
-         component: () => import('../views/2View.vue')
-      // component: () => import('../views/myProfile.vue'),
+      meta: { hideHeaderFooter: true }
     },
     {
       path: '/TimeLine',
       name: 'TimeLine',
-         component: () => import('../views/TimeLine.vue')
+      component: () => import('../views/TimeLine.vue')
       // component: () => import('../views/myProfile.vue'),
     },
-{
+    {
       path: '/followlist',
       name: 'followlist',
       component: () => import('../views/FollowListView.vue'),
     },
-
   ],
 })
 
