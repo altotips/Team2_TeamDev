@@ -16,7 +16,8 @@ export const useUserStore = defineStore(
     const userName = ref(null) // ユーザ名
     const email = ref(null) // メールアドレス
     const selfIntroduction = ref(null) // 自己紹介文
-    const follows = ref(null) //フォローユーザ一覧
+    const follows = ref(null) // フォローユーザ一覧
+    const authId = ref(null) // 管理権限
 
     // ログイン処理
     async function login(userData) {
@@ -24,10 +25,11 @@ export const useUserStore = defineStore(
         //   console.log('ログイン')
         //   console.log('ユーザ名かユーザID : ' + userData.userNameOrId)
         //   console.log('パスワード : ' + userData.password)
+        console.log(userData)
 
         // データベースでログイン判定処理
         const res = await axios.post('users/login', userData)
-        //   console.log('res: ' + res.data)
+        // console.log('res: ' + res.data)
         if (!res.data) {
           // showToastMessage('ログインに失敗しました')
           // throw new Error('ログイン失敗')
@@ -40,9 +42,9 @@ export const useUserStore = defineStore(
         userName.value = res.data.userName
         email.value = res.data.email
         selfIntroduction.value = res.data.selfIntroduction
-        
-        res = await axios.get('users/'+id.value+'/follow')
-        follows.value = res.data.follows
+
+        // res = await axios.get('users/'+id.value+'/follow')
+        // follows.value = res.data.follows
 
         //   console.log('id : ' + id.value)
         //   console.log('userName : ' + userName.value)
