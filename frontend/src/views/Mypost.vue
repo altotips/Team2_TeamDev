@@ -18,10 +18,10 @@
         try {
             await postStore.post({
                 image: selectedFile.value,
-                description: description.value
+                content: description.value
             })
             // alert('投稿完了！タイムラインに移動します✨')
-            router.push('/TimeLine') // ← 遷移したいルートに書き換えてOK！
+            router.push('/TimeLine') 
         } catch (error) {
             alert('投稿に失敗しました😢')
             console.error(error)
