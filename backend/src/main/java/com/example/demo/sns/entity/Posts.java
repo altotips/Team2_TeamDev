@@ -41,7 +41,7 @@ public class Posts {
 	@NotNull
 	private String urlPhoto;
 
-	@Column(columnDefinition = "VERCHAR DEFAULT ''")
+	@Column(columnDefinition = "VARCHAR DEFAULT ''")
 	private String content = "";
 
 	@Column(columnDefinition = "LONG DEFAULT 0")
