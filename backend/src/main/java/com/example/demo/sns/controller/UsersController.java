@@ -9,8 +9,12 @@ import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -51,13 +55,20 @@ public class UsersController {
 	@GetMapping("/{id}")
 	public Users getOne(@PathVariable Long id) {
 		Users user = usersrepository.findById(id).orElse(null);
-		if (user == null || user.getDelFlag() == false) {
+		if (user == null || user.getDelFlag() == true) {
 			return null;
 		}
 		System.out.println(user);
 		return user;
 	}
-
+	
+	// 全ユーザの情報を取得
+	@GetMapping("/{id}/follow")
+	public List<Follows> getAll(@PathVariable Long id) {
+		List<Follows> follows = followsrepository.findByToUserId(id);
+		return follows;
+	}	
+	
 	// ユーザ新規登録
 	@PostMapping("/register")
 	public Users register(@RequestBody Users user) {
@@ -102,36 +113,66 @@ public class UsersController {
 	}
 
 	// フォロー
-	@PutMapping("/{id}/follow/{follow_id}")
-	public Users follow(@PathVariable Long id, @PathVariable Long followId) {
-		Users followee = usersrepository.findById(id).orElse(null);
-		Users follower = usersrepository.findById(followId).orElse(null);
-		Follows follow = new Follows();
-		follow.setFolloweeUser(followee);
-		follow.setFollowerUser(follower);
-		followsrepository.save(follow);
+	@PutMapping("/{id}/follow/{to_id}")
+	public ResponseEntity<?> follow(@PathVariable Long id, @PathVariable("to_id") Long toId) {
 
-		return follower;
+	    // 自分自身のフォローは禁止
+	    if (id.equals(toId)) {
+	        return ResponseEntity.badRequest().body("自分自身はフォローできません");
+	    }
+
+	    // ユーザー存在チェック
+	    Optional<Users> fromUserOpt = usersrepository.findById(id);
+	    Optional<Users> toUserOpt = usersrepository.findById(toId);
+
+	    if (fromUserOpt.isEmpty() || toUserOpt.isEmpty()) {
+	        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("ユーザーが見つかりません");
+	    }
+
+	    Users fromUser = fromUserOpt.get();
+	    Users toUser = toUserOpt.get();
+
+	    // すでにフォロー済みか確認
+	    Optional<Follows> existingFollow = followsrepository.findByFromUserIdAndToUserId(id, toId);
+	    if (existingFollow.isPresent()) {
+	        return ResponseEntity.status(HttpStatus.CONFLICT).body("すでにフォローしています");
+	    }
+
+	    // フォローを作成して保存
+	    Follows newFollow = new Follows();
+	    newFollow.setFromUser(fromUser);
+	    newFollow.setToUser(toUser);
+	    followsrepository.save(newFollow);
+	    System.out.println("フォローしました");
+
+	    return ResponseEntity.ok(toUser);
 	}
 
+	
 	// フォロー解除
-	@DeleteMapping("/{id}/unfollow/{follow_id}")
-	public Users unfollow(@PathVariable Long id, @PathVariable Long followId) {
-		Follows response = followsrepository.findById(id).orElse(null); //List
-		if (response.getFollowerUser().getId() == followId) {
-			followsrepository.delete(response);
-			System.out.println("delete sccess");
-		} else {
-			System.out.println("delete failed");
-			return null;
-		}
-		return response.getFollowerUser();
-	}
+	@DeleteMapping("/{fromId}/unfollow/{toId}")
+    public ResponseEntity<String> unfollow(
+            @PathVariable Long fromId,
+            @PathVariable Long toId) {
+
+        Optional<Follows> follow = followsrepository.findByFromUserIdAndToUserId(fromId, toId);
+
+        if (follow.isPresent()) {
+            followsrepository.delete(follow.get());
+            return ResponseEntity.ok("フォローを解除しました");
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("指定されたフォロー関係が見つかりません");
+        }
+    }
 
 	// プロフィール変更
 	@PatchMapping("/{id}/edit")
-	public Users edit(@PathVariable Long id, @RequestParam String fullName, @RequestParam String userName,
-			@RequestParam String Introduction, @RequestParam("image") MultipartFile icon) throws IOException {
+	public Users edit(
+			@PathVariable Long id, @RequestParam String fullName, @RequestParam String userName,
+			@RequestParam String Introduction
+			, @RequestParam("image") MultipartFile icon
+			) throws IOException {
 
 		// ファイルの保存
 		String uploadDir = "./uploads/";
