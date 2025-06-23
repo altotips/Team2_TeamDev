@@ -29,7 +29,7 @@
         <button @click="toggleComment(post.id)" class="icon-button">💬 コメント</button>
       </div>
       <!-- コンテント表示 -->
-      <p class="post-content">{{ post.content }}</p>
+      <p class="post-content">{{ post.content }}</p> 
 
       <!-- コメント欄 -->
       <div v-if="showComment[post.id]" class="comment-section">
