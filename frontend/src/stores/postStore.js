@@ -96,13 +96,11 @@ export const usePostStore = defineStore(
 
     // 投稿する
     async function post(id, postData) {
-      // 未完成
       try {
         if (!id) {
           return
         }
-        const formData = ref(null)
-        formData.value = new FormData()
+        const formData = new FormData()
         formData.append('image', postData.image)
         formData.append('content', postData.content)
         const res = await axios.post(`/posts/${id}`, formData, {
