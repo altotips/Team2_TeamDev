@@ -20,9 +20,9 @@
   </div>
 </template>
 
-<!-- <script setup>
+<script setup>
 import { ref } from 'vue'
-import{useUserStore} from '@/store'
+import{useUserStore} from '../stores/userStore'
 import{useRouter} from 'vue-router'
 
 const fullNameOrEmail = ref('')
@@ -42,7 +42,7 @@ const handleLogin = async () => {
     alert('ログインできませんでした。')
   }
 }
-</script> -->
+</script>
 
 <style scoped>
 

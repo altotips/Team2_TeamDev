@@ -198,6 +198,10 @@ const submitComment = (postId) => {
 .comment-form button {
   padding: 4px 10px;
 }
+
+.timeline{
+padding-bottom: 60px; 
+}
 </style>
 
 
