@@ -1,20 +1,16 @@
 <template>
   <div class="timeline">
     <div v-for="post in posts" :key="post.id" class="post-card">
-      <!-- ユーザー情報 -->
       <div class="post-header">
-        <img class="user-icon" :src="post.user.urlIcon" alt="User Icon" />
-        <router-link :to="{ name: 'UserProfile', params: { userName: post.user.userName } }"
-  class="user-name"
->
-{{ post.user.userName }}
-</router-link>
+        <img class="user-icon" :src="post.user.urlIcon || '/images/default_profile_icon.png'" alt="User Icon" />
+        
+        <router-link :to="{ name: 'UserProfile', params: { userId: post.user.id } }" class="user-name">
+          {{ post.user.userName }}
+        </router-link>
       </div>
 
-      <!-- 投稿画像 -->
-      <img class="post-image" :src="post.urlPhoto" alt="投稿画像" />
+      <img class="post-image" :src="post.urlPhoto || '/images/default_post_image.png'" alt="投稿画像" />
 
-      <!-- アクション -->
       <div class="post-actions">
         <button @click="toggleLike(post)" class="icon-button">
           <span :style="{ color: post.liked ? 'red' : '#aaa' }">
@@ -26,10 +22,8 @@
         </button>
       </div>
 
-      <!-- 投稿テキスト -->
       <p class="post-content">{{ post.content }}</p>
 
-      <!-- コメント欄 -->
       <div v-if="showComment[post.id]" class="comment-section">
         <div v-for="comment in post.comments" :key="comment.id" class="comment">
           <strong>{{ comment.user.userName }}:</strong> {{ comment.content }}
@@ -39,6 +33,15 @@
           <button type="submit">送信</button>
         </form>
       </div>
+    </div>
+    <div v-if="postStore.isLoading" class="loading-message">
+      読み込み中...
+    </div>
+    <div v-else-if="postStore.error" class="error-message">
+      エラーが発生しました: {{ postStore.error.message }}
+    </div>
+    <div v-else-if="posts.length === 0 && !postStore.isLoading" class="no-posts-message">
+      まだ投稿がありません。
     </div>
   </div>
 </template>
@@ -52,8 +55,8 @@ import { useUserStore } from '@/stores/userStore'
 const postStore = usePostStore()
 const userStore = useUserStore()
 
-// 投稿リストは followersPosts（フォロー中）か allPosts に差し替え
-const posts = computed(() => postStore.allPosts) // or postStore.followersPosts
+// 投稿リストは allPosts を使用。必要であれば postStore.followersPosts に差し替え可能
+const posts = computed(() => postStore.allPosts)
 
 const showComment = reactive({})
 const newComments = reactive({})
@@ -65,11 +68,22 @@ onMounted(async () => {
 
 // いいね処理（API呼び出し付き）
 const toggleLike = async (post) => {
-  post.liked = !post.liked
-  if (post.liked) {
-    await postStore.addGood(post.id)
-  } else {
-    await postStore.subGood(post.id)
+  if (!userStore.id) {
+    alert('ログインしていません。いいねできません。');
+    return;
+  }
+  
+  post.liked = !post.liked // UIを先に更新
+  try {
+    if (post.liked) {
+      await postStore.addGood(post.id)
+    } else {
+      await postStore.subGood(post.id)
+    }
+  } catch (error) {
+    console.error("いいね処理中にエラー:", error);
+    alert("いいね処理中にエラーが発生しました。");
+    post.liked = !post.liked; // エラー時はUIを元に戻す
   }
 }
 
@@ -80,16 +94,27 @@ const toggleComment = (postId) => {
 
 // コメント送信
 const submitComment = async (postId) => {
-  console.log('✅ submitComment 呼ばれました: ', postId)
+  if (!userStore.id) {
+    alert('ログインしていません。コメントできません。');
+    return;
+  }
 
   const text = (newComments[postId] || '').trim()
   if (!text) return alert('コメントを入力してください')
-  await postStore.addComment(postId, {
-    user: await userStore.getUser(userStore.id),
-    content: text,
-  })
-  newComments[postId] = ''
-  await postStore.fetchAllPosts()
+  
+  try {
+    await postStore.addComment(postId, {
+      user: await userStore.getUser(userStore.id), // コメント送信時もgetUserを使用
+      content: text,
+    }); 
+
+    newComments[postId] = '' // コメントフォームクリア
+    alert('コメントを送信しました！');
+    await postStore.fetchAllPosts(); // コメント送信後、最新のコメントリストを反映するために再フェッチ
+  } catch (error) {
+    console.error("コメント送信中にエラー:", error);
+    alert("コメント送信中にエラーが発生しました。");
+  }
 }
 </script>
 
