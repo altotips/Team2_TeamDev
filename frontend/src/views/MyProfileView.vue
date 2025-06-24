@@ -111,6 +111,7 @@ onMounted(
     console.log(postStore.myPosts)
     userPosts.value = postStore.myPosts
     postsCount.value = postStore.myPosts.length
+    followingCount.value = userStore.follows.length
   }
 )
 </script>
