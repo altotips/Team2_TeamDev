@@ -12,61 +12,45 @@
     const previewFile = ref(null)
     const description = ref('')
 
-//inputで選んだ画像ファイルを取得
-function onFileChange(event) {
-  selectedFile.value = event.target.files[0]
-  previewFile.value = URL.createObjectURL(selectedFile.value)
-}
-
-const submitForm = async () => {
-  try {
-    if(!selectedFile.value){
-        alert('写真を選択してね！')
-      return
-    }
-
-    const res = await postStore.post({
-      image: selectedFile.value,
-      content: description.value,
-    })
-    if (res) {
-      alert('投稿完了！タイムラインに移動します✨')
-      router.push('/TimeLine')
-    } else {
-      alert('投稿失敗！😢')
+    //inputで選んだ画像ファイルを取得
+    function onFileChange(event) {
+        selectedFile.value = event.target.files[0]
+        previewFile.value = URL.createObjectURL(selectedFile.value)
     }
 
 
-    //画像とキャプションのデータを投稿
+
+    画像とキャプションのデータを投稿
     const submitForm = async () => {
 
         //写真が選択されていないときにアラートを出す
-        if (!selectedFile.value){
+        if (!selectedFile.value) {
             alert('画像を選択してください!📸')
             return
         }
 
-            try {
-                const res = await postStore.post({
-                    image: selectedFile.value,
-                    content: description.value,
-                })
-                console.log('レスポンス:', res)
-                if (res) {
-                    alert('投稿完了！タイムラインに移動します🌟')
-                    router.push('/TimeLine')
-                } else {
-                    alert('投稿失敗！😢')
-                }
-            } catch (error) {
-                alert('投稿に失敗しました😢')
-                console.error(error)
+        try {
+            const res = await postStore.post({
+                image: selectedFile.value,
+                content: description.value,
+            })
+            console.log('レスポンス:', res)
+            if (res) {
+                alert('投稿完了！タイムラインに移動します🌟')
+                router.push('/TimeLine')
+            } else {
+                alert('投稿失敗！😢')
             }
+        } catch (error) {
+            alert('投稿に失敗しました😢')
+            console.error(error)
+        }
     }
 
     const cancel = () => {
         router.push('/TimeLine')
     }
+
 </script>
 
 <template>
@@ -92,7 +76,7 @@ const submitForm = async () => {
             <button type="button" @click="cancel" class="cancel-button">キャンセル</button>
             <button type="submit" class="submit-button">投稿する</button>
         </div>
-        
+
     </form>
 </template>
 
