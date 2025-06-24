@@ -65,7 +65,7 @@ public class UsersController {
 	// 全ユーザの情報を取得
 	@GetMapping("/{id}/follow")
 	public List<Follows> getAll(@PathVariable Long id) {
-		List<Follows> follows = followsrepository.findByToUserId(id);
+		List<Follows> follows = followsrepository.findByFromUserId(id);
 		return follows;
 	}	
 	
