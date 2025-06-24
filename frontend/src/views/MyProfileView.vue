@@ -55,7 +55,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed , onMounted} from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/userStore';
 import { usePostStore } from '@/stores/postStore';
@@ -65,6 +65,12 @@ const router = useRouter();
 const userStore = useUserStore();
 const postStore = usePostStore();
 
+const displayIconUrl = computed(() => {
+  if (userStore.urlIcon) {
+    return `http://localhost:8080/uploads/${userStore.urlIcon}?t=${Date.now()}`;
+  }
+  return defaultIcon;
+});
 const userIconUrl = ref(userStore.userIconUrl || null); // ユーザーがアップロードしていない場合 null
 const fullName = ref(userStore.fullName || '自分のユーザー名');
 const userName = ref(userStore.userName || 'my_username');
@@ -83,22 +89,20 @@ const userPosts = ref([
 
 const isLoading = ref(false);
 
-const displayIconUrl = ref(userIconUrl.value || defaultIcon);
-
 const editProfile = () => {
-  router.push('/ProfileEdit') // プロフィール編集画面へ遷移
-}
+  router.push('/ProfileEdit'); // プロフィール編集画面へ遷移
+};
 
 const logout = async () => {
   console.log('ログアウト処理を実行します');
 
-  const success = await userStore.logout()
+  const success = await userStore.logout();
   if (success) {
-    router.push('/') // ログイン画面に遷移
+    router.push('/'); // ログイン画面に遷移
   } else {
-    alert('ログアウトに失敗しました')
+    alert('ログアウトに失敗しました');
   }
-}
+};
 
 onMounted(
   async ()=>{

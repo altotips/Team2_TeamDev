@@ -76,39 +76,39 @@ INSERT INTO posts (
     users_id, url_photo, content, good
 ) VALUES
 -- taro_yamada (id=2) の投稿
-(2, 'inu.png', '今日のランチは美味しかった！', 13),
-(2, 'inu.png', '新しいプロジェクトが始まったよ。がんばるぞ！', 2),
+(2, 'http://localhost:8080/uploads/inu1.jpg', '今日のランチは美味しかった！', 13),
+(2, 'http://localhost:8080/uploads/inu2.jpg', '新しいプロジェクトが始まったよ。がんばるぞ！', 2),
 
 -- cherry_bomb (id=3) の投稿
-(3,'inu.png', '🌸桜が満開です！', 34),
-(3, 'inu.png', 'お気に入りのカフェで一息😊', 26),
+(3,'http://localhost:8080/uploads/inu3.jpg', '🌸桜が満開です！', 34),
+(3, 'http://localhost:8080/uploads/inu4.jpg', 'お気に入りのカフェで一息😊', 26),
 
 -- takeshi_rock (id=4) の投稿
-(4,'inu.png', '筋トレ終了！💪',45),
-(4, 'inu.png', 'ロックミュージック最高！', 52),
+(4,'http://localhost:8080/uploads/inu5.jpg', '筋トレ終了！💪',45),
+(4, 'http://localhost:8080/uploads/inu6.jpg', 'ロックミュージック最高！', 52),
 
 -- yukari_purple (id=5) の投稿
-(5, 'inu.png', 'プログラミング楽しいな！', 3),
-(5, 'inu.png', '猫の動画を共有します🐱', 5),
+(5, 'http://localhost:8080/uploads/inu7.jpg', 'プログラミング楽しいな！', 3),
+(5, 'http://localhost:8080/uploads/inu8.jpg', '猫の動画を共有します🐱', 5),
 
 -- mako_hello (id=6) の投稿
-(6, 'inu.png', 'こんにちは世界！',34),
-(6, 'inu.png', '最近読んだ本が面白かった。', 42),
+(6, 'http://localhost:8080/uploads/inu9.jpg', 'こんにちは世界！',34),
+(6, 'http://localhost:8080/uploads/inu10.jpg', '最近読んだ本が面白かった。', 42),
 
 -- shin_chan (id=7) の投稿
-(7, 'inu.png', 'お昼寝最高～', 23),
-(7, 'inu.png', 'アニメ見てるなう！', 11),
+(7, 'http://localhost:8080/uploads/inu11.jpg', 'お昼寝最高～', 23),
+(7, 'http://localhost:8080/uploads/inu12.jpg', 'アニメ見てるなう！', 11),
 
 -- ayumi_walk (id=8) の投稿
-(8, 'inu.png', '散歩日和です👟', 23),
-(8, 'inu.png', '新しいスニーカー買ったよ！', 12),
+(8, 'http://localhost:8080/uploads/inu13.jpg', '散歩日和です👟', 23),
+(8, 'http://localhost:8080/uploads/inu14.jpg', '新しいスニーカー買ったよ！', 12),
 
 -- hiroto_sky (id=9) の投稿
-(9, 'inu.png', '空がきれいだね。', 23),
-(9, 'inu.png', 'ドライブに行きたいな。',66),
+(9, 'http://localhost:8080/uploads/inu15.jpg', '空がきれいだね。', 23),
+(9, 'http://localhost:8080/uploads/inu16.jpg', 'ドライブに行きたいな。',66),
 
 -- sakura_blossom (id=10) の投稿
-(10, 'inu.png', '🌸春が来た！', 34),
-(10, 'inu.png', '手作りクッキー焼きました🍪', 23);
+(10, 'http://localhost:8080/uploads/inu17.jpg', '🌸春が来た！', 34),
+(10, 'http://localhost:8080/uploads/inu18.jpg', '手作りクッキー焼きました🍪', 23);
 
 -- 中間テーブル INSERT --
