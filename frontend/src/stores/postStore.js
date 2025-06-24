@@ -34,6 +34,11 @@ export const usePostStore = defineStore(
     // 1ユーザのフォローしているすべてのユーザの投稿をすべて取得し、followersPostsに保存
     async function fetchFollowersPosts(id) {
       try {
+        if (!id) {
+          console.log('idがない')
+          return
+        }
+
         const res = await axios.get('/posts/users/' + id + 'follow')
         // console.log('ret : ' + res)
         // console.log('ret : ' + res.data.length)
@@ -78,8 +83,10 @@ export const usePostStore = defineStore(
           if (userPosts.value.length > 0) {
             userPosts.value = []
           }
+          console.log('idがない')
           return
         }
+
         const res = await axios.get(`/posts/users/${id}`)
         // console.log(res.data.reverse())
         // console.log(1)
