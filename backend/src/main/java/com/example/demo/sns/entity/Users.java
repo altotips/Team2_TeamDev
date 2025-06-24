@@ -44,10 +44,9 @@ public class Users {
 	private String salt;
 
 	@Column(columnDefinition = "VARCHAR DEFAULT ''")
-	private String selfIntroduction = "";
-
-	@Column(columnDefinition = "LONG DEFAULT 0")
-	private Long authId = 0l;
+	private String selfIntroduction;
+	
+	private Long authId;
 
 	@Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
 	private Boolean delFlag = false;
