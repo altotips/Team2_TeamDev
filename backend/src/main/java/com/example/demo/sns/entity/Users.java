@@ -41,7 +41,7 @@ public class Users {
 	@NotBlank
 	private String salt;
 
-	@Column(columnDefinition = "STRING DEFAULT ''")
+	@Column(columnDefinition = "VARCHAR DEFAULT ''")
 	private String selfIntroduction;
 	
 	private Long authId;
