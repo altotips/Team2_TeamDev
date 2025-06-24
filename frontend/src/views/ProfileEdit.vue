@@ -51,7 +51,7 @@ const form = reactive({
 })
 
 // プレビュー用アイコン設定
-const previewIcon = ref(userStore.urlIcon ? `http://localhost:8080/${userStore.urlIcon}` : null)
+const previewIcon = ref(userStore.urlIcon ? `http://localhost:8080/uploads/${userStore.urlIcon}` : null)
 
 // ファイル選択時にフォームに保持し、プレビューを更新
 function onFileChange(e) {
@@ -69,7 +69,12 @@ async function handleSubmit() {
   payload.append('userName', form.userName)
   payload.append('email', form.email)
   payload.append('selfIntroduction', form.selfIntroduction)
-  if (form.file) payload.append('icon', form.file)
+  payload.append('image', form.file)
+
+  // 👇 追加：FormDataの内容を確認
+  for (let [key, value] of payload.entries()) {
+    console.log(`${key}:`, value)
+  }
 
   const success = await userStore.changeProfile(payload)
   if (success) {

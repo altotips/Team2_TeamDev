@@ -52,5 +52,5 @@ public class Posts {
 //	private Comments comments;
 
 	@Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
-	private Boolean delFlag;
+	private Boolean delFlag = false;
 }
