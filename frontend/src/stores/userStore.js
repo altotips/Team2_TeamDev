@@ -92,7 +92,7 @@ export const useUserStore = defineStore(
       try {
         // showToastMessage('登録処理')
         // console.log('登録')
-        // console.log('ユーザ名 : ' + userData.userName)
+        console.log('ユーザ名 : ' + userData.userName)
         // console.log('ユーザID : ' + userData.userId)
         // console.log('パスワード : ' + userData.password)
 
