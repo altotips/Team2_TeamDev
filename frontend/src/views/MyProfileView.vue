@@ -55,13 +55,22 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/userStore';
 import defaultIcon from '@/images/default_icon.png';
 
+const router = useRouter();
+const userStore = useUserStore();
+
+const displayIconUrl = computed(() => {
+  if (userStore.urlIcon) {
+    return `http://localhost:8080/uploads/${userStore.urlIcon}?t=${Date.now()}`;
+  }
+  return defaultIcon;
+});
+
 const userName = ref('my_username');
-const userIconUrl = ref(null); // ユーザーがアップロードしていない場合 null
 const fullName = ref('自分のユーザー名');
 const selfIntroduction = ref('これは自分のプロフィールの自己紹介文です。');
 const postsCount = ref(123);
@@ -78,26 +87,22 @@ const userPosts = ref([
 
 const isLoading = ref(false);
 
-const displayIconUrl = ref(userIconUrl.value || defaultIcon);
-
 const editProfile = () => {
-  router.push('/ProfileEdit') // プロフィール編集画面へ遷移
-}
-
-const router = useRouter();
-const userStore = useUserStore();
+  router.push('/ProfileEdit'); // プロフィール編集画面へ遷移
+};
 
 const logout = async () => {
   console.log('ログアウト処理を実行します');
 
-  const success = await userStore.logout()
+  const success = await userStore.logout();
   if (success) {
-    router.push('/') // ログイン画面に遷移
+    router.push('/'); // ログイン画面に遷移
   } else {
-    alert('ログアウトに失敗しました')
+    alert('ログアウトに失敗しました');
   }
-}
+};
 </script>
+
 
 <style scoped>
 /* スタイルは以前の提案と同じで変更なし */

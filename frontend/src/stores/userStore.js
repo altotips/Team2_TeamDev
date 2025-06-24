@@ -254,17 +254,14 @@ export const useUserStore = defineStore(
           },
         })
         //   console.log('res: ' + res.data)
-        if (!res.data) {
-          // showToastMessage('ログインに失敗しました')
-          // throw new Error('ログイン失敗')
-          return false
-        }
+        if (res.status !== 200 && res.status !== 204) return false
+
 
         // id.value = res.data.id
         urlIcon.value = res.data.urlIcon
         fullName.value = res.data.fullName
         userName.value = res.data.userName
-        // email.value = res.data.email
+        email.value = res.data.email
         selfIntroduction.value = res.data.selfIntroduction
 
         // res = await axios.get('users/'+id.value+'/follow')
