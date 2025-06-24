@@ -54,10 +54,12 @@ export const usePostStore = defineStore(
           if (myPosts.value.length > 0) {
             myPosts.value = []
           }
+          console.log('idがない')
           return
         }
-        const res = await axios.get('/posts/users/' + id)
-        // console.log('ret : ' + res)
+
+        const res = await axios.get(`/posts/users/${id}`)
+        console.log('res : ' + res.data)
         // console.log('ret : ' + res.data.length)
         if (myPosts.value.length != res.data.length) {
           // 最新の投稿を上に表示するため、逆順にする
@@ -101,6 +103,11 @@ export const usePostStore = defineStore(
       try {
         // console.log(id)
         if (!userStore.id) {
+          alert('ログインしてね。')
+          return false
+        }
+        if (!postData.image) {
+          alert('写真を選択してね。')
           return false
         }
         // console.log(postData.content)
