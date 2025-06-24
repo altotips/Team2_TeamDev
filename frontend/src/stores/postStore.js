@@ -64,7 +64,7 @@ export const usePostStore = defineStore(
         }
 
         const res = await axios.get(`/posts/users/${id}`)
-        console.log('res : ' + res.data)
+        console.log('my posts res : ' + res.data)
         // console.log('ret : ' + res.data.length)
         if (myPosts.value.length != res.data.length) {
           // 最新の投稿を上に表示するため、逆順にする
