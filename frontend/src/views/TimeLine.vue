@@ -128,6 +128,8 @@ const submitComment = async (postId) => {
   padding: 12px;
 }
 
+
+
 .post-header {
   display: flex;
   align-items: center;
