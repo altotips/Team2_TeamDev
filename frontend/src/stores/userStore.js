@@ -25,7 +25,7 @@ export const useUserStore = defineStore(
         //   console.log('ログイン')
         //   console.log('ユーザ名かユーザID : ' + userData.userNameOrId)
         //   console.log('パスワード : ' + userData.password)
-        console.log(userData)
+        // console.log(userData)
 
         // データベースでログイン判定処理
         const res = await axios.post('users/login', userData)
@@ -43,12 +43,17 @@ export const useUserStore = defineStore(
         email.value = res.data.email
         selfIntroduction.value = res.data.selfIntroduction
 
-        // res = await axios.get('users/'+id.value+'/follow')
-        // follows.value = res.data.follows
+        followers()
+        // res = await axios.get(`users/${id.value}/follow`)
+        // follows.value = res.data
 
-        //   console.log('id : ' + id.value)
-        //   console.log('userName : ' + userName.value)
-        //   console.log('userId : ' + userId.value)
+        // console.log('id : ' + id.value)
+        // console.log('urlIcon : ' + urlIcon.value)
+        // console.log('fullName : ' + fullName.value)
+        // console.log('userName : ' + userName.value)
+        // console.log('email : ' + email.value)
+        // console.log('selfIntroduction : ' + selfIntroduction.value)
+        // console.log('follows : ' + follows.value)
 
         // showToastMessage('ログインしました')
         // alert('ログインしました')
@@ -139,8 +144,9 @@ export const useUserStore = defineStore(
         // email.value = res.data.email
         // selfIntroduction.value = res.data.selfIntroduction
 
-        res = await axios.get('users/' + id.value + '/follow')
-        follows.value = res.data.follows
+        followers()
+        // res = await axios.get('users/' + id.value + '/follow')
+        // follows.value = res.data
 
         //   console.log('id : ' + id.value)
         //   console.log('userName : ' + userName.value)
@@ -180,8 +186,9 @@ export const useUserStore = defineStore(
         // email.value = res.data.email
         // selfIntroduction.value = res.data.selfIntroduction
 
-        res = await axios.get('users/' + id.value + '/follow')
-        follows.value = res.data.follows
+        followers()
+        // res = await axios.get('users/' + id.value + '/follow')
+        // follows.value = res.data.follows
 
         //   console.log('id : ' + id.value)
         //   console.log('userName : ' + userName.value)
@@ -207,8 +214,9 @@ export const useUserStore = defineStore(
 
         // データベースでログイン判定処理
         const res = await axios.get(`users/${id.value}/follow`)
-        follows.value = res.data.follows
-        //   console.log('res: ' + res.data)
+        follows.value = res.data
+        // console.log('follows res.data : ' + res)
+        // console.log('follows res.data : ' + res.data)
         if (!res.data) {
           // showToastMessage('ログインに失敗しました')
           // throw new Error('ログイン失敗')
@@ -264,7 +272,7 @@ export const useUserStore = defineStore(
         urlIcon.value = res.data.urlIcon
         fullName.value = res.data.fullName
         userName.value = res.data.userName
-        // email.value = res.data.email
+        email.value = res.data.email
         selfIntroduction.value = res.data.selfIntroduction
 
         // res = await axios.get('users/'+id.value+'/follow')
@@ -278,7 +286,7 @@ export const useUserStore = defineStore(
         // alert('ログインしました')
         return true
       } catch (error) {
-        console.error('ログイン失敗', error)
+        console.error('プロフィール変更失敗', error)
         // showToastMessage('ログインに失敗しました')
         // alert('ログインに失敗しました')
         return false

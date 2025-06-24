@@ -55,15 +55,20 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/userStore';
+import { usePostStore } from '@/stores/postStore';
 import defaultIcon from '@/images/default_icon.png';
 
-const userName = ref('my_username');
-const userIconUrl = ref(null); // ユーザーがアップロードしていない場合 null
-const fullName = ref('自分のユーザー名');
-const selfIntroduction = ref('これは自分のプロフィールの自己紹介文です。');
+const router = useRouter();
+const userStore = useUserStore();
+const postStore = usePostStore();
+
+const userIconUrl = ref(userStore.userIconUrl || null); // ユーザーがアップロードしていない場合 null
+const fullName = ref(userStore.fullName || '自分のユーザー名');
+const userName = ref(userStore.userName || 'my_username');
+const selfIntroduction = ref(userStore.selfIntroduction || 'これは自分のプロフィールの自己紹介文です。');
 const postsCount = ref(123);
 const followingCount = ref(45);
 
@@ -84,9 +89,6 @@ const editProfile = () => {
   router.push('/ProfileEdit') // プロフィール編集画面へ遷移
 }
 
-const router = useRouter();
-const userStore = useUserStore();
-
 const logout = async () => {
   console.log('ログアウト処理を実行します');
 
@@ -97,6 +99,16 @@ const logout = async () => {
     alert('ログアウトに失敗しました')
   }
 }
+
+onMounted(
+  async ()=>{
+    console.log(userStore.id)
+    await postStore.fetchMyPosts(userStore.id)
+    console.log(postStore.myPosts)
+    userPosts.value = postStore.myPosts
+    postsCount.value = postStore.myPosts.length
+  }
+)
 </script>
 
 <style scoped>
