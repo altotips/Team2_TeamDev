@@ -1,12 +1,14 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import axios from '@/utils/axios'
+import { useUserStore } from '@/stores/userStore'
 // import { useToast } from '@/composables/useToast.js'
 
 // 投稿一覧の取得や投稿などをまとめる
 export const usePostStore = defineStore(
   'post',
   () => {
+    const userStore = useUserStore()
     // const { showToastMessage } = useToast()
     const allPosts = ref([])
     const followersPosts = ref([])
@@ -95,15 +97,26 @@ export const usePostStore = defineStore(
     }
 
     // 投稿する
-    async function post(id, postData) {
+    async function post(postData) {
       try {
-        if (!id) {
-          return
+        // console.log(id)
+        if (!userStore.id) {
+          return false
         }
-        const res = await axios.post(`/posts/${id}`, {
-          image: postData.image,
-          content: postData.content,
+        // console.log(postData.content)
+        // console.log(postData.image)
+
+        const res = await axios.post(`/posts/${userStore.id}`, postData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
         })
+
+        if (res) {
+          return true
+        } else {
+          return false
+        }
       } catch (err) {
         console.error('ユーザーの投稿に失敗:', err)
       }
