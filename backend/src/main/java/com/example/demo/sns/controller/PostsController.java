@@ -97,7 +97,7 @@ public class PostsController {
 			dir.mkdirs();
 		}
 
-		String fileName = 'http://localhost:8080/uploads/'+ System.currentTimeMillis() + "_" + photo.getOriginalFilename();
+		String fileName = "http://localhost:8080/uploads/" + System.currentTimeMillis() + "_" + photo.getOriginalFilename();
 		Path filePath = Paths.get(uploadDir, fileName);
 //		System.out.println(filePath);
 
