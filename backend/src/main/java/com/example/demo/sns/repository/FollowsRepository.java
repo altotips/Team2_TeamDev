@@ -10,6 +10,6 @@ import com.example.demo.sns.entity.Follows;
 public interface FollowsRepository extends JpaRepository<Follows, Long> {
 	Optional<Follows> findByFromUserIdAndToUserId(Long fromUserId, Long toUserId);
 	
-	List<Follows> findByToUserId(Long toUserId);
+	List<Follows> findByFromUserId(Long fromUserId);
 
 }

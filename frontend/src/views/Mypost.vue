@@ -12,11 +12,30 @@
     const previewFile = ref(null)
     const description = ref('')
 
-    //inputで選んだ画像ファイルを取得
-    function onFileChange(event) {
-        selectedFile.value = event.target.files[0]
-        previewFile.value = URL.createObjectURL(selectedFile.value) //選択したファイルをプレビューとして画面左に表示
+//inputで選んだ画像ファイルを取得
+function onFileChange(event) {
+  selectedFile.value = event.target.files[0]
+  previewFile.value = URL.createObjectURL(selectedFile.value)
+}
+
+const submitForm = async () => {
+  try {
+    if(!selectedFile.value){
+        alert('写真を選択してね！')
+      return
     }
+
+    const res = await postStore.post({
+      image: selectedFile.value,
+      content: description.value,
+    })
+    if (res) {
+      alert('投稿完了！タイムラインに移動します✨')
+      router.push('/TimeLine')
+    } else {
+      alert('投稿失敗！😢')
+    }
+
 
     //画像とキャプションのデータを投稿
     const submitForm = async () => {
