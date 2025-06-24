@@ -33,7 +33,6 @@ export const usePostStore = defineStore(
     async function fetchFollowersPosts(id) {
       try {
         const res = await axios.get('/posts/users/' + id + 'follow')
-        const res = await axios.get('/posts/users/' + id + 'follow')
         // console.log('ret : ' + res)
         // console.log('ret : ' + res.data.length)
         if (followersPosts.value.length != res.data.length) {

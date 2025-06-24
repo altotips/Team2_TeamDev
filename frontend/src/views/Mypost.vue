@@ -7,6 +7,7 @@
     const router = useRouter()
 
     const selectedFile = ref('../assets/images/hiyoko.jpg')
+    
     const description = ref('')
 
     //inputで選んだ画像ファイルを取得
@@ -40,9 +41,9 @@
         <!-- 左カラム：写真アップローダー -->
         <div class="left-column">
             <input type="file" @change="onFileChange" />
-            <img src="/hiyoko.jpg" alt="selectedFile" class="profile-icon">
+            <!-- <img src="/hiyoko.jpg" alt="selectedFile" class="profile-icon"> -->
             <!-- <img :src="`http://localhost:8080/uploads/inu.png`" alt="投稿画像" /> -->
-            <!-- <img :src="selectedFile || '@/assets/images/penguin.png'" alt="selectedFile" class="profile-icon"> -->
+            <img :src="selectedFile || '@/assets/images/penguin.png'" alt="selectedFile" class="profile-icon">
         </div>
 
         <!-- 右カラム：テキスト入力 -->
