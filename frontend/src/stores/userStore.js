@@ -139,7 +139,7 @@ export const useUserStore = defineStore(
         // email.value = res.data.email
         // selfIntroduction.value = res.data.selfIntroduction
 
-        res = await axios.get('users/'+id.value+'/follow')
+        res = await axios.get('users/' + id.value + '/follow')
         follows.value = res.data.follows
 
         //   console.log('id : ' + id.value)
@@ -179,8 +179,8 @@ export const useUserStore = defineStore(
         // userName.value = res.data.userName
         // email.value = res.data.email
         // selfIntroduction.value = res.data.selfIntroduction
-        
-        res = await axios.get('users/'+id.value+'/follow')
+
+        res = await axios.get('users/' + id.value + '/follow')
         follows.value = res.data.follows
 
         //   console.log('id : ' + id.value)
@@ -221,7 +221,7 @@ export const useUserStore = defineStore(
         // userName.value = res.data.userName
         // email.value = res.data.email
         // selfIntroduction.value = res.data.selfIntroduction
-        
+
         // res = await axios.get('users/'+id.value+'/follow')
         // follows.value = res.data.follows
 
@@ -248,7 +248,11 @@ export const useUserStore = defineStore(
         //   console.log('パスワード : ' + userData.password)
 
         // データベースでログイン判定処理
-        const res = await axios.patch(`users/${id.value}/edit`, userData)
+        const res = await axios.patch(`users/${id.value}/edit`, userData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        })
         //   console.log('res: ' + res.data)
         if (!res.data) {
           // showToastMessage('ログインに失敗しました')
@@ -309,8 +313,24 @@ export const useUserStore = defineStore(
     }
 
     // 使用できる変数やメソッドの指定
-    return { id, urlIcon, fullName, userName, email, selfIntroduction, follows, authId, 
-             login, logout, register, getUser, follow, unfollow, followers, changeProfile  }
+    return {
+      id,
+      urlIcon,
+      fullName,
+      userName,
+      email,
+      selfIntroduction,
+      follows,
+      authId,
+      login,
+      logout,
+      register,
+      getUser,
+      follow,
+      unfollow,
+      followers,
+      changeProfile,
+    }
   },
   {
     // ローカルストレージやセッションストレージに保存するデータを選択
@@ -319,7 +339,16 @@ export const useUserStore = defineStore(
     // ログインが維持される。
     persist: {
       storage: sessionStorage, // セッション中だけ保存
-      paths: ['id', 'urlIcon', 'fullName','userName', 'email', 'selfIntroduction','follows','authId'], // 保存するキーの指定
+      paths: [
+        'id',
+        'urlIcon',
+        'fullName',
+        'userName',
+        'email',
+        'selfIntroduction',
+        'follows',
+        'authId',
+      ], // 保存するキーの指定
     },
   },
 )
