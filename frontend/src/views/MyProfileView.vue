@@ -67,17 +67,17 @@ const postStore = usePostStore();
 
 const displayIconUrl = computed(() => {
   if (userStore.urlIcon) {
-    return `http://localhost:8080/uploads/${userStore.urlIcon}?t=${Date.now()}`;
+    return userStore.urlIcon;
   }
   return defaultIcon;
 });
-const userIconUrl = ref(userStore.userIconUrl || null); // ユーザーがアップロードしていない場合 null
-const fullName = ref(userStore.fullName || '自分のユーザー名');
-const userName = ref(userStore.userName || 'my_username');
-const selfIntroduction = ref(userStore.selfIntroduction || 'これは自分のプロフィールの自己紹介文です。');
+
+// const userIconUrl = ref(userStore.userIconUrl || null); // ユーザーがアップロードしていない場合 null
+// const fullName = ref(userStore.fullName || '自分のユーザー名');
+// const userName = ref(userStore.userName || 'my_username');
+// const selfIntroduction = ref(userStore.selfIntroduction || 'これは自分のプロフィールの自己紹介文です。');
 const postsCount = ref(123);
 const followingCount = ref(45);
-
 const userPosts = ref([
   { id: 1, urlPhoto: 'https://picsum.photos/seed/landscape/300', content: '風景写真' },
   { id: 2, urlPhoto: 'https://picsum.photos/seed/food/300', content: '食べ物の写真' },

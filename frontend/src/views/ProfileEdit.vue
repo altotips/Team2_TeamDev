@@ -51,7 +51,7 @@ const form = reactive({
 })
 
 // プレビュー用アイコン設定
-const previewIcon = ref(userStore.urlIcon ? `http://localhost:8080/uploads/${userStore.urlIcon}` : null)
+const previewIcon = ref(userStore.urlIcon ? userStore.urlIcon : null)
 
 // ファイル選択時にフォームに保持し、プレビューを更新
 function onFileChange(e) {
