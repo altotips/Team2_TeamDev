@@ -23,6 +23,7 @@ public class Users {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
+	@Column(columnDefinition = "VARCHAR DEFAULT 'http://localhost:8080/uploads/default_icon.png'")
 	private String urlIcon;
 
 	@NotBlank
@@ -40,12 +41,12 @@ public class Users {
 	@NotBlank
 	private String salt;
 
-	@Column(columnDefinition = "STRING DEFAULT ''")
+	@Column(columnDefinition = "VARCHAR DEFAULT ''")
 	private String selfIntroduction;
-
+	
 	private Long authId;
 
-	@Column(columnDefinition = "BOOLEAN DEFAULT 0")
-	private Boolean delFlag;
+	@Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
+	private Boolean delFlag = false;
 
 }
