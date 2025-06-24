@@ -51,7 +51,7 @@
         </div>
 
         <div v-if="error" class="error-message">
-          プロフィールの読み込み中にエラーが発生しました。
+          プロフィールの読み込み中にエラーが発生しました。: {{ error }}
         </div>
       </div>
     </main>
@@ -59,57 +59,124 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
+import { useUserStore } from '@/stores/userStore.js'; 
 
-// ユーザー名（URLから取得）
 const route = useRoute();
-const userName = ref(route.params.userName);
+const userStore = useUserStore();
 
-// プロフィール情報
+const targetUserId = ref(null); 
+
+const userName = ref(''); 
 const userIconUrl = ref('');
 const fullName = ref('');
 const selfIntroduction = ref('');
 const postsCount = ref(0);
-const followingCount = ref(0);
+const followingCount = ref(0); // ★ この値にフォロー数を格納
 const isMyProfile = ref(false);
 const isFollowing = ref(false);
 const userPosts = ref([]);
 const isLoading = ref(true);
 const error = ref(null);
 
-// 仮のAPI関数（あなたのバックエンドに応じて置き換えてください）
-async function fetchUserProfile(userName) {
-  // 例: 実際のAPIエンドポイントに変更する
-  const response = await fetch(`/api/users/${userName}`);
-  if (!response.ok) throw new Error('ユーザー情報の取得に失敗しました');
-  return await response.json();
-}
-
-// 初期化処理
-onMounted(async () => {
+async function fetchUserProfileData(userIdToFetch) { 
+  isLoading.value = true;
+  error.value = null;
   try {
-    isLoading.value = true;
-    const data = await fetchUserProfile(userName.value);
-    userIconUrl.value = data.iconUrl;
-    fullName.value = data.fullName;
-    selfIntroduction.value = data.selfIntroduction;
-    postsCount.value = data.postsCount;
-    followingCount.value = data.followingCount;
-    isFollowing.value = data.isFollowing;
-    isMyProfile.value = data.isMyProfile;
-    userPosts.value = data.posts;
+    // userStoreのgetUserアクションを呼び出し、特定のユーザー情報を取得
+    const response = await userStore.getUser(userIdToFetch); 
+
+    if (response && response.data) {
+      const data = response.data; // バックエンドから返されたユーザーデータ全体
+
+      userName.value = data.userName || ''; 
+      userIconUrl.value = data.urlIcon || '/images/default_profile_icon.png'; 
+      fullName.value = data.fullName || '';
+      selfIntroduction.value = data.selfIntroduction || '';
+      
+      // バックエンドからのレスポンスに直接 postsCount が含まれることを優先し、
+      // なければ posts 配列の長さで計算
+      postsCount.value = data.postsCount !== undefined ? data.postsCount : (data.posts ? data.posts.length : 0); 
+      
+      // 【重要】followingCount を設定
+      // バックエンドからのレスポンスに直接 followingCount が含まれることを優先し、
+      // なければ follows 配列の長さで計算
+      followingCount.value = data.followingCount !== undefined ? data.followingCount : (data.follows ? data.follows.length : 0); 
+      
+      userPosts.value = data.posts || []; 
+      
+      isMyProfile.value = (userStore.id === userIdToFetch);
+      // userStore.follows はログインユーザーがフォローしているリスト
+      // その中に現在表示しているユーザーのID (userIdToFetch) が含まれているかを確認
+      isFollowing.value = userStore.follows && userStore.follows.some(f => f.id === userIdToFetch);
+
+    } else {
+      throw new Error(`ユーザーID '${userIdToFetch}' のデータが見つかりませんでした。`);
+    }
   } catch (err) {
     error.value = err.message;
+    console.error("Error fetching user profile:", err);
   } finally {
     isLoading.value = false;
   }
+}
+
+onMounted(async () => {
+  const idFromRoute = parseInt(route.params.userId); 
+
+  if (!isNaN(idFromRoute)) {
+    targetUserId.value = idFromRoute;
+    await fetchUserProfileData(targetUserId.value);
+  } else {
+    if (userStore.id) { 
+        targetUserId.value = userStore.id;
+        isMyProfile.value = true;
+        await fetchUserProfileData(targetUserId.value);
+    } else {
+        error.value = "有効なユーザーIDが指定されていないか、ログインしていません。";
+        isLoading.value = false;
+    }
+  }
 });
 
-// フォローボタン切り替え
-const toggleFollow = () => {
-  isFollowing.value = !isFollowing.value;
-  // TODO: APIでフォロー状態を更新
+watch(() => route.params.userId, async (newUserId) => {
+  const id = parseInt(newUserId);
+  if (!isNaN(id) && id !== targetUserId.value) {
+    targetUserId.value = id;
+    await fetchUserProfileData(targetUserId.value);
+  }
+});
+
+const toggleFollow = async () => {
+    if (!userStore.id) { 
+        alert('ログインしていません。フォローできません。');
+        return;
+    }
+    if (!targetUserId.value) return;
+
+    try {
+        if (isFollowing.value) {
+            const success = await userStore.unfollow(targetUserId.value); 
+            if (success) {
+                isFollowing.value = false;
+            } else {
+                alert('フォロー解除に失敗しました。');
+            }
+        } else {
+            const success = await userStore.follow(targetUserId.value); 
+            if (success) {
+                isFollowing.value = true;
+            } else {
+                alert('フォローに失敗しました。');
+            }
+        }
+        // フォロー/アンフォロー後にプロフィール情報を再フェッチして、最新のフォロー数などを反映
+        await fetchUserProfileData(targetUserId.value);
+    } catch (err) {
+        console.error('フォロー処理中にエラー:', err);
+        alert('フォロー処理中にエラーが発生しました。');
+    }
 };
 </script>
 
