@@ -18,34 +18,34 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Table(name = "users")
 public class Users {
-	
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-	
+
 	private String urlIcon;
-	
+
 	@NotBlank
 	private String fullName;
-	
+
 	@NotBlank
 	private String userName;
-	
+
 	@NotBlank
 	private String email;
-	
+
 	@NotBlank
 	private String password;
-	
+
 	@NotBlank
 	private String salt;
-	
+
+	@Column(columnDefinition = "STRING DEFAULT ''")
 	private String selfIntroduction;
-	
+
 	private Long authId;
-	
+
 	@Column(columnDefinition = "BOOLEAN DEFAULT 0")
 	private Boolean delFlag;
-	
-	
+
 }

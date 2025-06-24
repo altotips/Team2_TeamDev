@@ -20,6 +20,11 @@ function onFileChange(event) {
 
 const submitForm = async () => {
   try {
+    if(!selectedFile.value){
+      alert('写真を選択してね！')
+      return
+    }
+
     const res = await postStore.post({
       image: selectedFile.value,
       content: description.value,
