@@ -51,6 +51,6 @@ public class Posts {
 //	@JoinColumn(name = "commentsId", nullable = false)
 //	private Comments comments;
 
-	@Column(columnDefinition = "BOOLEAN DEFAULT 0")
+	@Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
 	private Boolean delFlag;
 }
