@@ -90,12 +90,6 @@ public class PostsController {
 			@RequestParam("image") MultipartFile photo,
 			@RequestParam("content") String content) throws IOException {
 
-		// オブジェクトのテストが必要
-		// 
-		// 
-		// 
-		System.out.println(1);
-
 		// ファイルの保存
 		String uploadDir = "./uploads/";
 		File dir = new File(uploadDir);
@@ -110,10 +104,12 @@ public class PostsController {
 		Files.copy(photo.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
 		// ここからデータべースにファイル名を保存
-		Posts post = postsrepository.findById(id).orElse(null);
+		Posts post = new Posts();
+		Users user = usersrepository.findById(id).orElse(null);
+		post.setUser(user);
 		post.setUrlPhoto(fileName);
+		post.setContent(content);
 		postsrepository.save(post);
-		System.out.println(2);
 		return post;
 	}
 }

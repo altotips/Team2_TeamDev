@@ -7,8 +7,8 @@ const router = createRouter({
     {
       path: '/',
       name: 'login',
-     component: () => import('../views/Login.vue'),
-     meta: { hideHeaderFooter: true }
+      component: () => import('../views/Login.vue'),
+      meta: { hideHeaderFooter: true }
     },
     {
       path: '/MyProfile',
@@ -16,15 +16,26 @@ const router = createRouter({
       component: () => import('../views/MyProfileView.vue')
     },
     {
-      path: '/UserProfile',
-      name: 'UserProfile',
-      component: () => import('../views/UserProfileView.vue')
+      path: '/ProfileEdit',
+      name: 'ProfileEdit',
+      component: () => import('../views/ProfileEdit.vue')
     },
     {
       path: '/register',
       name: 'register',
       component: () => import('../views/RegisterView.vue'),
       meta: { hideHeaderFooter: true }
+    },
+    {
+      path: '/myProfile',
+      name: 'myProfile',
+      component: () => import('../views/2View.vue')
+      // component: () => import('../views/myProfile.vue'),
+    },
+    {
+      path: '/post',
+      name: 'post',
+       component: () => import('../views/MyPost.vue')
     },
     {
       path: '/TimeLine',
@@ -38,9 +49,10 @@ const router = createRouter({
       component: () => import('../views/FollowListView.vue'),
     },
     {
-    path: '/user/:userName',
+    path: '/user/:userId',
     name: 'UserProfile',
-    component: () => import('@/views/UserProfileView.vue')
+    component: () => import('@/views/UserProfileView.vue'),
+     props: true // userNameをUserProfileViewのpropsとして渡すため追加
     },
   ],
 })

@@ -61,14 +61,14 @@ public class UsersController {
 		System.out.println(user);
 		return user;
 	}
-	
+
 	// 全ユーザの情報を取得
 	@GetMapping("/{id}/follow")
 	public List<Follows> getAll(@PathVariable Long id) {
 		List<Follows> follows = followsrepository.findByFromUserId(id);
 		return follows;
-	}	
-	
+	}
+
 	// ユーザ新規登録
 	@PostMapping("/register")
 	public Users register(@RequestBody Users user) {
@@ -116,63 +116,60 @@ public class UsersController {
 	@PutMapping("/{id}/follow/{to_id}")
 	public ResponseEntity<?> follow(@PathVariable Long id, @PathVariable("to_id") Long toId) {
 
-	    // 自分自身のフォローは禁止
-	    if (id.equals(toId)) {
-	        return ResponseEntity.badRequest().body("自分自身はフォローできません");
-	    }
+		// 自分自身のフォローは禁止
+		if (id.equals(toId)) {
+			return ResponseEntity.badRequest().body("自分自身はフォローできません");
+		}
 
-	    // ユーザー存在チェック
-	    Optional<Users> fromUserOpt = usersrepository.findById(id);
-	    Optional<Users> toUserOpt = usersrepository.findById(toId);
+		// ユーザー存在チェック
+		Optional<Users> fromUserOpt = usersrepository.findById(id);
+		Optional<Users> toUserOpt = usersrepository.findById(toId);
 
-	    if (fromUserOpt.isEmpty() || toUserOpt.isEmpty()) {
-	        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("ユーザーが見つかりません");
-	    }
+		if (fromUserOpt.isEmpty() || toUserOpt.isEmpty()) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("ユーザーが見つかりません");
+		}
 
-	    Users fromUser = fromUserOpt.get();
-	    Users toUser = toUserOpt.get();
+		Users fromUser = fromUserOpt.get();
+		Users toUser = toUserOpt.get();
 
-	    // すでにフォロー済みか確認
-	    Optional<Follows> existingFollow = followsrepository.findByFromUserIdAndToUserId(id, toId);
-	    if (existingFollow.isPresent()) {
-	        return ResponseEntity.status(HttpStatus.CONFLICT).body("すでにフォローしています");
-	    }
+		// すでにフォロー済みか確認
+		Optional<Follows> existingFollow = followsrepository.findByFromUserIdAndToUserId(id, toId);
+		if (existingFollow.isPresent()) {
+			return ResponseEntity.status(HttpStatus.CONFLICT).body("すでにフォローしています");
+		}
 
-	    // フォローを作成して保存
-	    Follows newFollow = new Follows();
-	    newFollow.setFromUser(fromUser);
-	    newFollow.setToUser(toUser);
-	    followsrepository.save(newFollow);
-	    System.out.println("フォローしました");
+		// フォローを作成して保存
+		Follows newFollow = new Follows();
+		newFollow.setFromUser(fromUser);
+		newFollow.setToUser(toUser);
+		followsrepository.save(newFollow);
+		System.out.println("フォローしました");
 
-	    return ResponseEntity.ok(toUser);
+		return ResponseEntity.ok(toUser);
 	}
 
-	
 	// フォロー解除
 	@DeleteMapping("/{fromId}/unfollow/{toId}")
-    public ResponseEntity<String> unfollow(
-            @PathVariable Long fromId,
-            @PathVariable Long toId) {
+	public ResponseEntity<String> unfollow(
+			@PathVariable Long fromId,
+			@PathVariable Long toId) {
 
-        Optional<Follows> follow = followsrepository.findByFromUserIdAndToUserId(fromId, toId);
+		Optional<Follows> follow = followsrepository.findByFromUserIdAndToUserId(fromId, toId);
 
-        if (follow.isPresent()) {
-            followsrepository.delete(follow.get());
-            return ResponseEntity.ok("フォローを解除しました");
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("指定されたフォロー関係が見つかりません");
-        }
-    }
+		if (follow.isPresent()) {
+			followsrepository.delete(follow.get());
+			return ResponseEntity.ok("フォローを解除しました");
+		} else {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND)
+					.body("指定されたフォロー関係が見つかりません");
+		}
+	}
 
 	// プロフィール変更
 	@PatchMapping("/{id}/edit")
 	public Users edit(
 			@PathVariable Long id, @RequestParam String fullName, @RequestParam String userName,
-			@RequestParam String Introduction
-			, @RequestParam("image") MultipartFile icon
-			) throws IOException {
+			@RequestParam String Introduction, @RequestParam("image") MultipartFile icon) throws IOException {
 
 		// ファイルの保存
 		String uploadDir = "./uploads/";

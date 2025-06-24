@@ -56,6 +56,7 @@
 
 <script setup>
 import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/userStore';
 import defaultIcon from '@/images/default_icon.png';
 
@@ -80,16 +81,22 @@ const isLoading = ref(false);
 const displayIconUrl = ref(userIconUrl.value || defaultIcon);
 
 const editProfile = () => {
-  console.log('プロフィール編集ボタンが押されました');
-  // 例：router.push('/edit-profile');
-};
+  router.push('/ProfileEdit') // プロフィール編集画面へ遷移
+}
 
-const logout = () => {
-  console.log('ログアウト処理を実行します');
-  // 例：ログアウト処理 + router.push('/login');
-};
-
+const router = useRouter();
 const userStore = useUserStore();
+
+const logout = async () => {
+  console.log('ログアウト処理を実行します');
+
+  const success = await userStore.logout()
+  if (success) {
+    router.push('/') // ログイン画面に遷移
+  } else {
+    alert('ログアウトに失敗しました')
+  }
+}
 </script>
 
 <style scoped>
