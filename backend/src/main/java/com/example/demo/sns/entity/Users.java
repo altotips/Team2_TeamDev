@@ -42,7 +42,7 @@ public class Users {
 
 	@Column(columnDefinition = "STRING DEFAULT ''")
 	private String selfIntroduction;
-
+	
 	private Long authId;
 
 	@Column(columnDefinition = "BOOLEAN DEFAULT 0")
