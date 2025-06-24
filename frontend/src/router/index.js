@@ -21,14 +21,6 @@ const router = createRouter({
       component: () => import('../views/ProfileEdit.vue')
     },
     {
-      path: '/UserProfile',
-      name: 'UserProfile',
-      component: () => import('../views/UserProfileView.vue')
-    },
-
-
-
-    {
       path: '/register',
       name: 'register',
       component: () => import('../views/RegisterView.vue'),
@@ -57,7 +49,7 @@ const router = createRouter({
       component: () => import('../views/FollowListView.vue'),
     },
     {
-    path: '/user/:userName',
+    path: '/user/:userId',
     name: 'UserProfile',
     component: () => import('@/views/UserProfileView.vue'),
      props: true // userNameをUserProfileViewのpropsとして渡すため追加
