@@ -70,7 +70,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/userStore';
 import { usePostStore } from '@/stores/postStore';
-import defaultIcon from '@/images/default_icon.png';
+import defaultIcon from '@/assets/images/default_icon.png';
 // モーダルコンポーネントをインポート
 import ModalUserPostsView from '@/views/ModalUserPostsView.vue';
 

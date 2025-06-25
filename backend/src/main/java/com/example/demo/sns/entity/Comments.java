@@ -23,12 +23,12 @@ public class Comments {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-	
+
 	@NotNull
 	@ManyToOne
 	@JoinColumn(name = "commentFromId", nullable = false)
 	private Users fromUser;
-	
+
 	@NotNull
 	@ManyToOne
 	@JoinColumn(name = "commentToId", nullable = false)

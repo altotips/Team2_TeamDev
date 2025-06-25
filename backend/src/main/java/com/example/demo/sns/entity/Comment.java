@@ -22,11 +22,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Table(name = "comment")
 public class Comment {
-	
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-	
+
 	@NotNull
 	@ManyToOne
 	@JoinColumn(name = "userId", nullable = false)
@@ -34,10 +34,10 @@ public class Comment {
 
 	@NotBlank
 	private String content;
-	
+
 	@NotNull
 	@ManyToOne
 	@JoinColumn(name = "postsId", nullable = false)
 	@JsonIgnore // ★★★ 追加: CommentがJSON化されるときに、関連するPostsを除外する ★★★
-	private Posts posts; 
+	private Posts posts;
 }
