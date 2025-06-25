@@ -37,9 +37,11 @@
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/userStore'
+import { useToast } from '@/composables/useToast.js'
 
 const userStore = useUserStore()
 const router = useRouter()
+const { showToastMessage } = useToast()
 
 // ① フォーム用データ初期化
 const form = reactive({
@@ -80,7 +82,7 @@ async function handleSubmit() {
   if (success) {
     router.push('/MyProfile')
   } else {
-    alert('更新に失敗しました')
+    showToastMessage('更新に失敗しました')
   }
 }
 
