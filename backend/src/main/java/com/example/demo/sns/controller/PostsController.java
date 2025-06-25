@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -137,7 +138,7 @@ public class PostsController {
 		return post;
 	}
 
-	@PatchMapping("/{id}/ungood")
+	@PutMapping("/{id}/unGood")
 	public Posts unGood(@PathVariable Long id) {
 		Posts post = postsrepository.findById(id).orElse(null);
 		post.setGood(post.getGood() - 1);
