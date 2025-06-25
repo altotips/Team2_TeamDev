@@ -4,7 +4,7 @@
       <span class="icon">⌂</span>
     </RouterLink>
 
-    <RouterLink to="/Search" class="nav-item">
+    <RouterLink to="/search" class="nav-item">
       <img src="@/assets/images/image.png" alt="検索" class="search_icon" />
     </RouterLink>
 
