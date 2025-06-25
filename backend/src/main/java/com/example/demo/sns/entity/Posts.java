@@ -1,5 +1,7 @@
 package com.example.demo.sns.entity;
 
+import java.util.Optional;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -8,6 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import jakarta.validation.constraints.NotNull;
 
 import lombok.AllArgsConstructor;
@@ -51,6 +54,9 @@ public class Posts {
 //	@JoinColumn(name = "commentsId", nullable = false)
 //	private Comments comments;
 
-	@Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
-	private Boolean delFlag = false;
+	@Column(columnDefinition = "BOOLEAN DEFAULT 0")
+	private Boolean delFlag;
+	
+	@Transient
+	private Optional<Comment> commentList;
 }
