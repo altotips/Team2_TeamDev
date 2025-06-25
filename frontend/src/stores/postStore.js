@@ -183,6 +183,18 @@ export const usePostStore = defineStore(
       // ここで fetchAllPosts() は呼ばない
     }
 
+    //ユーザ検索
+    async function searchUsers(searchStr) {
+      const res = await axios.post(`/api/posts/search/users`, searchStr)
+      return res
+    }
+
+    //投稿検索
+    async function searchPosts(searchStr) {
+      const res = await axios.post(`/api/posts/search/posts`, searchStr)
+      return res
+    }
+
     return {
       allPosts,
       followersPosts,
@@ -197,6 +209,8 @@ export const usePostStore = defineStore(
       good,
       unGood,
       addComment,
+      searchUsers,
+      searchPosts,
     }
   },
   // {
