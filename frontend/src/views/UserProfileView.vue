@@ -63,9 +63,9 @@
             <div class="post-overlay">
               <div class="overlay-stats">
                 <span class="stat-icon">❤️</span>
-                <span class="stat-number">{{ post.goodCount }}</span>
+                <span class="stat-number">{{ post.good }}</span>
                 <span class="stat-icon">💬</span>
-                <span class="stat-number">{{ post.commentCount }}</span>
+                <span class="stat-number">{{ post.comments.length }}</span>
               </div>
             </div>
             </div>

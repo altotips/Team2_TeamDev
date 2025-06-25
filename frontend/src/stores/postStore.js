@@ -34,21 +34,19 @@ export const usePostStore = defineStore(
     // 1ユーザのフォローしているすべてのユーザの投稿をすべて取得し、followersPostsに保存
     async function fetchFollowersPosts() {
       try {
-        // if (!id) {
-        //   console.log('idがない')
-        //   return
-        // }
+        if (!userStore.id) {
+          console.warn('ユーザーIDが取得できませんでした。ログイン済みか確認してください。')
+          return
+        }
 
-        const res = await axios.get('/posts/users/' + userStore.id + 'follow')
-        // console.log('ret : ' + res)
-        // console.log('ret : ' + res.data.length)
-        if (followersPosts.value.length != res.data.length) {
-          // 最新の投稿を上に表示するため、逆順にする
+        const res = await axios.get(`/posts/users/${userStore.id}/follow`)
+
+        // 差分がある場合のみ更新（パフォーマンス改善にもなる）
+        if (followersPosts.value.length !== res.data.length) {
           followersPosts.value = res.data.reverse()
         }
-        // console.log('followers : ' + followersPosts.value)
       } catch (err) {
-        console.error('全投稿の取得に失敗:', err)
+        console.error('フォロー投稿の取得に失敗:', err)
       }
     }
 
@@ -179,6 +177,12 @@ export const usePostStore = defineStore(
       }
     }
 
+    //コメント追加
+    async function addComment(postId, user, content) {
+      await axios.post(`/api/posts/${postId}/comments`, comment)
+      // ここで fetchAllPosts() は呼ばない
+    }
+
     return {
       allPosts,
       followersPosts,
@@ -192,6 +196,7 @@ export const usePostStore = defineStore(
       post,
       good,
       unGood,
+      addComment,
     }
   },
   // {
