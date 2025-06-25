@@ -160,7 +160,7 @@ watch(
 }
 
 .page-title {
-  /* text-align: center;  これを left に変更 */
+  /* text-align: center;  これを left に変更 */
   text-align: left; /* ★ここを変更 */
   font-size: 24px;
   font-weight: bold;
@@ -224,6 +224,7 @@ watch(
   font-weight: bold;
   font-size: 16px;
   color: #262626;
+  cursor: pointer; /* <--- ADDED THIS LINE */
 }
 
 .fullname {
