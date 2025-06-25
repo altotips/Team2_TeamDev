@@ -37,29 +37,32 @@ const props = defineProps({
 <style scoped>
 .toast {
   position: fixed;
-  top: 20px;
+  top: 30px;
   left: 50%;
   transform: translateX(-50%);
-  background-color: #828282;
-  color: yellow;
+  background-color: #3f3e3e;      /* シンプルな濃いグレー */
+  color: #fff;                 /* 白文字 */
   padding: 12px 24px;
   border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(45, 44, 44, 0.25);
   z-index: 1000;
-  transition: opacity 0.3s ease;
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: 0.03em;
+  transition: opacity 0.3s ease, transform 0.3s ease;
   opacity: 0.95;
-  animation: fadeIn 0.3s ease;
+  animation: fadeInUp 0.3s ease forwards;
+  user-select: none;
 }
 
-@keyframes fadeIn {
+@keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateX(-50%) scale(0.9);
+    transform: translateX(-50%) translateY(8px);
   }
-
   to {
-    opacity: 1;
-    transform: translateX(-50%) scale(1);
+    opacity: 0.95;
+    transform: translateX(-50%) translateY(0);
   }
 }
 </style>
