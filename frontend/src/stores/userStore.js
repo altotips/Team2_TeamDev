@@ -249,14 +249,14 @@ export const useUserStore = defineStore(
     }
   
     // 他人のフォローユーザ一覧
-    async function userFollowers() {
+    async function userFollowers(userId) {
       try {
         //   console.log('ログイン')
         //   console.log('ユーザ名かユーザID : ' + userData.userNameOrId)
         //   console.log('パスワード : ' + userData.password)
 
         // データベースでログイン判定処理
-        const res = await axios.get(`users/${id.value}/follow`)
+        const res = await axios.get(`users/${userId}/follow`)
         return res.data;
         // console.log('follows res.data : ' + res)
         // console.log('follows res.data : ' + res.data)
