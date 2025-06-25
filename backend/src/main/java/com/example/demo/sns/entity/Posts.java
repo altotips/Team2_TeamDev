@@ -60,5 +60,5 @@ public class Posts {
 	// orphanRemoval = true: commentListからコメントを削除した際に、データベースからもそのコメントを削除するように設定
 	// fetchタイプはデフォルトのLAZYのままでOK。@EntityGraphでEAGERロードを制御します。
 	@OneToMany(mappedBy = "posts", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<Comment> commentList = new ArrayList<>(); // nullPointerExceptionを防ぐために初期化
+	private List<Comment> comments = new ArrayList<>(); // nullPointerExceptionを防ぐために初期化
 }
