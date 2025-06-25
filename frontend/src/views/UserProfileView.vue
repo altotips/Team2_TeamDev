@@ -380,24 +380,8 @@ const closeModal = () => {
 }
 
 /* プロフィール編集ボタンのスタイル */
-.edit-profile-button {
-  background-color: #efefef;
-  color: #262626;
-  border: 1px solid #dbdbdb;
-  border-radius: 8px;
-  padding: 7px 16px;
-  font-size: 14px;
-  font-weight: bold;
-  cursor: pointer;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.edit-profile-button:hover {
-  background-color: #e0e0e0;
-}
-
 /* ログアウトボタンのスタイル */
+.edit-profile-button,
 .logout-button {
   background-color: #fff;
   color: #262626;
@@ -408,7 +392,7 @@ const closeModal = () => {
   font-weight: bold;
   cursor: pointer;
 }
-
+.edit-profile-button:hover,
 .logout-button:hover {
   background-color: #fafafa;
 }
