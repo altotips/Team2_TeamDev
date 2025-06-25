@@ -2,14 +2,15 @@
   <div class="timeline">
     <div v-for="post in posts" :key="post.id" class="post-card">
       <div class="post-header">
-        <img class="user-icon" :src="post.user.urlIcon || '/images/default_profile_icon.png'" alt="User Icon" />
+        <img class="user-icon" :src="`http://localhost:8080/uploads/${post.user.urlIcon}`" alt="User Icon" />
         
         <router-link :to="{ name: 'UserProfile', params: { userId: post.user.id } }" class="user-name">
           {{ post.user.userName }}
         </router-link>
       </div>
 
-      <img class="post-image" :src="post.urlPhoto || '/images/default_post_image.png'" alt="投稿画像" />
+      <!-- <img class="post-image" :src="post.urlPhoto || '/images/default_post_image.png'" alt="投稿画像" /> -->
+      <img :src="`http://localhost:8080/uploads/${post.urlPhoto}`" class="post-image" alt="image" />
 
       <div class="post-actions">
        
@@ -24,7 +25,7 @@
         </button>
 
         <p v-if="Array.isArray(post.comments)">
-  {{ post.comments.length }} 件のコメント
+  {{ post.commentList.length }} 件のコメント
 </p>
       </div>
 
