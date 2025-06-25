@@ -144,7 +144,7 @@ export const usePostStore = defineStore(
           return false
         }
 
-        const res = await axios.patch(`/posts/${userStore.id}/good`, postData)
+        const res = await axios.patch(`/posts/${postId}/good`)
         console.log('いいねしたよ')
 
         return res
@@ -166,7 +166,7 @@ export const usePostStore = defineStore(
           return false
         }
 
-        const res = await axios.patch(`/posts/${userStore.id}/ungood`, postData)
+        const res = await axios.put(`/posts/${postId}/unGood`)
         console.log('いいね解除')
         return res
         // if (res) {
@@ -178,6 +178,10 @@ export const usePostStore = defineStore(
         console.error('ユーザーの投稿に失敗:', err)
       }
     }
+
+  
+
+
 
     return {
       allPosts,
