@@ -10,11 +10,11 @@
           </div>
           <div v-else class="modal-post-display">
             <div class="post-header">
-              <img class="user-icon" :src="post.user?.urlIcon || '/images/default_profile_icon.png'" alt="User Icon" />
+              <img class="user-icon" :src="post.user?.urlIcon ? `http://localhost:8080/uploads/${post.user.urlIcon}` : '/images/default_profile_icon.png'" alt="User Icon" />
               <span class="user-name">{{ post.user?.userName }}</span>
             </div>
 
-            <img class="post-image" :src="post.urlPhoto || '/images/default_post_image.png'" :alt="post.content" />
+            <img class="post-image" :src="post.urlPhoto ? `http://localhost:8080/uploads/${post.urlPhoto}` : '/images/default_post_image.png'" :alt="post.content" />
 
             <div class="post-actions">
               <button @click="toggleLike(post)" class="icon-button">
