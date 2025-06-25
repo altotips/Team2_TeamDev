@@ -168,46 +168,45 @@ public class UsersController {
 	// プロフィール変更
 	@PatchMapping("/{id}/edit")
 	public ResponseEntity<?> edit(
-	        @PathVariable Long id,
-	        @RequestParam String fullName,
-	        @RequestParam String userName,
-	        @RequestParam String email,
-	        @RequestParam String selfIntroduction,
-	        @RequestParam(value = "image", required = false) MultipartFile icon) throws IOException {
+			@PathVariable Long id,
+			@RequestParam String fullName,
+			@RequestParam String userName,
+			@RequestParam String email,
+			@RequestParam String selfIntroduction,
+			@RequestParam(value = "image", required = false) MultipartFile icon) throws IOException {
 
-	    System.out.println("==== edit called ====");
-	    System.out.println("fullName: " + fullName);
-	    System.out.println("userName: " + userName);
-	    System.out.println("email: " + email);
-	    System.out.println("selfIntroduction: " + selfIntroduction);
-	    System.out.println("icon: " + (icon != null ? icon.getOriginalFilename() : "なし"));
+		System.out.println("==== edit called ====");
+		System.out.println("fullName: " + fullName);
+		System.out.println("userName: " + userName);
+		System.out.println("email: " + email);
+		System.out.println("selfIntroduction: " + selfIntroduction);
+		System.out.println("icon: " + (icon != null ? icon.getOriginalFilename() : "なし"));
 
-	    Users user = usersrepository.findById(id).orElse(null);
-	    if (user == null) {
-	        throw new RuntimeException("User not found with id: " + id);
-	    }
+		Users user = usersrepository.findById(id).orElse(null);
+		if (user == null) {
+			throw new RuntimeException("User not found with id: " + id);
+		}
 
+		String fileName = null;
+		if (icon != null && !icon.isEmpty()) {
+			String uploadDir = "./uploads/";
+			File dir = new File(uploadDir);
+			if (!dir.exists()) {
+				dir.mkdirs();
+			}
+			fileName = System.currentTimeMillis() + "_" + icon.getOriginalFilename();
+			Path filePath = Paths.get(uploadDir, fileName);
+			Files.copy(icon.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+			user.setUrlIcon(fileName);
+		}
 
-	    String fileName = null;
-	    if (icon != null && !icon.isEmpty()) {
-	        String uploadDir = "./uploads/";
-	        File dir = new File(uploadDir);
-	        if (!dir.exists()) {
-	            dir.mkdirs();
-	        }
-	        fileName = System.currentTimeMillis() + "_" + icon.getOriginalFilename();
-	        Path filePath = Paths.get(uploadDir, fileName);
-	        Files.copy(icon.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-	        user.setUrlIcon(fileName);
-	    }
+		user.setFullName(fullName);
+		user.setUserName(userName);
+		user.setEmail(email);
+		user.setSelfIntroduction(selfIntroduction);
 
-	    user.setFullName(fullName);
-	    user.setUserName(userName);
-	    user.setEmail(email);
-	    user.setSelfIntroduction(selfIntroduction);
-
-	    usersrepository.save(user);
-	    return ResponseEntity.ok(user);
+		usersrepository.save(user);
+		return ResponseEntity.ok(user);
 	}
 
 	// ランダムなソルトを生成

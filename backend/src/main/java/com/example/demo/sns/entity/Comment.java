@@ -10,6 +10,8 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import com.fasterxml.jackson.annotation.JsonIgnore; // ★★★ 追加 ★★★
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -32,8 +34,10 @@ public class Comment {
 
 	@NotBlank
 	private String content;
+	
+	@NotNull
+	@ManyToOne
+	@JoinColumn(name = "postsId", nullable = false)
+	@JsonIgnore // ★★★ 追加: CommentがJSON化されるときに、関連するPostsを除外する ★★★
+	private Posts posts; 
 }
-	
-	
-
-
