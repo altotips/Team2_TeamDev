@@ -112,7 +112,7 @@ INSERT INTO posts (
 (10, 'inu18.jpg', '手作りクッキー焼きました🍪', 23);
 
 INSERT INTO comment (
-    user_id,content,post_id
+    user_id,content,posts_id
 ) VALUES
 (1,'かわいい！！',1),
 (1,'かわいい！！',1),

@@ -7,13 +7,12 @@
 
       <div class="profile-details-row">
         <div class="icon-container">
-          <img :src="displayIconUrl" alt="User Icon" class="profile-icon">
+          <img :src="userStore.urlIcon ? `http://localhost:8080/uploads/${userStore.urlIcon}` : defaultIcon" alt="User Icon" class="profile-icon">
         </div>
 
         <div class="right-of-icon-info">
           <div class="name-and-button">
             <div class="full-name">{{ userStore.fullName }}</div>
-            <!-- 編集ボタンとログアウトボタン -->
             <div class="my-profile-buttons">
               <button class="edit-profile-button" @click="editProfile">プロフィール編集</button>
               <button class="logout-button" @click="logout">ログアウト</button>
@@ -27,7 +26,9 @@
             </div>
             <div class="stat-item">
               <span class="stat-value">{{ followingCount }}</span>
-              <span class="stat-label">フォロー中</span>
+              <router-link :to="`/followlist?userId=${userStore.id}&type=following`" class="stat-label-link">
+                <span class="stat-label">フォロー中</span>
+              </router-link>
             </div>
           </div>
         </div>
@@ -38,8 +39,8 @@
 
     <main class="profile-content">
       <div class="posts-grid">
-        <div v-for="post in userPosts" :key="post.id" class="post-thumbnail">
-          <img :src="post.urlPhoto || '/images/default_post_image.png'" :alt="post.content" class="post-image" loading="lazy">
+        <div v-for="post in userPosts" :key="post.id" class="post-thumbnail" @click="openModal(post)">
+          <img :src="post.urlPhoto ? `http://localhost:8080/uploads/${post.urlPhoto}` : '/images/default_post_image.png'" :alt="post.content" class="post-image" loading="lazy">
         </div>
 
         <div v-if="userPosts.length === 0 && !isLoading" class="no-posts-message">
@@ -52,40 +53,36 @@
       </div>
     </main>
   </div>
+
+  <ModalUserPostsView :show="showModal" :postData="selectedPostObj" @close="closeModal" />
 </template>
 
 <script setup>
-import { ref, computed , onMounted} from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/userStore';
 import { usePostStore } from '@/stores/postStore';
 import defaultIcon from '@/assets/images/default_icon.png';
+// モーダルコンポーネントをインポート
+import ModalUserPostsView from '@/views/ModalUserPostsView.vue';
 
 const router = useRouter();
 const userStore = useUserStore();
 const postStore = usePostStore();
 
+// モーダルの表示状態と選択された投稿データを管理するrefを追加
+const showModal = ref(false);
+const selectedPostObj = ref(null);
+
 const displayIconUrl = computed(() => {
-  if (userStore.urlIcon) {
-    return userStore.urlIcon;
-  }
-  return defaultIcon;
+  // ここでのdisplayIconUrlはuserStore.urlIconを直接使うように変更します
+  // テンプレート内で直接条件式を使うため、このcomputedプロパティの複雑さを減らします
+  return userStore.urlIcon; 
 });
 
-// const userIconUrl = ref(userStore.userIconUrl || null); // ユーザーがアップロードしていない場合 null
-// const fullName = ref(userStore.fullName || '自分のユーザー名');
-// const userName = ref(userStore.userName || 'my_username');
-// const selfIntroduction = ref(userStore.selfIntroduction || 'これは自分のプロフィールの自己紹介文です。');
-const postsCount = ref(123);
-const followingCount = ref(45);
-const userPosts = ref([
-  { id: 1, urlPhoto: 'https://picsum.photos/seed/landscape/300', content: '風景写真' },
-  { id: 2, urlPhoto: 'https://picsum.photos/seed/food/300', content: '食べ物の写真' },
-  { id: 3, urlPhoto: 'https://picsum.photos/seed/pet/300', content: 'ペットの写真' },
-  { id: 4, urlPhoto: 'https://picsum.photos/seed/selfie/300', content: '自撮り' },
-  { id: 5, urlPhoto: 'https://picsum.photos/seed/art/300', content: 'アート作品' },
-  { id: 6, urlPhoto: 'https://picsum.photos/seed/daily/300', content: '日常' },
-]);
+const postsCount = ref(0); // 初期値を0に設定
+const followingCount = ref(0); // 初期値を0に設定
+const userPosts = ref([]); // 初期値を空の配列に設定
 
 const isLoading = ref(false);
 
@@ -105,15 +102,40 @@ const logout = async () => {
 };
 
 onMounted(
-  async ()=>{
-    console.log(userStore.id)
-    await postStore.fetchMyPosts(userStore.id)
-    console.log(postStore.myPosts)
-    userPosts.value = postStore.myPosts
-    postsCount.value = postStore.myPosts.length
-    followingCount.value = userStore.follows.length
+  async () => {
+    isLoading.value = true; // 読み込み開始
+    try {
+      console.log(userStore.id);
+      await postStore.fetchMyPosts(userStore.id);
+      console.log(postStore.myPosts);
+      userPosts.value = postStore.myPosts;
+      postsCount.value = postStore.myPosts.length;
+      
+      // userStoreのfollowsがまだロードされていない可能性があるので、awaitで待つか、適切に処理する
+      // ここでは userStore.getUser を再度呼び出してフォローリストを更新する可能性も考慮
+      // もし userStore.follows が確実に最新のものを保持しているなら、以下でOK
+      followingCount.value = userStore.follows ? userStore.follows.length : 0;
+
+    } catch (error) {
+      console.error("プロフィールデータの読み込み中にエラーが発生しました:", error);
+      // エラーハンドリングを追加
+    } finally {
+      isLoading.value = false; // 読み込み終了
+    }
   }
-)
+);
+
+// モーダルを開く関数
+const openModal = (post) => {
+  selectedPostObj.value = post; // クリックされた投稿データをセット
+  showModal.value = true; // モーダルを表示
+};
+
+// モーダルを閉じる関数
+const closeModal = () => {
+  showModal.value = false; // モーダルを非表示
+  selectedPostObj.value = null; // 選択された投稿データをクリア
+};
 </script>
 
 <style scoped>

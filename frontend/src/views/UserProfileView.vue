@@ -10,7 +10,7 @@
 
       <div class="profile-details-row" v-if="!isLoading && !error">
         <div class="icon-container">
-          <img :src="userIconUrl || '/images/default_profile_icon.png'" alt="User Icon" class="profile-icon">
+          <img :src="userIconUrl.startsWith('http') ? userIconUrl : `http://localhost:8080/uploads/${userIconUrl}` || '/images/default_profile_icon.png'" alt="User Icon" class="profile-icon">
         </div>
 
         <div class="right-of-icon-info">
@@ -56,7 +56,7 @@
 
         <div v-else class="image-grid">
           <div v-for="post in userPosts" :key="post.id" class="image-item" @click="openModal(post)">
-            <img :src="post.urlPhoto || '/images/default_post_image.png'" :alt="post.content" class="post-image">
+            <img :src="post.urlPhoto ? `http://localhost:8080/uploads/${post.urlPhoto}` : '/images/default_post_image.png'" :alt="post.content" class="post-image">
           </div>
         </div>
       </div>
@@ -146,42 +146,6 @@ async function fetchUserProfileData(userIdToFetch) {
     isLoading.value = false;
   }
 }
-// async function fetchUserProfileData(userIdToFetch) {
-//   isLoading.value = true;
-//   error.value = null;
-//   userPosts.value = [];
-
-//   try {
-//     const response = await userStore.getUser(userIdToFetch);
-
-//     if (response && response.data) {
-//       const data = response.data;
-
-//       userName.value = data.userName || '';
-//       userIconUrl.value = data.urlIcon || '/images/default_profile_icon.png';
-//       fullName.value = data.fullName || '';
-//       selfIntroduction.value = data.selfIntroduction || '';
-
-//       displayedFollowingCount.value = data.followingCount !== undefined ? data.followingCount : 0;
-
-//       isMyProfile.value = (userStore.id === userIdToFetch);
-//       isFollowing.value = loggedInUserIsFollowing.value;
-
-//       await postStore.fetchUserPosts(userIdToFetch);
-//       userPosts.value = postStore.userPosts;
-
-//       postsCount.value = userPosts.value.length;
-
-//     } else {
-//       throw new Error(`ユーザーID '${userIdToFetch}' のデータが見つかりませんでした。`);
-//     }
-//   } catch (err) {
-//     error.value = err.message;
-//     console.error("Error fetching user profile:", err);
-//   } finally {
-//     isLoading.value = false;
-//   }
-// }
 
 const initiateFetch = async (userId) => {
   if (userId) {
