@@ -38,7 +38,7 @@ public class PostsController {
 	@Autowired
 	private final UsersRepository usersrepository;
 
-//	すべての投稿を取得
+	//	すべての投稿を取得
 	@GetMapping
 	public List<Posts> getAll() {
 		List<Posts> response = postsrepository.findByDelFlagFalse();
@@ -48,7 +48,7 @@ public class PostsController {
 		return response;
 	}
 
-//	1投稿を取得
+	//	1投稿を取得
 	@GetMapping("{id}")
 	public Posts getOne(@PathVariable Long id) {
 		Posts post = postsrepository.findById(id).orElse(null);
@@ -58,7 +58,7 @@ public class PostsController {
 		return post;
 	}
 
-//	1ユーザの全投稿を取得
+	//	1ユーザの全投稿を取得
 	@GetMapping("users/{id}")
 	public List<Posts> getUserPosts(@PathVariable Long id) {
 		Users user = usersrepository.findById(id).orElse(null);
@@ -69,22 +69,22 @@ public class PostsController {
 		return posts;
 	}
 
-//	フォローユーザ全員の全投稿を取得
-//	@GetMapping("users/{id}")
-//	public List<Posts> getUserPosts(@PathVariable Long id) {
-//		Users user = usersrepository.findById(id).orElse(null);
-//		if (user == null || user.getDelFlag() == true) {
-//			return null;
-//		}
-//		List<Posts> posts = postsrepository.findByUsers(user);
-//		return posts;
-//	}
+	//	フォローユーザ全員の全投稿を取得
+	//	@GetMapping("users/{id}")
+	//	public List<Posts> getUserPosts(@PathVariable Long id) {
+	//		Users user = usersrepository.findById(id).orElse(null);
+	//		if (user == null || user.getDelFlag() == true) {
+	//			return null;
+	//		}
+	//		List<Posts> posts = postsrepository.findByUsers(user);
+	//		return posts;
+	//	}
 
-//	投稿を登録
-//	postするオブジェクトは
-//	{
-//		content : String
-//	}
+	//	投稿を登録
+	//	postするオブジェクトは
+	//	{
+	//		content : String
+	//	}
 	@PostMapping("/{id}")
 	public Posts post(@PathVariable Long id,
 			@RequestParam("image") MultipartFile photo,
@@ -97,9 +97,9 @@ public class PostsController {
 			dir.mkdirs();
 		}
 
-		String fileName = "http://localhost:8080/uploads/" + System.currentTimeMillis() + "_" + photo.getOriginalFilename();
+		String fileName = System.currentTimeMillis() + "_" + photo.getOriginalFilename();
 		Path filePath = Paths.get(uploadDir, fileName);
-//		System.out.println(filePath);
+		//		System.out.println(filePath);
 
 		Files.copy(photo.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
