@@ -161,7 +161,7 @@ async function fetchFollowersPosts() {
     async function good(postId) {
       try {
         if (!postId) {
-          alert('どの投稿わからないよ')
+          alert('どの投稿かわからないよ')
           return false
         }
 
@@ -175,7 +175,7 @@ async function fetchFollowersPosts() {
         //   return false
         // }
       } catch (err) {
-        console.error('ユーザーの投稿に失敗:', err)
+        console.error('いいねに失敗:', err)
       }
     }
 
@@ -183,7 +183,7 @@ async function fetchFollowersPosts() {
     async function unGood(postId) {
       try {
         if (!postId) {
-          alert('どの投稿わからないよ')
+          alert('どの投稿かわからないよ')
           return false
         }
 
@@ -196,7 +196,7 @@ async function fetchFollowersPosts() {
         //   return false
         // }
       } catch (err) {
-        console.error('ユーザーの投稿に失敗:', err)
+        console.error('いいね解除に失敗:', err)
       }
     }
 

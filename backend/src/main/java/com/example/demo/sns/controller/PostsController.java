@@ -98,10 +98,6 @@ public class PostsController {
 	}
 
 //	投稿を登録
-//	postするオブジェクトは
-//	{
-//		content : String
-//	}
 	@PostMapping("/{id}")
 	public Posts post(@PathVariable Long id,
 			@RequestParam("image") MultipartFile photo,
@@ -130,6 +126,7 @@ public class PostsController {
 		return post;
 	}
 
+	// いいねする
 	@PatchMapping("/{id}/good")
 	public Posts good(@PathVariable Long id) {
 		Posts post = postsrepository.findById(id).orElse(null);
