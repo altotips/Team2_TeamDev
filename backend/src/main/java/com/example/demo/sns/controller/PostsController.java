@@ -113,19 +113,7 @@ public class PostsController {
 			dir.mkdirs();
 		}
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-		String fileName = "http://localhost:8080/uploads/" + System.currentTimeMillis() + "_" + photo.getOriginalFilename();
-=======
-<<<<<<< HEAD
-		String fileName = "http://localhost:8080/uploads/"+ System.currentTimeMillis() + "_" + photo.getOriginalFilename();
-=======
 		String fileName = System.currentTimeMillis() + "_" + photo.getOriginalFilename();
->>>>>>> a59d041c1ea2a71635accb13cb6beb799a1acb8f
->>>>>>> main
-=======
-		String fileName = System.currentTimeMillis() + "_" + photo.getOriginalFilename();
->>>>>>> main
 		Path filePath = Paths.get(uploadDir, fileName);
 //		System.out.println(filePath);
 
