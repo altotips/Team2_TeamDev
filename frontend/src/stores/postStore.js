@@ -136,6 +136,49 @@ export const usePostStore = defineStore(
       }
     }
 
+    // いいねする
+    async function good(postId) {
+      try {
+        if (!postId) {
+          alert('どの投稿わからないよ')
+          return false
+        }
+
+        const res = await axios.patch(`/posts/${userStore.id}/good`, postData)
+        console.log('いいねしたよ')
+
+        return res
+        // if (res) {
+        //   return true
+        // } else {
+        //   return false
+        // }
+      } catch (err) {
+        console.error('ユーザーの投稿に失敗:', err)
+      }
+    }
+
+    // いいね解除
+    async function unGood(postId) {
+      try {
+        if (!postId) {
+          alert('どの投稿わからないよ')
+          return false
+        }
+
+        const res = await axios.patch(`/posts/${userStore.id}/ungood`, postData)
+        console.log('いいね解除')
+        return res
+        // if (res) {
+        //   return true
+        // } else {
+        //   return false
+        // }
+      } catch (err) {
+        console.error('ユーザーの投稿に失敗:', err)
+      }
+    }
+
     return {
       allPosts,
       followersPosts,
@@ -147,6 +190,8 @@ export const usePostStore = defineStore(
       fetchUserPosts,
       logout,
       post,
+      good,
+      unGood,
     }
   },
   // {

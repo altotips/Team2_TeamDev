@@ -30,9 +30,11 @@ public class Users {
 	private String fullName;
 
 	@NotBlank
+	@Column(unique = true)
 	private String userName;
 
 	@NotBlank
+	@Column(unique = true)
 	private String email;
 
 	@NotBlank
