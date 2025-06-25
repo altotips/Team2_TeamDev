@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,9 +20,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.example.demo.sns.entity.Follows;
 import com.example.demo.sns.entity.Posts;
 import com.example.demo.sns.entity.Users;
 import com.example.demo.sns.repository.CommentRepository;
+import com.example.demo.sns.repository.FollowsRepository;
 import com.example.demo.sns.repository.PostsRepository;
 import com.example.demo.sns.repository.UsersRepository;
 
@@ -41,7 +44,9 @@ public class PostsController {
 	private final UsersRepository usersrepository;
 	@Autowired
 	private final CommentRepository commentrepository;
-	
+	@Autowired
+	private final FollowsRepository followsrepository;
+
 //	すべての投稿を取得
 	@GetMapping
 	public List<Posts> getAll() {
@@ -76,12 +81,17 @@ public class PostsController {
 //	フォローユーザ全員の全投稿を取得
 	@GetMapping("users/{id}/follow")
 	public List<Posts> follwersPosts(@PathVariable Long id) {
-		Users user = usersrepository.findById(id).orElse(null);
-		if (user == null || user.getDelFlag() == true) {
+		Users me = usersrepository.findById(id).orElse(null);
+		if (me == null || me.getDelFlag() == true) {
 			return null;
 		}
-
-		List<Posts> posts = postsrepository.findByUser(user);
+		List<Follows> follows = followsrepository.findByFromUserId(id);
+		List<Posts> posts = new ArrayList<>();
+		for (Follows follow : follows) {
+			Users user = follow.getToUser();
+			List<Posts> userPosts = postsrepository.findByUser(user);
+			posts.addAll(userPosts);
+		}
 		return posts;
 	}
 
@@ -90,8 +100,6 @@ public class PostsController {
 //	{
 //		content : String
 //	}
-	
-	
 	@PostMapping("/{id}")
 	public Posts post(@PathVariable Long id,
 			@RequestParam("image") MultipartFile photo,
