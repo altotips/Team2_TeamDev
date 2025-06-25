@@ -1,14 +1,14 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import axios from '@/utils/axios'
-// import { useToast } from '@/composables/useToast.js'
+import { useToast } from '@/composables/useToast.js'
 
 // ユーザ情報やログインなどをまとめる
 export const useUserStore = defineStore(
   'user',
   () => {
     // トースト表示のため使用
-    // const { showToastMessage } = useToast()
+    const { showToastMessage } = useToast()
 
     const id = ref(null) // ユーザのID(主キー)
     const urlIcon = ref(null) // ユーザアイコンのurl
@@ -31,7 +31,7 @@ export const useUserStore = defineStore(
         const res = await axios.post('users/login', userData)
         // console.log('res: ' + res.data)
         if (!res.data) {
-          // showToastMessage('ログインに失敗しました')
+          showToastMessage('ログインに失敗しました')
           // throw new Error('ログイン失敗')
           return false
         }
@@ -55,12 +55,12 @@ export const useUserStore = defineStore(
         // console.log('selfIntroduction : ' + selfIntroduction.value)
         // console.log('follows : ' + follows.value)
 
-        // showToastMessage('ログインしました')
+        showToastMessage('ログインしました')
         // alert('ログインしました')
         return true
       } catch (error) {
         console.error('ログイン失敗', error)
-        // showToastMessage('ログインに失敗しました')
+        showToastMessage('ログインに失敗しました')
         // alert('ログインに失敗しました')
         return false
       }
@@ -76,12 +76,12 @@ export const useUserStore = defineStore(
         email.value = null
         selfIntroduction.value = null
         follows.value = null
-        // showToastMessage('ログアウトしました')
+        showToastMessage('ログアウトしました')
         // alert('ログアウトしました')
         return true
       } catch (error) {
         console.error('ログアウト失敗', error)
-        // showToastMessage('ログアウトに失敗しました')
+        showToastMessage('ログアウトに失敗しました')
         // alert('ログアウトに失敗しました')
         return false
       }
@@ -110,12 +110,12 @@ export const useUserStore = defineStore(
         // console.log('userName : ' + res.data.userName)
         // console.log('userId : ' + res.data.userId)
 
-        // showToastMessage('ユーザ登録をしました')
+        showToastMessage('ユーザ登録をしました')
         // alert('ユーザ登録をしました')
         return true
       } catch (error) {
         console.error('ユーザ登録失敗', error)
-        // showToastMessage('ユーザ登録に失敗しました')
+        showToastMessage('ユーザ登録に失敗しました')
         // alert('ユーザ登録に失敗しました')
         return false
       }
