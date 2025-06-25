@@ -54,6 +54,11 @@ const router = createRouter({
     component: () => import('@/views/UserProfileView.vue'),
      props: true // userNameをUserProfileViewのpropsとして渡すため追加
     },
+    {
+      path: '/search', // 検索画面へのパス
+      name: 'Search', // ルートの名前
+      component: () => import('../views/SearchView.vue') // SearchView.vueのインポート
+    },
   ],
 })
 
