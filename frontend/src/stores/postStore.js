@@ -32,46 +32,23 @@ export const usePostStore = defineStore(
     }
 
     // 1ユーザのフォローしているすべてのユーザの投稿をすべて取得し、followersPostsに保存
-    // async function fetchFollowersPosts(id) {
-    //   try {
-    //     // if (!id) {
-    //     //   console.log('idがない')
-    //     //   return
-    //     // }
+    async function fetchFollowersPosts() {
+      try {
+        if (!userStore.id) {
+          console.warn('ユーザーIDが取得できませんでした。ログイン済みか確認してください。')
+          return
+        }
 
-    //     const res = await axios.get('/posts/users/' + id + 'follow')
-    //     // console.log('ret : ' + res)
-    //     // console.log('ret : ' + res.data.length)
-    //     if (followersPosts.value.length != res.data.length) {
-    //       // 最新の投稿を上に表示するため、逆順にする
-    //       followersPosts.value = res.data.reverse()
-    //     }
-    //     // console.log('followers : ' + followersPosts.value)
-    //   } catch (err) {
-    //     console.error('全投稿の取得に失敗:', err)
-    //   }
-    // }
+        const res = await axios.get(`/posts/users/${userStore.id}/follow`)
 
-
-
-async function fetchFollowersPosts() {
-  try {
-    if (!userStore.id) {
-      console.warn('ユーザーIDが取得できませんでした。ログイン済みか確認してください。')
-      return
+        // 差分がある場合のみ更新（パフォーマンス改善にもなる）
+        if (followersPosts.value.length !== res.data.length) {
+          followersPosts.value = res.data.reverse()
+        }
+      } catch (err) {
+        console.error('フォロー投稿の取得に失敗:', err)
+      }
     }
-
-    const res = await axios.get(`/posts/users/${userStore.id}/follow`)
-
-    // 差分がある場合のみ更新（パフォーマンス改善にもなる）
-    if (followersPosts.value.length !== res.data.length) {
-      followersPosts.value = res.data.reverse()
-    }
-
-  } catch (err) {
-    console.error('フォロー投稿の取得に失敗:', err)
-  }
-}
 
     // 自分の投稿をすべて取得し、myPostsに保存
     async function fetchMyPosts(id) {
@@ -200,14 +177,11 @@ async function fetchFollowersPosts() {
       }
     }
 
-  //コメント追加
-   async function addComment(postId, user,content) {
-    await axios.post(`/api/posts/${postId}/comments`, comment);
-    // ここで fetchAllPosts() は呼ばない
-}
-
-
-
+    //コメント追加
+    async function addComment(postId, user, content) {
+      await axios.post(`/api/posts/${postId}/comments`, comment)
+      // ここで fetchAllPosts() は呼ばない
+    }
 
     return {
       allPosts,

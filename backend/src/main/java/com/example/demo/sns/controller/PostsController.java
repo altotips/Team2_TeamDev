@@ -146,6 +146,20 @@ public class PostsController {
 		return post;
 	}
 
+	// ユーザ検索
+	@GetMapping("/search/users")
+	public List<Users> saerchUsers(@RequestBody String searchStr) {
+		List<Users> users = usersrepository.findByUserNameContaining(searchStr);
+		return users;
+	}
+
+	// 投稿検索
+	@GetMapping("/search/posts")
+	public List<Posts> saerchPosts(@RequestBody String searchStr) {
+		List<Posts> posts = postsrepository.findByContentContaining(searchStr);
+		return posts;
+	}
+
 	// コメント投稿
 	@PostMapping("/{postId}/comments/{userId}") // 投稿IDとユーザーIDをパス変数で受け取る
 	public Comment addCommentWithoutDto(
