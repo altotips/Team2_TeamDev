@@ -24,5 +24,8 @@ public class Authority {
 	
 	@NotBlank
 	private String authority;
+	
+//	@Transient
+//	private String list;
 
 }
