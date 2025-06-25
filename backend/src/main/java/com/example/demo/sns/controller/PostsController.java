@@ -71,15 +71,16 @@ public class PostsController {
 	}
 
 //	フォローユーザ全員の全投稿を取得
-//	@GetMapping("users/{id}")
-//	public List<Posts> getUserPosts(@PathVariable Long id) {
-//		Users user = usersrepository.findById(id).orElse(null);
-//		if (user == null || user.getDelFlag() == true) {
-//			return null;
-//		}
-//		List<Posts> posts = postsrepository.findByUsers(user);
-//		return posts;
-//	}
+	@GetMapping("users/{id}/follow")
+	public List<Posts> follwersPosts(@PathVariable Long id) {
+		Users user = usersrepository.findById(id).orElse(null);
+		if (user == null || user.getDelFlag() == true) {
+			return null;
+		}
+
+		List<Posts> posts = postsrepository.findByUser(user);
+		return posts;
+	}
 
 //	投稿を登録
 //	postするオブジェクトは
@@ -98,7 +99,7 @@ public class PostsController {
 			dir.mkdirs();
 		}
 
-		String fileName = "http://localhost:8080/uploads/"+ System.currentTimeMillis() + "_" + photo.getOriginalFilename();
+		String fileName = System.currentTimeMillis() + "_" + photo.getOriginalFilename();
 		Path filePath = Paths.get(uploadDir, fileName);
 //		System.out.println(filePath);
 

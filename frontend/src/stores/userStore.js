@@ -92,7 +92,7 @@ export const useUserStore = defineStore(
       try {
         // showToastMessage('登録処理')
         // console.log('登録')
-        console.log('ユーザ名 : ' + userData.userName)
+        // console.log('ユーザ名 : ' + userData.userName)
         // console.log('ユーザID : ' + userData.userId)
         // console.log('パスワード : ' + userData.password)
 
@@ -247,7 +247,50 @@ export const useUserStore = defineStore(
         return false
       }
     }
+  
+    // 他人のフォローユーザ一覧
+    async function userFollowers() {
+      try {
+        //   console.log('ログイン')
+        //   console.log('ユーザ名かユーザID : ' + userData.userNameOrId)
+        //   console.log('パスワード : ' + userData.password)
 
+        // データベースでログイン判定処理
+        const res = await axios.get(`users/${id.value}/follow`)
+        return res.data;
+        // console.log('follows res.data : ' + res)
+        // console.log('follows res.data : ' + res.data)
+        // if (!res.data) {
+          // showToastMessage('ログインに失敗しました')
+          // throw new Error('ログイン失敗')
+        //   return false
+        // }
+
+        // id.value = res.data.id
+        // urlIcon.value = res.data.urlIcon
+        // fullName.value = res.data.fullName
+        // userName.value = res.data.userName
+        // email.value = res.data.email
+        // selfIntroduction.value = res.data.selfIntroduction
+
+        // res = await axios.get('users/'+id.value+'/follow')
+        // follows.value = res.data.follows
+
+        //   console.log('id : ' + id.value)
+        //   console.log('userName : ' + userName.value)
+        //   console.log('userId : ' + userId.value)
+
+        // showToastMessage('ログインしました')
+        // alert('ログインしました')
+        // return true
+      } catch (error) {
+        console.error('ログイン失敗', error)
+        // showToastMessage('ログインに失敗しました')
+        // alert('ログインに失敗しました')
+        return false
+      }
+    }
+  
     // プロフィール変更
     async function changeProfile(userData) {
       try {
