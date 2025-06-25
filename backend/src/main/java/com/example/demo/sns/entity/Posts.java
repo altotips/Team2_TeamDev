@@ -56,7 +56,7 @@ public class Posts {
 
 	@Column(columnDefinition = "BOOLEAN DEFAULT 0")
 	private Boolean delFlag;
-	
+
 	@Transient
 	private Optional<Comment> commentList;
 }

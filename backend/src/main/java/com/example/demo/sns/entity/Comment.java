@@ -20,11 +20,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Table(name = "comment")
 public class Comment {
-	
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-	
+
 	@NotNull
 	@ManyToOne
 	@JoinColumn(name = "userId", nullable = false)
@@ -32,12 +32,8 @@ public class Comment {
 
 	@NotBlank
 	private String content;
-	
+
 	@NotBlank
 	@JoinColumn(name = "postId")
 	private int postId;
 }
-	
-	
-
-
