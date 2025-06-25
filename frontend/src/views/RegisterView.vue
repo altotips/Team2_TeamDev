@@ -2,9 +2,11 @@
 import { ref, reactive } from 'vue'
 import { useUserStore } from '@/stores/userStore'
 import { useRouter } from 'vue-router'
+import { useToast } from '@/composables/useToast.js'
 
 const userStore = useUserStore()
 const router = useRouter()
+const { showToastMessage } = useToast()
 
 const form = reactive({
   email: '',
@@ -17,13 +19,13 @@ const submitRegister = async () => {
   try {
     const res = await userStore.register(form)
     if (res) {
-      alert('登録できました！ログインしてください')
+      showToastMessage('登録できました！ログインしてください')
       router.push('/')
     } else {
-      alert('登録に失敗しました')
+      showToastMessage('登録に失敗しました')
     }
   } catch (error) {
-    alert('登録に失敗しました')
+    showToastMessage('登録に失敗しました')
     console.log(error)
   }
 }
