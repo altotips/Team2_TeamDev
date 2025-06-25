@@ -399,22 +399,19 @@ const closeModal = () => {
 
 /* ログアウトボタンのスタイル */
 .logout-button {
-  background-color: #dc3545; /* 赤系の色 */
-  color: white;
-  border: none;
+  background-color: #fff;
+  color: #262626;
+  border: 1px solid #dbdbdb;
   border-radius: 8px;
   padding: 7px 16px;
   font-size: 14px;
   font-weight: bold;
   cursor: pointer;
-  white-space: nowrap;
-  flex-shrink: 0;
 }
 
 .logout-button:hover {
-  background-color: #c82333;
+  background-color: #fafafa;
 }
-
 .user-stats {
   display: flex;
   justify-content: flex-start;
