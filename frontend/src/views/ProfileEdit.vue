@@ -22,7 +22,7 @@
       <div class="field">
         <label>アイコン画像</label>
         <input type="file" @change="onFileChange" />
-        <img v-if="previewIcon" :src="previewIcon" class="preview-icon" />
+        <img v-if="previewIcon" :src="`http://localhost:8080/uploads/${previewIcon}`" class="preview-icon" alt="image" />
       </div>
 
       <div class="buttons">
