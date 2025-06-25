@@ -377,6 +377,7 @@ export const useUserStore = defineStore(
       follow,
       unfollow,
       followers,
+      userFollowers,
       changeProfile,
     }
   },
