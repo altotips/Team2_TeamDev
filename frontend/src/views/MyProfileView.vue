@@ -365,9 +365,9 @@ const closeModal = () => {
   margin-right: 5px; /* アイコンと数字の間のスペース */
 }
 
-.overlay-stats .stat-number {
+/* .overlay-stats .stat-number { */
   /* ここは特に調整不要ですが、必要なら追加 */
-}
+/* } */
 /* --- 追加CSSここまで --- */
 
 
