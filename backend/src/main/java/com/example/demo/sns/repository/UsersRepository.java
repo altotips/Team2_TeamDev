@@ -10,10 +10,12 @@ import com.example.demo.sns.entity.Users;
 
 public interface UsersRepository extends JpaRepository<Users, Long> {
 	List<Posts> findByDelFlagFalse();
-	
+
 //	Optional<Users> findById(String userId);
 
 	Optional<Users> findByUserName(String userName);
-	
+
 	Optional<Users> findByEmail(String email);
+
+	List<Users> findByUserNameContaining(String searchStr);
 }
