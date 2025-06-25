@@ -7,7 +7,7 @@ const showToast = ref(false)
 // トースト表示(上に出てくる、エラーのポップアップのようなもの)を制御する
 export function useToast() {
   // トースト表示する関数
-  function show(message, duration = 1000) {
+  function show(message, duration = 1500) {
     // 一度非表示にする
     showToast.value = false
     // タイマー
