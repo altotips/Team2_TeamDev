@@ -1,25 +1,34 @@
 <template>
   <div class="timeline">
     <div v-for="post in posts" :key="post.id" class="post-card">
+      
       <div class="post-header">
-        <img class="user-icon" :src="post.user.urlIcon || '/images/default_profile_icon.png'" alt="User Icon" />
+        <img class="user-icon" :src="`http://localhost:8080/uploads/${post.user.urlIcon}`" alt="User Icon" />
         
         <router-link :to="{ name: 'UserProfile', params: { userId: post.user.id } }" class="user-name">
           {{ post.user.userName }}
         </router-link>
       </div>
 
-      <img class="post-image" :src="post.urlPhoto || '/images/default_post_image.png'" alt="投稿画像" />
+      <!-- <img class="post-image" :src="post.urlPhoto || '/images/default_post_image.png'" alt="投稿画像" /> -->
+      <img :src="`http://localhost:8080/uploads/${post.urlPhoto}`" class="post-image" alt="image" />
 
       <div class="post-actions">
-        <button @click="toggleLike(post)" class="icon-button">
+       
+        <button @click="toggleLike(post)" class="icon-button" :class="{ liked: post.liked, animate: post.animateHeart }">
           <span :style="{ color: post.liked ? 'red' : '#aaa' }">
             {{ post.liked ? '❤️' : '♡' }}
           </span>
         </button>
+          <p>{{ post.good }} 件のいいね</p>
         <button @click="toggleComment(post.id)" class="icon-button">
-          💬 コメント
+          💬 
         </button>
+
+        <p v-if="Array.isArray(post.comments)">
+          {{ post.comments.length }} 件のコメント
+        </p>
+        
       </div>
 
       <p class="post-content">{{ post.content }}</p>
@@ -50,6 +59,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { usePostStore } from '@/stores/postStore'
 import { useUserStore } from '@/stores/userStore'
+import axios from 'axios'
 
 // ストア読み込み
 const postStore = usePostStore()
@@ -64,6 +74,7 @@ const newComments = reactive({})
 // データ取得
 onMounted(async () => {
   await postStore.fetchAllPosts()
+  console.log(posts)
 })
 
 // いいね処理（API呼び出し付き）
@@ -73,18 +84,28 @@ const toggleLike = async (post) => {
     return;
   }
   
-  post.liked = !post.liked // UIを先に更新
-  try {
-    if (post.liked) {
-      await postStore.addGood(post.id)
-    } else {
-      await postStore.subGood(post.id)
-    }
-  } catch (error) {
-    console.error("いいね処理中にエラー:", error);
-    alert("いいね処理中にエラーが発生しました。");
-    post.liked = !post.liked; // エラー時はUIを元に戻す
+  if (post.liked) {
+    post.good = Math.max(0, post.good - 1) // 最小0を保証
+  } else {
+    post.good += 1
   }
+
+
+  post.liked = !post.liked // UIを先に更新
+
+
+
+  // try {
+  //   if (post.liked) {
+  //     await postStore.good(post.id)
+  //   } else {
+  //     await postStore.unGood(post.id)
+  //   }
+  // } catch (error) {
+  //   console.error("いいね処理中にエラー:", error);
+  //   alert("いいね処理中にエラーが発生しました。");
+  //   post.liked = !post.liked; // エラー時はUIを元に戻す
+  // }
 }
 
 // コメント欄トグル
@@ -127,6 +148,8 @@ const submitComment = async (postId) => {
   background: white;
   padding: 12px;
 }
+
+
 
 .post-header {
   display: flex;

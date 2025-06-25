@@ -22,12 +22,12 @@
       <div class="field">
         <label>アイコン画像</label>
         <input type="file" @change="onFileChange" />
-        <img v-if="previewIcon" :src="previewIcon" class="preview-icon" />
+        <img v-if="previewIcon" :src="`http://localhost:8080/uploads/${previewIcon}`" class="preview-icon" alt="image" />
       </div>
 
       <div class="buttons">
-        <button type="submit">保存</button>
         <button type="button" class="cancel" @click="cancel">キャンセル</button>
+        <button type="submit">保存</button>
       </div>
     </form>
   </div>
@@ -51,7 +51,7 @@ const form = reactive({
 })
 
 // プレビュー用アイコン設定
-const previewIcon = ref(userStore.urlIcon ? `http://localhost:8080/uploads/${userStore.urlIcon}` : null)
+const previewIcon = ref(userStore.urlIcon ? userStore.urlIcon : null)
 
 // ファイル選択時にフォームに保持し、プレビューを更新
 function onFileChange(e) {

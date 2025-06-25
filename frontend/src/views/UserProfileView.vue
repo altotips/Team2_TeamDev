@@ -10,16 +10,19 @@
 
       <div class="profile-details-row" v-if="!isLoading && !error">
         <div class="icon-container">
-          <img :src="userIconUrl || '/images/default_profile_icon.png'" alt="User Icon" class="profile-icon">
+          <img :src="userIconUrl && !userIconUrl.startsWith('http') ? `http://localhost:8080/uploads/${userIconUrl}` : (userIconUrl || '/images/default_profile_icon.png')" alt="User Icon" class="profile-icon">
         </div>
 
         <div class="right-of-icon-info">
           <div class="name-and-button">
             <div class="full-name">{{ fullName }}</div>
-            <button v-if="!isMyProfile" :class="['follow-button', { 'is-following': isFollowing }]"
-              @click="toggleFollow">
-              {{ isFollowing ? 'フォロー中' : 'フォロー' }}
-            </button>
+            <div class="profile-buttons">
+              <button v-if="isMyProfile" class="edit-profile-button" @click="goToEditProfile">プロフィール編集</button>
+              <button v-if="isMyProfile" class="logout-button" @click="handleLogout">ログアウト</button>
+              <button v-else :class="['follow-button', { 'is-following': isFollowing }]" @click="toggleFollow">
+                {{ followButtonText }}
+              </button>
+            </div>
           </div>
 
           <div class="user-stats">
@@ -32,7 +35,7 @@
               <router-link :to="`/followlist?userId=${targetUserId}&type=following`" class="stat-label-link">
                 <span class="stat-label">フォロー中</span>
               </router-link>
-              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -42,81 +45,124 @@
 
     <main class="profile-content">
       <div class="posts-grid">
-        <div v-for="post in userPosts" :key="post.id" class="post-thumbnail">
-          <img :src="post.urlPhoto || '/images/default_post_image.png'" :alt="post.content" class="post-image">
+        <div v-if="isLoading" class="loading-message">
+          投稿を読み込み中...
         </div>
 
-        <div v-if="userPosts.length === 0 && !isLoading" class="no-posts-message">
+        <div v-else-if="error" class="error-message">
+          投稿の読み込み中にエラーが発生しました。: {{ error }}
+        </div>
+
+        <div v-else-if="userPosts.length === 0" class="no-posts-message">
           まだ投稿がありません。
         </div>
 
-        <div v-if="isLoading" class="loading-message">
-          読み込み中...
-        </div>
-
-        <div v-if="error" class="error-message">
-          プロフィールの読み込み中にエラーが発生しました。: {{ error }}
+        <div v-else class="image-grid">
+          <div v-for="post in userPosts" :key="post.id" class="image-item" @click="openModal(post)">
+            <img :src="post.urlPhoto && !post.urlPhoto.startsWith('http') ? `http://localhost:8080/uploads/${post.urlPhoto}` : (post.urlPhoto || '/images/default_post_image.png')" :alt="post.content" class="post-image">
+          </div>
         </div>
       </div>
     </main>
   </div>
+
+  <ModalUserPostsView :show="showModal" :postData="selectedPostObj" @close="closeModal" />
 </template>
 
 <script setup>
-import { ref, watch, computed } from 'vue'; // 'computed' を追加
+import { ref, watch, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/userStore.js';
 import { usePostStore } from '@/stores/postStore.js';
+import ModalUserPostsView from '@/views/ModalUserPostsView.vue';
+import defaultIcon from '@/images/default_icon.png'; // default_icon.png をインポート
 
 const route = useRoute();
 const router = useRouter();
 const userStore = useUserStore();
 const postStore = usePostStore();
 
-const targetUserId = ref(null);
+const targetUserId = ref(null); // 表示中のユーザーのID
 
 const userName = ref('');
 const userIconUrl = ref('');
 const fullName = ref('');
 const selfIntroduction = ref('');
 const postsCount = ref(0);
-// const followingCount = ref(0); // 直接使用せず computed プロパティを使用
-const isMyProfile = ref(false);
-const isFollowing = ref(false);
-const userPosts = postStore.userPosts;
+const isMyProfile = ref(false); // 自分のプロフィールかどうかを判定
+const isFollowing = ref(false); // ログインユーザーがこのプロフィールをフォローしているか
+
+const userPosts = ref([]);
 
 const isLoading = ref(true);
 const error = ref(null);
 
-// ★ 追加: followingCount の計算を computed プロパティにする
-// 表示しているプロフィールのユーザーがフォローしている数
-const displayedFollowingCount = ref(0);
+const displayedFollowingCount = ref(0); // 表示中のユーザーのフォロー中人数
+
+const showModal = ref(false);
+const selectedPostObj = ref(null);
+
+// ログインユーザーが対象ユーザーをフォローしているかの判定ロジック
+// userStore.follows はログインユーザーがフォローしているリスト
+const loggedInUserIsFollowing = computed(() => {
+  if (!userStore.id || !targetUserId.value || !userStore.follows) {
+    return false;
+  }
+  // userStore.follows の各要素 f が持つ toUser.id と targetUserId.value を比較
+  // ※ f.toUser が存在することを前提としています。APIレスポンスの構造をご確認ください。
+  return userStore.follows.some(f => f.toUser && f.toUser.id === targetUserId.value);
+});
+
+const followButtonText = computed(() => {
+  return isFollowing.value ? 'フォロー中' : 'フォロー';
+});
+
+// ログアウト処理
+const handleLogout = async () => {
+  if (confirm('ログアウトしますか？')) {
+    console.log('ログアウト処理を実行します');
+    const success = await userStore.logout();
+    if (success) {
+      router.push('/login'); // ログアウト後にログイン画面に遷移
+    } else {
+      alert('ログアウトに失敗しました');
+    }
+  }
+};
+
+// プロフィール編集画面へ遷移
+const goToEditProfile = () => {
+  router.push('/ProfileEdit'); // プロフィール編集画面へ遷移
+};
 
 async function fetchUserProfileData(userIdToFetch) {
   isLoading.value = true;
   error.value = null;
+  userPosts.value = [];
+
   try {
-    const response = await userStore.getUser(userIdToFetch);
+    const response = await userStore.getUser(userIdToFetch); // 対象ユーザーの基本情報を取得
 
     if (response && response.data) {
       const data = response.data;
 
       userName.value = data.userName || '';
-      userIconUrl.value = data.urlIcon || '/images/default_profile_icon.png';
+      userIconUrl.value = data.urlIcon || '/images/default_profile_icon.png'; // デフォルトアイコンパスも考慮
       fullName.value = data.fullName || '';
       selfIntroduction.value = data.selfIntroduction || '';
 
-      // ★ 変更: APIレスポンスの followingCount を使用
-      // もし userStore.follows がログインユーザーのフォローリストであれば、
-      // ここは表示対象ユーザーのフォロー数なので API から取得した値を使用
-      displayedFollowingCount.value = data.followingCount !== undefined ? data.followingCount : (data.follows ? data.follows.length : 0);
-
-      await postStore.fetchUserPosts(userIdToFetch);
-      postsCount.value = postStore.userPosts.length;
-
+      // ★ 自分のプロフィールかどうかを判定
       isMyProfile.value = (userStore.id === userIdToFetch);
-      // isFollowing はログインユーザーと表示ユーザーの関係なので userStore.follows を使う
-      isFollowing.value = userStore.follows && userStore.follows.some(f => f.id === userIdToFetch);
+
+      // ★ フォロー中の人数を取得 (userStore.userFollowers を使用)
+      // userStore.jsにこのメソッドがあることを前提としています
+      const targetUserFollowingList = await userStore.userFollowers(userIdToFetch);
+      displayedFollowingCount.value = targetUserFollowingList ? targetUserFollowingList.length : 0;
+
+      // ユーザーの投稿を取得
+      await postStore.fetchUserPosts(userIdToFetch);
+      userPosts.value = postStore.userPosts;
+      postsCount.value = userPosts.value.length;
 
     } else {
       throw new Error(`ユーザーID '${userIdToFetch}' のデータが見つかりませんでした。`);
@@ -129,64 +175,54 @@ async function fetchUserProfileData(userIdToFetch) {
   }
 }
 
-// データのフェッチをトリガーする共通ロジック
-const initiateFetch = async () => {
-  const idFromRoute = parseInt(route.params.userId);
-
-  // ルートパラメータにIDがある場合はそれを使用
-  if (!isNaN(idFromRoute)) {
-    targetUserId.value = idFromRoute;
+const initiateFetch = async (userId) => {
+  if (userId) {
+    targetUserId.value = userId; // targetUserId を設定
     await fetchUserProfileData(targetUserId.value);
-  }
-  // ルートパラメータにIDがなく、userStore.idがある場合は自分のプロフィールを表示
-  else if (userStore.id) {
-    targetUserId.value = userStore.id;
-    isMyProfile.value = true;
-    await fetchUserProfileData(targetUserId.value);
-  }
-  // どちらのIDも特定できない場合
-  else {
+  } else {
     error.value = "有効なユーザーIDが指定されていないか、ログインしていません。";
     isLoading.value = false;
   }
 };
 
-// route.params.userId または userStore.id の変更を監視
+// ルートパラメータ (userId) とログインID (userStore.id) の変更を監視
 watch(
   () => [route.params.userId, userStore.id],
-  async ([newRouteUserId, newUserStoreId], oldValues = []) => {
-    const [oldRouteUserId, oldUserStoreId] = oldValues;
+  async ([newRouteUserId, newUserStoreId]) => {
+    let idToFetch = null;
+    const routeIdNum = parseInt(newRouteUserId);
 
-    const currentRouteIdNum = parseInt(newRouteUserId);
-    const prevRouteIdNum = parseInt(oldRouteUserId);
-
-    const currentUserStoreIdNum = newUserStoreId || 0;
-    const prevUserStoreIdNum = oldUserStoreId || 0;
-
-    if (
-        (newRouteUserId && currentRouteIdNum !== prevRouteIdNum && !isNaN(currentRouteIdNum)) ||
-        (newUserStoreId && currentUserStoreIdNum !== prevUserStoreIdNum && currentUserStoreIdNum !== 0)
-    ) {
-        console.log("Watch triggered by ID change.");
-        await initiateFetch();
+    if (!isNaN(routeIdNum) && routeIdNum > 0) {
+      idToFetch = routeIdNum;
+    } else if (newUserStoreId && newUserStoreId > 0) {
+      // route.params.userId がない場合や、不正な値の場合は、ログイン中のユーザーのプロフィールを表示
+      idToFetch = newUserStoreId;
     }
-    else if (!newRouteUserId && newUserStoreId && !oldUserStoreId) {
-        console.log("Watch triggered by initial userStore.id set.");
-        await initiateFetch();
+
+    // 取得対象のユーザーIDが変更された場合、または同じIDでもログイン状態が変わった場合に再フェッチ
+    if (idToFetch && (idToFetch !== targetUserId.value || (userStore.id !== null && isMyProfile.value !== (newUserStoreId === idToFetch)))) {
+      console.log("Watch triggered by ID change or login status. Fetching user profile for:", idToFetch);
+      await initiateFetch(idToFetch);
+    } else if (!idToFetch && !targetUserId.value && !error.value) {
+      error.value = "有効なユーザーIDが指定されていないか、ログインしていません。";
+      isLoading.value = false;
     }
+    // ログインユーザーのフォローリストを更新（フォローボタンの状態反映のため）
+    if (userStore.id) {
+      await userStore.followers();
+    }
+  },
+  { immediate: true } // コンポーネントがマウントされた直後にも実行
+);
+
+// ログインユーザーが対象ユーザーをフォローしているかのcomputedプロパティの変更を監視
+watch(
+  loggedInUserIsFollowing,
+  (newValue) => {
+    isFollowing.value = newValue;
   },
   { immediate: true }
 );
-
-// ★ 追加: ログインユーザーのフォローリストの変更を監視し、isFollowing を更新
-watch(
-  () => userStore.follows,
-  (newFollows) => {
-    isFollowing.value = newFollows && newFollows.some(f => f.id === targetUserId.value);
-  },
-  { deep: true } // followsが配列なので、その中身の変更も検知するために deep: true を追加
-);
-
 
 const toggleFollow = async () => {
   if (!userStore.id) {
@@ -199,30 +235,40 @@ const toggleFollow = async () => {
     if (isFollowing.value) {
       const success = await userStore.unfollow(targetUserId.value);
       if (success) {
-        // isFollowing.value は watch(userStore.follows) で更新されるのでここでの直接変更は不要
+        alert('フォローを解除しました。');
       } else {
         alert('フォロー解除に失敗しました。');
       }
     } else {
       const success = await userStore.follow(targetUserId.value);
       if (success) {
-        // isFollowing.value は watch(userStore.follows) で更新されるのでここでの直接変更は不要
+        alert('フォローしました。');
       } else {
         alert('フォローに失敗しました。');
       }
     }
-    // フォロー/アンフォロー後にプロフィール情報を再フェッチして、最新の状態を反映
-    // これにより displayedFollowingCount と postsCount が更新される
+    // フォロー/フォロー解除後、ユーザーのプロフィールデータとログインユーザーのフォローリストを再フェッチして表示を更新
     await fetchUserProfileData(targetUserId.value);
+    await userStore.followers();
   } catch (err) {
     console.error('フォロー処理中にエラー:', err);
     alert('フォロー処理中にエラーが発生しました。');
   }
 };
+
+const openModal = (post) => {
+  selectedPostObj.value = post;
+  showModal.value = true;
+};
+
+const closeModal = () => {
+  showModal.value = false;
+  selectedPostObj.value = null;
+};
 </script>
 
 <style scoped>
-/* スタイルは以前の提案と同じで変更なし */
+/* 提供されたCSSをそのままここに貼り付けます */
 .profile-page {
   max-width: 935px;
   margin: 0 auto;
@@ -234,25 +280,21 @@ const toggleFollow = async () => {
   margin-bottom: 44px;
 }
 
-/* ユーザーネームのトップエリア */
 .header-top {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  /* 左寄せ */
   margin-bottom: 20px;
-  /* アイコン行との間隔 */
 }
 
-/* 新しいバックボタンのスタイル */
 .back-button {
-  background-color: transparent; /* 背景を透明に */
-  border: none; /* 枠線を透明に */
-  color: #262626; /* テキストの色（任意で調整） */
-  font-size: 24px; /* サイズを調整 */
-  margin-right: 15px; /* ユーザーネームとの間隔 */
+  background-color: transparent;
+  border: none;
+  color: #262626;
+  font-size: 24px;
+  margin-right: 15px;
   cursor: pointer;
-  padding: 0; /* デフォルトのパディングを削除 */
+  padding: 0;
 }
 
 .username {
@@ -264,15 +306,11 @@ const toggleFollow = async () => {
   text-overflow: ellipsis;
 }
 
-/* アイコンと右側情報の横並びコンテナ */
 .profile-details-row {
   display: flex;
   align-items: flex-start;
-  /* アイコンと右側の情報の高さを上揃え */
   margin-bottom: 20px;
-  /* 自己紹介との間隔 */
   gap: 80px;
-  /* アイコンと右側情報の間隔 */
 }
 
 .icon-container {
@@ -284,6 +322,8 @@ const toggleFollow = async () => {
   justify-content: center;
   align-items: center;
   flex-shrink: 0;
+  /* プロフィール編集ボタンを配置するために必要 */
+  position: relative;
 }
 
 .profile-icon {
@@ -292,36 +332,32 @@ const toggleFollow = async () => {
   object-fit: cover;
 }
 
-/* アイコン右側の情報すべてをまとめるコンテナ */
 .right-of-icon-info {
   flex-grow: 1;
-  /* 残りのスペースを埋める */
   display: flex;
   flex-direction: column;
-  /* フルネーム、ボタン、統計情報を縦に並べる */
   justify-content: center;
-  /* 垂直方向の中央寄せ（アイコンとのバランスのため） */
   min-height: 150px;
-  /* アイコンの高さに合わせる */
 }
 
-/* フルネームとフォローボタンの横並びコンテナ */
 .name-and-button {
   display: flex;
   align-items: center;
-  /* 垂直中央揃え */
-  /* ここを修正: margin-bottom を増やす */
   margin-bottom: 30px;
-  /* 統計情報との間隔を広げた */
-  /* ここを修正: gap を増やす */
   gap: 30px;
-  /* フルネームとボタンの間隔を広げた */
 }
 
 .full-name {
   font-weight: bold;
   font-size: 16px;
   margin: 0;
+}
+
+/* プロフィール関連のボタンを囲むコンテナ */
+.profile-buttons {
+  display: flex;
+  gap: 10px; /* ボタン間のスペース */
+  align-items: center;
 }
 
 .follow-button {
@@ -343,17 +379,49 @@ const toggleFollow = async () => {
   border: 1px solid #dbdbdb;
 }
 
+/* プロフィール編集ボタンのスタイル */
+.edit-profile-button {
+  background-color: #efefef;
+  color: #262626;
+  border: 1px solid #dbdbdb;
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.edit-profile-button:hover {
+  background-color: #e0e0e0;
+}
+
+/* ログアウトボタンのスタイル */
+.logout-button {
+  background-color: #dc3545; /* 赤系の色 */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.logout-button:hover {
+  background-color: #c82333;
+}
+
 .user-stats {
   display: flex;
   justify-content: flex-start;
-  /* 左寄せ */
-  /* ここを修正: gap を増やす */
   gap: 60px;
-  /* 統計項目間の間隔を広げた */
   font-size: 16px;
   text-align: left;
   margin-bottom: 20px;
-  /* 自己紹介との間隔 */
 }
 
 .stat-item {
@@ -373,12 +441,21 @@ const toggleFollow = async () => {
   font-size: 14px;
 }
 
+.stat-label-link {
+  color: #8e8e8e;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.stat-label-link:hover {
+  text-decoration: underline;
+}
+
 .self-introduction {
   font-size: 15px;
   line-height: 1.5;
   white-space: pre-wrap;
   margin-bottom: 20px;
-  /* 投稿グリッドとの間隔 */
 }
 
 .profile-content {
@@ -386,13 +463,13 @@ const toggleFollow = async () => {
   padding-top: 20px;
 }
 
-.posts-grid {
+.image-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 28px;
 }
 
-.post-thumbnail {
+.image-item {
   width: 100%;
   padding-top: 100%;
   position: relative;
@@ -400,7 +477,7 @@ const toggleFollow = async () => {
   background-color: #eee;
 }
 
-.post-image {
+.image-item .post-image {
   position: absolute;
   top: 0;
   left: 0;
@@ -410,7 +487,8 @@ const toggleFollow = async () => {
 }
 
 .no-posts-message,
-.loading-message {
+.loading-message,
+.error-message {
   grid-column: 1 / -1;
   text-align: center;
   padding: 50px;
@@ -439,20 +517,17 @@ const toggleFollow = async () => {
   .name-and-button {
     justify-content: center;
     flex-wrap: wrap;
-    /* レスポンシブでも少し間隔を広げる */
     gap: 20px;
     margin-bottom: 20px;
-    /* レスポンシブでの間隔も調整 */
   }
 
   .user-stats {
     justify-content: space-around;
     width: 100%;
-    /* レスポンシブでも少し間隔を広げる */
     gap: 40px;
   }
 
-  .posts-grid {
+  .image-grid {
     gap: 10px;
   }
 }

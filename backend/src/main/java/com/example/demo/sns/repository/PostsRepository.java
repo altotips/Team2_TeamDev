@@ -2,15 +2,18 @@ package com.example.demo.sns.repository;
 
 import java.util.List;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
 import com.example.demo.sns.entity.Posts;
 import com.example.demo.sns.entity.Users;
 
-@Repository
 public interface PostsRepository extends JpaRepository<Posts, Long> {
-	List<Posts> findByDelFlagFalse();
 
-	List<Posts> findByUser(Users user);
+    // ★★★ 修正点: "commentList.user" を追加 ★★★
+    @EntityGraph(attributePaths = {"comments", "user", "comments.user"}) 
+    List<Posts> findByDelFlagFalse();
+
+    @EntityGraph(attributePaths = {"comments", "user", "comments.user"})
+    List<Posts> findByUser(Users user);
 }
