@@ -16,7 +16,7 @@
 
             <img class="post-image" :src="post.urlPhoto ? `http://localhost:8080/uploads/${post.urlPhoto}` : '/images/default_post_image.png'" :alt="post.content" />
 
-            <div class="post-actions">
+            <!-- <div class="post-actions">
               <button @click="toggleLike(post)" class="icon-button">
                 <span :style="{ color: post.liked ? 'red' : '#aaa' }">
                   {{ post.liked ? '❤️' : '♡' }}
@@ -25,9 +25,27 @@
               <button @click="toggleComment(post.id)" class="icon-button">
                 💬 コメント
               </button>
-            </div>
+            </div> -->
+            <div class="post-actions">
 
-            <p class="post-content">{{ post.content }}</p>
+        <button @click="toggleLike(post)" class="icon-button"
+          :class="{ liked: post.liked, animate: post.animateHeart }">
+          <span :style="{ color: post.liked ? 'red' : '#aaa' }">
+            {{ post.liked ? '❤️' : '♡' }}
+          </span>
+        </button>
+        <p>{{ post.good }} </p>
+        <button @click="toggleComment(post.id)" class="icon-button">
+          💬
+        </button>
+
+        <p v-if="Array.isArray(post.comments)">
+          {{ post.comments.length }}
+        </p>
+
+      </div>
+
+            <!-- <p class="post-content">{{ post.content }}</p> -->
 
             <div v-if="showComment[post.id]" class="comment-section">
               <div v-for="comment in post.comments" :key="comment.id" class="comment">
@@ -104,94 +122,81 @@ const closeModal = () => {
 };
 
 
-// --- いいね処理 (Timeline.vueからコピー) ---
-const toggleLike = async (postItem) => { // postという変数名が被るのでpostItemに
-  if (!userStore.id) {
-    alert('ログインしていません。いいねできません。');
-    return;
-  }
-  
-  // UIを先に更新
-  postItem.liked = !postItem.liked; 
-  try {
-    if (postItem.liked) {
-      await postStore.addGood(postItem.id);
-    } else {
-      await postStore.subGood(postItem.id);
+// いいね処理（API呼び出し付き）
+  const toggleLike = async (post) => {
+    if (!userStore.id) {
+      alert('ログインしていません。いいねできません。');
+      return;
     }
-    // いいね状態が変更されたら、親コンポーネントに通知するか、
-    // postStoreのデータを直接更新してUserProfileView側も同期させる（Pinia/Vuexの利点）
-    // 例: postStore.updatePostLikeStatus(postItem.id, postItem.liked); のようなアクション
-    // 今回はpostStoreが更新されるので、自動的にUserProfileView側も更新されることを期待
-  } catch (error) {
-    console.error("いいね処理中にエラー:", error);
-    alert("いいね処理中にエラーが発生しました。");
-    postItem.liked = !postItem.liked; // エラー時はUIを元に戻す
-  }
-};
-
-// --- コメント欄トグル (Timeline.vueからコピー) ---
-const toggleComment = (postId) => {
-  showComment[postId] = !showComment[postId];
-};
-
-// --- コメント送信 (Timeline.vueからコピー) ---
-const submitComment = async (postId) => {
-  if (!userStore.id) {
-    alert('ログインしていません。コメントできません。');
-    return;
-  }
-
-  const text = (newComments[postId] || '').trim();
-  if (!text) return alert('コメントを入力してください');
-  
-  try {
-    await postStore.addComment(postId, {
-      user: {
-        id: userStore.id,
-        userName: userStore.userName,
-        urlIcon: userStore.urlIcon
-      },
-      content: text,
-    }); 
-
-    newComments[postId] = ''; // コメントフォームクリア
-    alert('コメントを送信しました！');
-    
-    // コメント追加後、postStore.allPostsまたはUserProfileViewのuserPostsを再フェッチし、
-    // モーダル内のコメントリストを最新にする必要がある
-    // ここでは、モーダル内のpostオブジェクトのcomments配列を直接更新する方が効率的
-    // バックエンドがコメント送信時に最新のコメントリストを返してくれるのが理想
-    // もしくは、postStoreにfetchCommentsForPost(postId)のようなメソッドを用意し、それを呼び出す
-    
-    // Simplest approach: manually add the comment to the local post object
-    // Assuming backend returns success and doesn't need a full re-fetch for just this comment.
-    // If backend doesn't return the full comment object, you might need to adjust.
-    if (post.value && post.value.id === postId) {
-      if (!post.value.comments) {
-        post.value.comments = [];
+    try {
+      if (post.liked) {
+        post.good = Math.max(0, post.good - 1) // 最小0を保証
+        console.log("マイナスしたよ")
+        console.log(post.good)
+        await postStore.unGood(post.id)
+      } else {
+        post.good += 1
+        console.log("ぷらすしたよ")
+        console.log(post.good)
+        await postStore.good(post.id)
       }
-      // 通常、コメントIDはバックエンドが生成するので、ここでは仮のIDを使用
-      // 実際にはバックエンドからのレスポンスに含まれるIDを使うべき
-      post.value.comments.push({
-        id: Date.now(), // 仮のID
-        user: {
-          id: userStore.id,
-          userName: userStore.userName,
-          urlIcon: userStore.urlIcon
-        },
-        content: text,
-        createdAt: new Date().toISOString() // 仮の日付
-      });
+      //   if (post.liked) {
+      //   post.good += 1
+      //   await postStore.good(post.id)
+      // } else {
+      //    post.good = Math.max(0, post.good - 1) // 最小0を保証
+      //   await postStore.unGood(post.id)
+      // }
+    } catch (error) {
+      console.error("いいね処理中にエラー:", error);
+      alert("いいね処理中にエラーが発生しました。");
+      post.liked = !post.liked; // エラー時はUIを元に戻す
     }
 
-    // 必要であれば、親コンポーネント（UserProfileView）のデータも更新するイベントを発火
-    // emit('commentAdded', postId);
-  } catch (error) {
-    console.error("コメント送信中にエラー:", error);
-    alert("コメント送信中にエラーが発生しました。");
+    post.liked = !post.liked // UIを先に更新
+
+    // try {
+    //   if (post.liked) {
+    //     await postStore.good(postId)
+    //   } else {
+    //     await postStore.unGood(postId)
+    //   }
+    // } catch (error) {
+    //   console.error("いいね処理中にエラー:", error);
+    //   alert("いいね処理中にエラーが発生しました。");
+    //   post.liked = !post.liked; // エラー時はUIを元に戻す
+    // }
   }
-};
+
+  // コメント欄トグル
+  const toggleComment = (postId) => {
+    showComment[postId] = !showComment[postId]
+  }
+
+  // コメント送信
+  const submitComment = async (postId) => {
+    if (!userStore.id) {
+      alert('ログインしていません。コメントできません。');
+      return;
+    }
+
+    const text = (newComments[postId] || '').trim()
+    if (!text) return alert('コメントを入力してください')
+
+    try {
+      await postStore.addComment(postId, {
+        user: await userStore.getUser(userStore.id), // コメント送信時もgetUserを使用
+        content: text,
+      });
+
+      newComments[postId] = '' // コメントフォームクリア
+      alert('コメントを送信しました！');
+      await postStore.fetchAllPosts(); // コメント送信後、最新のコメントリストを反映するために再フェッチ
+    } catch (error) {
+      console.error("コメント送信中にエラー:", error);
+      alert("コメント送信中にエラーが発生しました。");
+    }
+  }
 </script>
 
 <style scoped>
