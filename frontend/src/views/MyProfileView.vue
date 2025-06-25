@@ -7,7 +7,7 @@
 
       <div class="profile-details-row">
         <div class="icon-container">
-          <img :src="displayIconUrl" alt="User Icon" class="profile-icon">
+          <img :src="userStore.urlIcon ? `http://localhost:8080/uploads/${userStore.urlIcon}` : defaultIcon" alt="User Icon" class="profile-icon">
         </div>
 
         <div class="right-of-icon-info">
@@ -40,8 +40,7 @@
     <main class="profile-content">
       <div class="posts-grid">
         <div v-for="post in userPosts" :key="post.id" class="post-thumbnail" @click="openModal(post)">
-          <img :src="post.urlPhoto || '/images/default_post_image.png'" :alt="post.content" class="post-image"
-            loading="lazy">
+          <img :src="post.urlPhoto ? `http://localhost:8080/uploads/${post.urlPhoto}` : '/images/default_post_image.png'" :alt="post.content" class="post-image" loading="lazy">
         </div>
 
         <div v-if="userPosts.length === 0 && !isLoading" class="no-posts-message">
@@ -76,10 +75,9 @@ const showModal = ref(false);
 const selectedPostObj = ref(null);
 
 const displayIconUrl = computed(() => {
-  if (userStore.urlIcon) {
-    return userStore.urlIcon;
-  }
-  return defaultIcon;
+  // ここでのdisplayIconUrlはuserStore.urlIconを直接使うように変更します
+  // テンプレート内で直接条件式を使うため、このcomputedプロパティの複雑さを減らします
+  return userStore.urlIcon; 
 });
 
 const postsCount = ref(0); // 初期値を0に設定
