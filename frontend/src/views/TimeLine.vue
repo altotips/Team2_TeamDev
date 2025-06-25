@@ -1,6 +1,7 @@
 <template>
   <div class="timeline">
     <div v-for="post in posts" :key="post.id" class="post-card">
+      
       <div class="post-header">
         <img class="user-icon" :src="`http://localhost:8080/uploads/${post.user.urlIcon}`" alt="User Icon" />
         
@@ -25,8 +26,9 @@
         </button>
 
         <p v-if="Array.isArray(post.comments)">
-  {{ post.commentList.length }} 件のコメント
-</p>
+          {{ post.comments.length }} 件のコメント
+        </p>
+        
       </div>
 
       <p class="post-content">{{ post.content }}</p>
@@ -72,6 +74,7 @@ const newComments = reactive({})
 // データ取得
 onMounted(async () => {
   await postStore.fetchAllPosts()
+  console.log(posts)
 })
 
 // いいね処理（API呼び出し付き）
