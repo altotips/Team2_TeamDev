@@ -114,7 +114,7 @@ async function fetchUserProfileData(userIdToFetch) {
   userPosts.value = [];
 
   try {
-    const response = await userStore.getUser(userIdToFetch);
+    const response = await userStore.getUser(userIdToFetch); // 対象ユーザーの基本情報を取得
 
     if (response && response.data) {
       const data = response.data;
@@ -124,14 +124,16 @@ async function fetchUserProfileData(userIdToFetch) {
       fullName.value = data.fullName || '';
       selfIntroduction.value = data.selfIntroduction || '';
 
-      displayedFollowingCount.value = data.followingCount !== undefined ? data.followingCount : 0;
+      // ★ ここで新しく追加した userStore.userFollowers(userId) を呼び出してフォロー人数を取得します
+      const targetUserFollowingList = await userStore.userFollowers(userIdToFetch);
+      displayedFollowingCount.value = targetUserFollowingList ? targetUserFollowingList.length : 0; // nullチェックも追加
 
       isMyProfile.value = (userStore.id === userIdToFetch);
-      isFollowing.value = loggedInUserIsFollowing.value;
+      // ログインユーザーが対象ユーザーをフォローしているかの判定（既存ロジック）
+      isFollowing.value = userStore.follows && userStore.follows.some(f => f.id === userIdToFetch);
 
       await postStore.fetchUserPosts(userIdToFetch);
       userPosts.value = postStore.userPosts;
-
       postsCount.value = userPosts.value.length;
 
     } else {
@@ -144,6 +146,42 @@ async function fetchUserProfileData(userIdToFetch) {
     isLoading.value = false;
   }
 }
+// async function fetchUserProfileData(userIdToFetch) {
+//   isLoading.value = true;
+//   error.value = null;
+//   userPosts.value = [];
+
+//   try {
+//     const response = await userStore.getUser(userIdToFetch);
+
+//     if (response && response.data) {
+//       const data = response.data;
+
+//       userName.value = data.userName || '';
+//       userIconUrl.value = data.urlIcon || '/images/default_profile_icon.png';
+//       fullName.value = data.fullName || '';
+//       selfIntroduction.value = data.selfIntroduction || '';
+
+//       displayedFollowingCount.value = data.followingCount !== undefined ? data.followingCount : 0;
+
+//       isMyProfile.value = (userStore.id === userIdToFetch);
+//       isFollowing.value = loggedInUserIsFollowing.value;
+
+//       await postStore.fetchUserPosts(userIdToFetch);
+//       userPosts.value = postStore.userPosts;
+
+//       postsCount.value = userPosts.value.length;
+
+//     } else {
+//       throw new Error(`ユーザーID '${userIdToFetch}' のデータが見つかりませんでした。`);
+//     }
+//   } catch (err) {
+//     error.value = err.message;
+//     console.error("Error fetching user profile:", err);
+//   } finally {
+//     isLoading.value = false;
+//   }
+// }
 
 const initiateFetch = async (userId) => {
   if (userId) {

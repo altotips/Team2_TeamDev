@@ -7,7 +7,7 @@
       <h2 class="followed-user-name">{{ currentUserName }}</h2>
     </div>
 
-    <h1 class="page-title">{{ listType === 'following' ? 'フォロー中一覧' : 'フォロワー一覧' }}</h1>
+    <h1 class="page-title">フォロー中一覧</h1>
 
     <div v-if="isLoading" class="loading-message">
       読み込み中...
@@ -18,7 +18,7 @@
     </div>
 
     <div v-else-if="usersInList.length === 0" class="no-follows-message">
-      {{ listType === 'following' ? 'まだ誰もフォローしていません。' : 'まだフォロワーがいません。' }}
+      まだ誰もフォローしていません。
     </div>
 
     <ul v-else class="follow-list">
@@ -50,75 +50,61 @@ const userStore = useUserStore();
 
 const isLoading = ref(false);
 const error = ref(null);
-const usersInList = ref([]); // フォローユーザー または フォロワーユーザー のリスト
-const currentUserName = ref(''); // 現在表示しているリストの所有者名
-const currentListOwnerId = ref(null); // 現在表示しているリストの所有者のID
-const listType = ref(''); // 'following' (フォロー中) または 'followers' (フォロワー)
+const usersInList = ref([]);
+const currentUserName = ref('');
+const currentListOwnerId = ref(null);
+const listType = ref(''); // 'following' のみになる想定
 
-// プロフィールページへの遷移
 const goToUserProfile = (userId) => {
-  // 現在表示しているプロフィールのユーザーと、クリックしたユーザーが同じであれば遷移しない
-  // これは主に /user/:userId パスで直接アクセスした場合を考慮
   if (route.params.userId && parseInt(route.params.userId) === userId) {
     return;
   }
   router.push(`/user/${userId}`);
 };
 
-// フォローリストのデータを取得する関数 (fetchUsersList にリネーム済)
 const fetchUsersList = async () => {
   isLoading.value = true;
-  error.value = null; // エラーをリセット
-  usersInList.value = []; // 表示リストをクリア
+  error.value = null;
+  usersInList.value = [];
 
-  // URLクエリパラメータから userId と type を取得
-  const routeUserId = parseInt(route.query.userId); // ★ route.params.userId ではなく route.query.userId を使う
-  const routeListType = route.query.type; // 'following' or 'followers'
+  const routeUserId = parseInt(route.query.userId);
+  const routeListType = route.query.type; // この値は常に 'following' になる想定
 
   try {
     let targetId = null;
 
-    // URLクエリパラメータに userId があればそれを使用
     if (!isNaN(routeUserId)) {
       targetId = routeUserId;
-      listType.value = routeListType || 'following'; // typeが指定されていなければデフォルトでfollowing
-    } 
-    // URLクエリパラメータに userId がなく、ログインしている場合は自分のリスト
-    else if (userStore.id) {
+      listType.value = 'following'; // 「フォロワー」リストは取得しないため、常に'following'
+    } else if (userStore.id) {
       targetId = userStore.id;
-      listType.value = 'following'; // 自分のページから遷移する際はフォロー中リストを想定
-    } 
-    // どちらのIDも特定できない場合
-    else {
+      listType.value = 'following';
+    } else {
       error.value = new Error('表示するユーザー情報が特定できません（ログインが必要です）。');
       currentUserName.value = '不明なユーザー';
       return;
     }
 
-    currentListOwnerId.value = targetId; // リストの所有者IDを保持
+    currentListOwnerId.value = targetId;
 
-    // ユーザー情報とリストを取得
-    const res = await userStore.getUser(targetId); // ユーザー情報を取得するAPIコール
-    if (res && res.data) {
-      // ★ ここで currentUserName を取得
-      currentUserName.value = res.data.userName || 'ユーザー';
-
-      // listType に応じて適切なリストを割り当てる
-      if (listType.value === 'following') {
-        // APIレスポンスに targetId のユーザーがフォローしているリストが含まれる前提
-        // 例: res.data.follows が Follows エンティティの配列の場合、toUser をマッピング
-        // もしAPIが直接ユーザーの配列を返すなら、res.data.follows など
-        usersInList.value = res.data.follows?.map(f => f.toUser) || []; // APIのレスポンス構造に合わせて調整
-      } else if (listType.value === 'followers') {
-        // APIレスポンスに targetId のユーザーのフォロワーリストが含まれる前提
-        usersInList.value = res.data.followers?.map(f => f.fromUser) || []; // APIのレスポンス構造に合わせて調整
-      } else {
-        error.value = new Error(`不明なリストタイプ: ${listType.value}`);
-      }
+    // ユーザー基本情報を取得
+    const userRes = await userStore.getUser(targetId);
+    if (userRes && userRes.data) {
+      currentUserName.value = userRes.data.userName || 'ユーザー';
     } else {
       error.value = new Error(`ユーザーID ${targetId} の情報が見つかりませんでした。`);
       currentUserName.value = 'ユーザー不明';
+      return;
     }
+
+    // ★ 常に 'userFollowers' を呼び出す
+    const listData = await userStore.userFollowers(targetId);
+    
+    // APIレスポンスの構造に合わせてマッピング
+    // listDataが { id, fromUser, toUser } の配列を返し、
+    // その中の toUser がフォローしているユーザー情報を持つ場合を想定
+    usersInList.value = listData?.map(f => f.toUser) || [];
+
   } catch (err) {
     console.error('ユーザーリストのフェッチ中にエラー:', err);
     error.value = err;
@@ -127,7 +113,6 @@ const fetchUsersList = async () => {
   }
 };
 
-// フォロー解除処理
 const unfollow = async (userIdToUnfollow) => {
   if (!userStore.id) {
     alert('ログインしていません。フォロー解除できません。');
@@ -141,27 +126,25 @@ const unfollow = async (userIdToUnfollow) => {
   if (success) {
     alert(`${userIdToUnfollow} 番のユーザーのフォローを解除しました。`);
     // フォロー解除後、表示しているリストが自分のフォローリストであれば再フェッチして更新
-    if (userStore.id === currentListOwnerId.value && listType.value === 'following') {
-      await fetchUsersList(); // 現在のリストを再フェッチ
+    if (userStore.id === currentListOwnerId.value) { // listTypeは常に'following'なので条件から外しました
+      await fetchUsersList();
     }
+    // ログインユーザーの follows プロパティも更新しておく
+    await userStore.followers(); 
   } else {
     alert('フォロー解除に失敗しました。');
   }
 };
 
-// コンポーネントがマウントされた時、またはURLパラメータが変更された時にリストをフェッチ
 watch(
-  () => [route.query.userId, route.query.type], // ★ route.params.userId ではなく route.query.userId を監視
-  async ([newUserId, newType], oldValues = []) => {
-    const [oldUserId, oldType] = oldValues;
-
-    // パラメータが実際に変更された場合にのみ再フェッチ
-    if (newUserId !== oldUserId || newType !== oldType) {
+  () => route.query.userId, // typeは常に'following'になるので、userIdのみを監視
+  async (newUserId, oldUserId) => {
+    if (newUserId !== oldUserId) {
       console.log("Watch triggered by query change. Fetching list...");
       await fetchUsersList();
     }
   },
-  { immediate: true } // コンポーネントが作成された直後にもウォッチャーを実行
+  { immediate: true }
 );
 </script>
 
