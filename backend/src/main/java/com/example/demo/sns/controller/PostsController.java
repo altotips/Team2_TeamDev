@@ -20,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.sns.entity.Posts;
 import com.example.demo.sns.entity.Users;
+import com.example.demo.sns.repository.CommentRepository;
 import com.example.demo.sns.repository.PostsRepository;
 import com.example.demo.sns.repository.UsersRepository;
 
@@ -37,7 +38,9 @@ public class PostsController {
 	private final PostsRepository postsrepository;
 	@Autowired
 	private final UsersRepository usersrepository;
-
+	@Autowired
+	private final CommentRepository commentrepository;
+	
 //	すべての投稿を取得
 	@GetMapping
 	public List<Posts> getAll() {
@@ -85,6 +88,8 @@ public class PostsController {
 //	{
 //		content : String
 //	}
+	
+	
 	@PostMapping("/{id}")
 	public Posts post(@PathVariable Long id,
 			@RequestParam("image") MultipartFile photo,
