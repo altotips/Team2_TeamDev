@@ -50,7 +50,7 @@ const cancel = () => {
     <!-- 左カラム：写真アップローダー -->
     <div class="left-column">
       <input type="file" @change="onFileChange" />
-      <!-- <img src="/hiyoko.jpg" alt="selectedFile" class="profile-icon"> -->
+      <!-- <img src="@/assets/images/hiyoko.jpg" alt="selectedFile" class="profile-icon"> -->
       <!-- <img :src="`http://localhost:8080/uploads/inu.png`" alt="投稿画像" /> -->
       <!-- <img src="@/assets/images/penguin.png" :src="selectedFile || '@/assets/images/penguin.png'" alt="selectedFile" class="profile-icon"> -->
       <img :src="previewFile" :alt="selectedFile" class="profile-icon" />
