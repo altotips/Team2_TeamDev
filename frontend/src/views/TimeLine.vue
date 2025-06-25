@@ -67,16 +67,21 @@
   const userStore = useUserStore()
 
   // 投稿リストは allPosts を使用。必要であれば postStore.followersPosts に差し替え可能
-  const posts = computed(() => postStore.allPosts)
+  const posts = computed(() => postStore.followersPosts)
 
   const showComment = reactive({})
   const newComments = reactive({})
 
   // データ取得
   onMounted(async () => {
-    await postStore.fetchAllPosts()
-    console.log(posts)
-  })
+  if (userStore.id) {
+    await postStore.fetchFollowersPosts()
+  }
+})
+
+
+
+
 
   // いいね処理（API呼び出し付き）
   const toggleLike = async (post) => {
