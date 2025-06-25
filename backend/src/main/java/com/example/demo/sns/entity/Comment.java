@@ -32,6 +32,10 @@ public class Comment {
 
 	@NotBlank
 	private String content;
+	
+	@NotBlank
+	@JoinColumn(name = "postId")
+	private int postId;
 }
 	
 	

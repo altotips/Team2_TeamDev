@@ -26,8 +26,8 @@
       </div>
 
       <div class="buttons">
-        <button type="submit">保存</button>
         <button type="button" class="cancel" @click="cancel">キャンセル</button>
+        <button type="submit">保存</button>
       </div>
     </form>
   </div>
