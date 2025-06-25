@@ -24,12 +24,14 @@
 import { ref } from 'vue'
 import { useUserStore } from '@/stores/userStore'
 import { useRouter } from 'vue-router'
+import { useToast } from '@/composables/useToast.js'
 
 const userNameOrMailAddress = ref('')
 const password = ref('')
 
 const userStore = useUserStore()
 const router = useRouter()
+const { showToastMessage } = useToast()
 
 const handleLogin = async () => {
   try {
@@ -38,13 +40,13 @@ const handleLogin = async () => {
       password: password.value,
     })
     if (!res) {
-      alert('ログインできませんでした。')
+      showToastMessage('ログインできませんでした。')
     } else {
-      alert('ログインできました。')
+      showToastMessage('ログインできました。')
       router.push('/MyProfile')
     }
   } catch (error) {
-    alert('ログインできませんでした。')
+    showToastMessage('ログインできませんでした。')
   }
 }
 </script>
