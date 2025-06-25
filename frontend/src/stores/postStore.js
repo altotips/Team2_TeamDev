@@ -32,14 +32,14 @@ export const usePostStore = defineStore(
     }
 
     // 1ユーザのフォローしているすべてのユーザの投稿をすべて取得し、followersPostsに保存
-    async function fetchFollowersPosts(id) {
+    async function fetchFollowersPosts() {
       try {
-        if (!id) {
-          console.log('idがない')
-          return
-        }
+        // if (!id) {
+        //   console.log('idがない')
+        //   return
+        // }
 
-        const res = await axios.get('/posts/users/' + id + 'follow')
+        const res = await axios.get('/posts/users/' + userStore.id + 'follow')
         // console.log('ret : ' + res)
         // console.log('ret : ' + res.data.length)
         if (followersPosts.value.length != res.data.length) {
@@ -178,10 +178,6 @@ export const usePostStore = defineStore(
         console.error('いいね解除に失敗:', err)
       }
     }
-
-  
-
-
 
     return {
       allPosts,

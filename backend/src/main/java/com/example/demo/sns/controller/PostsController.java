@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -29,6 +28,7 @@ import com.example.demo.sns.repository.FollowsRepository;
 import com.example.demo.sns.repository.PostsRepository;
 import com.example.demo.sns.repository.UsersRepository;
 
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import lombok.RequiredArgsConstructor;
 
 /*
@@ -55,7 +55,7 @@ public class PostsController {
 		if (response == null) {
 			System.out.println(1);
 		}
-		
+
 		return response;
 	}
 
@@ -135,11 +135,17 @@ public class PostsController {
 		return post;
 	}
 
-	@PutMapping("/{id}/unGood")
-	public Posts unGood(@PathVariable Long id) {
-		Posts post = postsrepository.findById(id).orElse(null);
-		post.setGood(post.getGood() - 1);
-		postsrepository.save(post);
-		return post;
+	// ユーザ検索
+	@GetMapping("/search/users")
+	public List<Users> saerchUsers(@RequestBody String searchStr) {
+		List<Users> users = usersrepository.findByUserNameContaining(searchStr);
+		return users;
+	}
+
+	// 投稿検索
+	@GetMapping("/search/posts")
+	public List<Posts> saerchPosts(@RequestBody String searchStr) {
+		List<Posts> posts = postsrepository.findByContentContaining(searchStr);
+		return posts;
 	}
 }
