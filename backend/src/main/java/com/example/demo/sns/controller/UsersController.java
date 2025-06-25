@@ -194,7 +194,7 @@ public class UsersController {
 			if (!dir.exists()) {
 				dir.mkdirs();
 			}
-			fileName = "http://localhost:8080/uploads/" + System.currentTimeMillis() + "_" + icon.getOriginalFilename();
+			fileName = System.currentTimeMillis() + "_" + icon.getOriginalFilename();
 			Path filePath = Paths.get(uploadDir, fileName);
 			Files.copy(icon.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 			user.setUrlIcon(fileName);
