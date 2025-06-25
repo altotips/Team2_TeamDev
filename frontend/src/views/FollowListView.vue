@@ -25,7 +25,7 @@
       <li v-for="user in usersInList" :key="user.id" class="follow-item">
         <div class="user-info" @click="goToUserProfile(user.id)">
           <div class="icon-container">
-            <img :src="user.urlIcon || '/images/default_profile_icon.png'" alt="User Icon" class="user-icon">
+            <img :src="user.urlIcon ? `http://localhost:8080/uploads/${user.urlIcon}` : '/images/default_profile_icon.png'" alt="User Icon" class="user-icon">
           </div>
           <div class="text-info">
             <span class="username">{{ user.userName }}</span>
