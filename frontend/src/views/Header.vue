@@ -28,6 +28,7 @@
     margin: 0 auto;
     width: 50%;
     /* 最小の幅 */
+    max-width: 600px;
     min-width: 600px;
     height: 60px;
     background-color: #f5f5f5;

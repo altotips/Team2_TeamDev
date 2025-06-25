@@ -42,8 +42,7 @@
     right: 0;
     margin: 0 auto;
     width: 100%;
-    max-width: 800px;
-    /* max-width: 935px; */
+    max-width: 600px;
     height: 60px;
     display: flex;
     justify-content: space-around;
@@ -53,7 +52,7 @@
     /* 横幅を親（container）に合わせる */
     width: 100%;
   }
-
+  
   /* .footer-nav {
     position: fixed;
     bottom: 0;
