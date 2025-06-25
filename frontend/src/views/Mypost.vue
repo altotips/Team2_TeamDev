@@ -7,8 +7,7 @@ import { useRouter } from 'vue-router'
 const postStore = usePostStore()
 const router = useRouter()
 
-// const selectedFile = ref('/assets/images/hiyoko.jpg')
-const selectedFile = ref('/assets/images/hiyoko.jpg')
+const selectedFile = ref(null)
 const previewFile = ref(null)
 const description = ref('')
 

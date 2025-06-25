@@ -34,6 +34,11 @@ export const usePostStore = defineStore(
     // 1ユーザのフォローしているすべてのユーザの投稿をすべて取得し、followersPostsに保存
     async function fetchFollowersPosts(id) {
       try {
+        if (!id) {
+          console.log('idがない')
+          return
+        }
+
         const res = await axios.get('/posts/users/' + id + 'follow')
         // console.log('ret : ' + res)
         // console.log('ret : ' + res.data.length)
@@ -59,7 +64,7 @@ export const usePostStore = defineStore(
         }
 
         const res = await axios.get(`/posts/users/${id}`)
-        console.log('res : ' + res.data)
+        console.log('my posts res : ' + res.data)
         // console.log('ret : ' + res.data.length)
         if (myPosts.value.length != res.data.length) {
           // 最新の投稿を上に表示するため、逆順にする
@@ -78,8 +83,10 @@ export const usePostStore = defineStore(
           if (userPosts.value.length > 0) {
             userPosts.value = []
           }
+          console.log('idがない')
           return
         }
+
         const res = await axios.get(`/posts/users/${id}`)
         // console.log(res.data.reverse())
         // console.log(1)
@@ -129,6 +136,49 @@ export const usePostStore = defineStore(
       }
     }
 
+    // いいねする
+    async function good(postId) {
+      try {
+        if (!postId) {
+          alert('どの投稿わからないよ')
+          return false
+        }
+
+        const res = await axios.patch(`/posts/${userStore.id}/good`, postData)
+        console.log('いいねしたよ')
+
+        return res
+        // if (res) {
+        //   return true
+        // } else {
+        //   return false
+        // }
+      } catch (err) {
+        console.error('ユーザーの投稿に失敗:', err)
+      }
+    }
+
+    // いいね解除
+    async function unGood(postId) {
+      try {
+        if (!postId) {
+          alert('どの投稿わからないよ')
+          return false
+        }
+
+        const res = await axios.patch(`/posts/${userStore.id}/ungood`, postData)
+        console.log('いいね解除')
+        return res
+        // if (res) {
+        //   return true
+        // } else {
+        //   return false
+        // }
+      } catch (err) {
+        console.error('ユーザーの投稿に失敗:', err)
+      }
+    }
+
     return {
       allPosts,
       followersPosts,
@@ -140,6 +190,8 @@ export const usePostStore = defineStore(
       fetchUserPosts,
       logout,
       post,
+      good,
+      unGood,
     }
   },
   // {

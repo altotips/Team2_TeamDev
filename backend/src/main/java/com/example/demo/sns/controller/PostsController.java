@@ -11,6 +11,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -70,15 +71,16 @@ public class PostsController {
 	}
 
 //	フォローユーザ全員の全投稿を取得
-//	@GetMapping("users/{id}")
-//	public List<Posts> getUserPosts(@PathVariable Long id) {
-//		Users user = usersrepository.findById(id).orElse(null);
-//		if (user == null || user.getDelFlag() == true) {
-//			return null;
-//		}
-//		List<Posts> posts = postsrepository.findByUsers(user);
-//		return posts;
-//	}
+	@GetMapping("users/{id}/follow")
+	public List<Posts> follwersPosts(@PathVariable Long id) {
+		Users user = usersrepository.findById(id).orElse(null);
+		if (user == null || user.getDelFlag() == true) {
+			return null;
+		}
+
+		List<Posts> posts = postsrepository.findByUser(user);
+		return posts;
+	}
 
 //	投稿を登録
 //	postするオブジェクトは
@@ -97,7 +99,11 @@ public class PostsController {
 			dir.mkdirs();
 		}
 
+<<<<<<< HEAD
 		String fileName = "http://localhost:8080/uploads/"+ System.currentTimeMillis() + "_" + photo.getOriginalFilename();
+=======
+		String fileName = System.currentTimeMillis() + "_" + photo.getOriginalFilename();
+>>>>>>> a59d041c1ea2a71635accb13cb6beb799a1acb8f
 		Path filePath = Paths.get(uploadDir, fileName);
 //		System.out.println(filePath);
 
@@ -109,6 +115,22 @@ public class PostsController {
 		post.setUser(user);
 		post.setUrlPhoto(fileName);
 		post.setContent(content);
+		postsrepository.save(post);
+		return post;
+	}
+
+	@PatchMapping("/{id}/good")
+	public Posts good(@PathVariable Long id) {
+		Posts post = postsrepository.findById(id).orElse(null);
+		post.setGood(post.getGood() + 1);
+		postsrepository.save(post);
+		return post;
+	}
+
+	@PatchMapping("/{id}/ungood")
+	public Posts unGood(@PathVariable Long id) {
+		Posts post = postsrepository.findById(id).orElse(null);
+		post.setGood(post.getGood() - 1);
 		postsrepository.save(post);
 		return post;
 	}

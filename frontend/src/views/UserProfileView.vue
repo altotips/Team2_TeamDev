@@ -2,6 +2,9 @@
   <div class="profile-page">
     <header class="profile-header">
       <div class="header-top">
+        <button class="back-button" @click="$router.go(-1)">
+          ＜
+        </button>
         <h1 class="username">{{ userName }}</h1>
       </div>
 
@@ -13,8 +16,9 @@
         <div class="right-of-icon-info">
           <div class="name-and-button">
             <div class="full-name">{{ fullName }}</div>
-            <button v-if="!isMyProfile" :class="['follow-button', { 'is-following': isFollowing }]" @click="toggleFollow">
-              {{ isFollowing ? 'フォロー中' : 'フォロー' }}
+            <button v-if="!isMyProfile" :class="['follow-button', { 'is-following': isFollowing }]"
+              @click="toggleFollow">
+              {{ followButtonText }}
             </button>
           </div>
 
@@ -24,8 +28,8 @@
               <span class="stat-label">投稿</span>
             </div>
             <div class="stat-item">
-              <span class="stat-value">{{ followingCount }}</span>
-              <router-link to="/followlist" class="stat-label-link">
+              <span class="stat-value">{{ displayedFollowingCount }}</span>
+              <router-link :to="`/followlist?userId=${targetUserId}&type=following`" class="stat-label-link">
                 <span class="stat-label">フォロー中</span>
               </router-link>
             </div>
@@ -38,78 +42,97 @@
 
     <main class="profile-content">
       <div class="posts-grid">
-        <div v-for="post in userPosts" :key="post.id" class="post-thumbnail">
-          <img :src="post.urlPhoto || '/images/default_post_image.png'" :alt="post.content" class="post-image">
+        <div v-if="isLoading" class="loading-message">
+          投稿を読み込み中...
         </div>
 
-        <div v-if="userPosts.length === 0 && !isLoading" class="no-posts-message">
+        <div v-else-if="error" class="error-message">
+          投稿の読み込み中にエラーが発生しました。: {{ error }}
+        </div>
+
+        <div v-else-if="userPosts.length === 0" class="no-posts-message">
           まだ投稿がありません。
         </div>
 
-        <div v-if="isLoading" class="loading-message">
-          読み込み中...
-        </div>
-
-        <div v-if="error" class="error-message">
-          プロフィールの読み込み中にエラーが発生しました。: {{ error }}
+        <div v-else class="image-grid">
+          <div v-for="post in userPosts" :key="post.id" class="image-item" @click="openModal(post)">
+            <img :src="post.urlPhoto || '/images/default_post_image.png'" :alt="post.content" class="post-image">
+          </div>
         </div>
       </div>
     </main>
   </div>
+
+  <ModalUserPostsView :show="showModal" :postData="selectedPostObj" @close="closeModal" />
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
-import { useRoute } from 'vue-router';
-import { useUserStore } from '@/stores/userStore.js'; 
+import { ref, watch, computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { useUserStore } from '@/stores/userStore.js';
+import { usePostStore } from '@/stores/postStore.js';
+import ModalUserPostsView from '@/views/ModalUserPostsView.vue';
 
 const route = useRoute();
+const router = useRouter();
 const userStore = useUserStore();
+const postStore = usePostStore();
 
-const targetUserId = ref(null); 
+const targetUserId = ref(null);
 
-const userName = ref(''); 
+const userName = ref('');
 const userIconUrl = ref('');
 const fullName = ref('');
 const selfIntroduction = ref('');
 const postsCount = ref(0);
-const followingCount = ref(0); // ★ この値にフォロー数を格納
 const isMyProfile = ref(false);
 const isFollowing = ref(false);
 const userPosts = ref([]);
+
 const isLoading = ref(true);
 const error = ref(null);
 
-async function fetchUserProfileData(userIdToFetch) { 
+const displayedFollowingCount = ref(0);
+
+const showModal = ref(false);
+const selectedPostObj = ref(null);
+
+const loggedInUserIsFollowing = computed(() => {
+  if (!userStore.id || !targetUserId.value || !userStore.follows) {
+    return false;
+  }
+  return userStore.follows.some(f => f.id === targetUserId.value);
+});
+
+const followButtonText = computed(() => {
+  return isFollowing.value ? 'フォロー中' : 'フォロー';
+});
+
+async function fetchUserProfileData(userIdToFetch) {
   isLoading.value = true;
   error.value = null;
+  userPosts.value = [];
+
   try {
-    // userStoreのgetUserアクションを呼び出し、特定のユーザー情報を取得
-    const response = await userStore.getUser(userIdToFetch); 
+    const response = await userStore.getUser(userIdToFetch);
 
     if (response && response.data) {
-      const data = response.data; // バックエンドから返されたユーザーデータ全体
+      const data = response.data;
 
-      userName.value = data.userName || ''; 
-      userIconUrl.value = data.urlIcon || '/images/default_profile_icon.png'; 
+      userName.value = data.userName || '';
+      userIconUrl.value = data.urlIcon || '/images/default_profile_icon.png';
       fullName.value = data.fullName || '';
       selfIntroduction.value = data.selfIntroduction || '';
-      
-      // バックエンドからのレスポンスに直接 postsCount が含まれることを優先し、
-      // なければ posts 配列の長さで計算
-      postsCount.value = data.postsCount !== undefined ? data.postsCount : (data.posts ? data.posts.length : 0); 
-      
-      // 【重要】followingCount を設定
-      // バックエンドからのレスポンスに直接 followingCount が含まれることを優先し、
-      // なければ follows 配列の長さで計算
-      followingCount.value = data.followingCount !== undefined ? data.followingCount : (data.follows ? data.follows.length : 0); 
-      
-      userPosts.value = data.posts || []; 
-      
+
+      displayedFollowingCount.value = data.followingCount !== undefined ? data.followingCount : 0;
+
       isMyProfile.value = (userStore.id === userIdToFetch);
-      // userStore.follows はログインユーザーがフォローしているリスト
-      // その中に現在表示しているユーザーのID (userIdToFetch) が含まれているかを確認
-      isFollowing.value = userStore.follows && userStore.follows.some(f => f.id === userIdToFetch);
+      isFollowing.value = loggedInUserIsFollowing.value;
+
+      await postStore.fetchUserPosts(userIdToFetch);
+      userPosts.value = postStore.userPosts;
+
+      postsCount.value = userPosts.value.length;
 
     } else {
       throw new Error(`ユーザーID '${userIdToFetch}' のデータが見つかりませんでした。`);
@@ -122,66 +145,88 @@ async function fetchUserProfileData(userIdToFetch) {
   }
 }
 
-onMounted(async () => {
-  const idFromRoute = parseInt(route.params.userId); 
-
-  if (!isNaN(idFromRoute)) {
-    targetUserId.value = idFromRoute;
+const initiateFetch = async (userId) => {
+  if (userId) {
+    targetUserId.value = userId;
     await fetchUserProfileData(targetUserId.value);
   } else {
-    if (userStore.id) { 
-        targetUserId.value = userStore.id;
-        isMyProfile.value = true;
-        await fetchUserProfileData(targetUserId.value);
-    } else {
-        error.value = "有効なユーザーIDが指定されていないか、ログインしていません。";
-        isLoading.value = false;
-    }
+    error.value = "有効なユーザーIDが指定されていないか、ログインしていません。";
+    isLoading.value = false;
   }
-});
+};
 
-watch(() => route.params.userId, async (newUserId) => {
-  const id = parseInt(newUserId);
-  if (!isNaN(id) && id !== targetUserId.value) {
-    targetUserId.value = id;
-    await fetchUserProfileData(targetUserId.value);
-  }
-});
+watch(
+  () => [route.params.userId, userStore.id],
+  async ([newRouteUserId, newUserStoreId]) => {
+    let idToFetch = null;
+    const routeIdNum = parseInt(newRouteUserId);
+
+    if (!isNaN(routeIdNum) && routeIdNum > 0) {
+      idToFetch = routeIdNum;
+    }
+    else if (newUserStoreId && newUserStoreId > 0) {
+      idToFetch = newUserStoreId;
+    }
+
+    if (idToFetch && idToFetch !== targetUserId.value) {
+      console.log("Watch triggered by ID change. Fetching user profile for:", idToFetch);
+      await initiateFetch(idToFetch);
+    }
+    else if (!idToFetch && !targetUserId.value && !error.value) {
+      error.value = "有効なユーザーIDが指定されていないか、ログインしていません。";
+      isLoading.value = false;
+    }
+  },
+  { immediate: true }
+);
+
+watch(
+  loggedInUserIsFollowing,
+  (newValue) => {
+    isFollowing.value = newValue;
+  },
+  { immediate: true }
+);
 
 const toggleFollow = async () => {
-    if (!userStore.id) { 
-        alert('ログインしていません。フォローできません。');
-        return;
-    }
-    if (!targetUserId.value) return;
+  if (!userStore.id) {
+    alert('ログインしていません。フォローできません。');
+    return;
+  }
+  if (!targetUserId.value) return;
 
-    try {
-        if (isFollowing.value) {
-            const success = await userStore.unfollow(targetUserId.value); 
-            if (success) {
-                isFollowing.value = false;
-            } else {
-                alert('フォロー解除に失敗しました。');
-            }
-        } else {
-            const success = await userStore.follow(targetUserId.value); 
-            if (success) {
-                isFollowing.value = true;
-            } else {
-                alert('フォローに失敗しました。');
-            }
-        }
-        // フォロー/アンフォロー後にプロフィール情報を再フェッチして、最新のフォロー数などを反映
-        await fetchUserProfileData(targetUserId.value);
-    } catch (err) {
-        console.error('フォロー処理中にエラー:', err);
-        alert('フォロー処理中にエラーが発生しました。');
+  try {
+    if (isFollowing.value) {
+      const success = await userStore.unfollow(targetUserId.value);
+      if (!success) {
+        alert('フォロー解除に失敗しました。');
+      }
+    } else {
+      const success = await userStore.follow(targetUserId.value);
+      if (!success) {
+        alert('フォローに失敗しました。');
+      }
     }
+    await fetchUserProfileData(targetUserId.value);
+  } catch (err) {
+    console.error('フォロー処理中にエラー:', err);
+    alert('フォロー処理中にエラーが発生しました。');
+  }
+};
+
+const openModal = (post) => {
+  selectedPostObj.value = post;
+  showModal.value = true;
+};
+
+const closeModal = () => {
+  showModal.value = false;
+  selectedPostObj.value = null;
 };
 </script>
 
+
 <style scoped>
-/* スタイルは以前の提案と同じで変更なし */
 .profile-page {
   max-width: 935px;
   margin: 0 auto;
@@ -193,12 +238,21 @@ const toggleFollow = async () => {
   margin-bottom: 44px;
 }
 
-/* ユーザーネームのトップエリア */
 .header-top {
   display: flex;
   align-items: center;
-  justify-content: flex-start; /* 左寄せ */
-  margin-bottom: 20px; /* アイコン行との間隔 */
+  justify-content: flex-start;
+  margin-bottom: 20px;
+}
+
+.back-button {
+  background-color: transparent;
+  border: none;
+  color: #262626;
+  font-size: 24px;
+  margin-right: 15px;
+  cursor: pointer;
+  padding: 0;
 }
 
 .username {
@@ -210,12 +264,11 @@ const toggleFollow = async () => {
   text-overflow: ellipsis;
 }
 
-/* アイコンと右側情報の横並びコンテナ */
 .profile-details-row {
   display: flex;
-  align-items: flex-start; /* アイコンと右側の情報の高さを上揃え */
-  margin-bottom: 20px; /* 自己紹介との間隔 */
-  gap: 80px; /* アイコンと右側情報の間隔 */
+  align-items: flex-start;
+  margin-bottom: 20px;
+  gap: 80px;
 }
 
 .icon-container {
@@ -235,23 +288,19 @@ const toggleFollow = async () => {
   object-fit: cover;
 }
 
-/* アイコン右側の情報すべてをまとめるコンテナ */
 .right-of-icon-info {
-  flex-grow: 1; /* 残りのスペースを埋める */
+  flex-grow: 1;
   display: flex;
-  flex-direction: column; /* フルネーム、ボタン、統計情報を縦に並べる */
-  justify-content: center; /* 垂直方向の中央寄せ（アイコンとのバランスのため） */
-  min-height: 150px; /* アイコンの高さに合わせる */
+  flex-direction: column;
+  justify-content: center;
+  min-height: 150px;
 }
 
-/* フルネームとフォローボタンの横並びコンテナ */
 .name-and-button {
   display: flex;
-  align-items: center; /* 垂直中央揃え */
-  /* ここを修正: margin-bottom を増やす */
-  margin-bottom: 30px; /* 統計情報との間隔を広げた */
-  /* ここを修正: gap を増やす */
-  gap: 30px; /* フルネームとボタンの間隔を広げた */
+  align-items: center;
+  margin-bottom: 30px;
+  gap: 30px;
 }
 
 .full-name {
@@ -281,12 +330,11 @@ const toggleFollow = async () => {
 
 .user-stats {
   display: flex;
-  justify-content: flex-start; /* 左寄せ */
-  /* ここを修正: gap を増やす */
-  gap: 60px; /* 統計項目間の間隔を広げた */
+  justify-content: flex-start;
+  gap: 60px;
   font-size: 16px;
   text-align: left;
-  margin-bottom: 20px; /* 自己紹介との間隔 */
+  margin-bottom: 20px;
 }
 
 .stat-item {
@@ -310,7 +358,7 @@ const toggleFollow = async () => {
   font-size: 15px;
   line-height: 1.5;
   white-space: pre-wrap;
-  margin-bottom: 20px; /* 投稿グリッドとの間隔 */
+  margin-bottom: 20px;
 }
 
 .profile-content {
@@ -318,36 +366,42 @@ const toggleFollow = async () => {
   padding-top: 20px;
 }
 
-.posts-grid {
+/* 投稿グリッドのコンテナ */
+.image-grid { /* posts-grid の中身をこちらに合わせる */
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 28px;
 }
 
-.post-thumbnail {
+/* 各投稿アイテムのコンテナ */
+.image-item {
   width: 100%;
-  padding-top: 100%;
+  padding-top: 100%; /* アスペクト比を1:1に保つ */
   position: relative;
   overflow: hidden;
-  background-color: #eee;
+  background-color: #eee; /* 画像読み込み中の背景色 */
 }
 
-.post-image {
+/* 投稿画像そのもの */
+.image-item .post-image { /* .image-item の中の .post-image を指定 */
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: cover; /* 画像がボックスに収まるようにトリミング */
 }
 
-.no-posts-message, .loading-message {
-  grid-column: 1 / -1;
+.no-posts-message,
+.loading-message,
+.error-message { /* エラーメッセージも中央揃えにするため追加 */
+  grid-column: 1 / -1; /* グリッド全体に広がるように */
   text-align: center;
   padding: 50px;
   color: #8e8e8e;
   font-size: 18px;
 }
+
 
 /* レスポンシブ対応 */
 @media (max-width: 768px) {
@@ -356,28 +410,31 @@ const toggleFollow = async () => {
     align-items: center;
     gap: 20px;
   }
+
   .icon-container {
     width: 100px;
     height: 100px;
   }
+
   .right-of-icon-info {
     align-items: center;
     min-height: auto;
   }
+
   .name-and-button {
     justify-content: center;
     flex-wrap: wrap;
-    /* レスポンシブでも少し間隔を広げる */
     gap: 20px;
-    margin-bottom: 20px; /* レスポンシブでの間隔も調整 */
+    margin-bottom: 20px;
   }
+
   .user-stats {
     justify-content: space-around;
     width: 100%;
-    /* レスポンシブでも少し間隔を広げる */
     gap: 40px;
   }
-  .posts-grid {
+
+  .image-grid { /* posts-grid の中身をこちらに合わせる */
     gap: 10px;
   }
 }

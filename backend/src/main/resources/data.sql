@@ -4,7 +4,7 @@
 --('管理者');
 
 -- ユーザーテーブル INSERT --
-INSERT INTO Users (
+INSERT INTO users (
     url_icon, full_name, user_name, email, password, salt, self_introduction
 ) VALUES
 ('http://localhost:8080/uploads/default_icon.png', 'かんりしゃさん', 'admin_san', 'admin@example.com', 'd3a8ed876ec9c01c6073e5670532b008eb876db669f3741d4c6a26303a7f2c83', '1', 'システムを管理する者です。どうぞよろしくお願いいたします。'),
