@@ -11,16 +11,27 @@
       </RouterLink>
 
       <RouterLink to="/MyProfile" class="nav-item">
-        <span class="icon">〇</span>
+        <img :src="`http://localhost:8080/uploads/${iconUrl}`" alt="My Icon" class="footer-icon" />
+        <!-- <span class="icon">〇</span> -->
       </RouterLink>
     </div>
   </footer>
 </template>
 
-<script>
-  export default {
-    name: 'Footer'
-  }
+<script setup>
+  import { useUserStore } from '@/stores/userStore'
+  import { computed } from 'vue'
+  import defaultIcon from '@/images/default_icon.png' // 画像が public にない場合は import
+
+  const userStore = useUserStore()
+  // 表示用のアイコンURLを computed で作成
+  const iconUrl = computed(() => {
+    return userStore.urlIcon || defaultIcon
+  })
+
+  // export default {
+  //   name: 'Footer'
+  // }
 </script>
 
 <style scoped>
@@ -79,5 +90,14 @@
 
   .icon {
     font-size: 24px;
+  }
+
+  .footer-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid white;
+    /* 任意で枠を付けたい場合 */
   }
 </style>

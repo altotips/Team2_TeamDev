@@ -23,7 +23,7 @@
 <style scoped>
   .container {
     /* position: relative; */
-    max-width: 800px;
+    max-width: 50%;
     width: 100%;
     margin: 0 auto;
     /* 中央に寄せる */
@@ -35,5 +35,6 @@
   .app-main {
     min-height: 60vh;
     /* 中身が少なすぎても高さ保つ */
+    padding-top: 60px;
   }
 </style>
