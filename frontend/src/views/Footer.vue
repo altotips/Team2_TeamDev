@@ -4,6 +4,10 @@
       <span class="icon">⌂</span>
     </RouterLink>
 
+    <RouterLink to="/Search" class="nav-item">
+      <img src="@/assets/images/image.png" alt="検索" class="search_icon" />
+    </RouterLink>
+
     <RouterLink to="/post" class="nav-item">
       <span class="icon">＋</span>
     </RouterLink>
@@ -45,4 +49,12 @@ export default {
 .icon {
   font-size: 24px;
 }
+
+.search_icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  vertical-align: middle;
+}
+
 </style>
