@@ -7,8 +7,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -30,6 +32,7 @@ import com.example.demo.sns.entity.Users;
 import com.example.demo.sns.repository.CommentRepository;
 import com.example.demo.sns.repository.FollowsRepository;
 import com.example.demo.sns.repository.PostsRepository;
+import com.example.demo.sns.repository.TagsRepository;
 import com.example.demo.sns.repository.UsersRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -50,6 +53,8 @@ public class PostsController {
 	private final CommentRepository commentrepository;
 	@Autowired
 	private final FollowsRepository followsrepository;
+	@Autowired
+	private final TagsRepository tagsrepository;
 
 	//	すべての投稿を取得
 	@GetMapping
@@ -97,14 +102,20 @@ public class PostsController {
 			List<Posts> userPosts = postsrepository.findByUser(user);
 			posts.addAll(userPosts);
 		}
-		return posts;
+		posts.addAll(postsrepository.findByUser(me));
+		List<Posts> sortedPosts = posts.stream()
+				.sorted(Comparator.comparing(Posts::getId)) // 昇順
+				.collect(Collectors.toList());
+		return sortedPosts;
 	}
 
-	//	コメントのを登録
+	// 投稿を登録
 	@PostMapping("/{id}")
 	public Posts post(@PathVariable Long id,
 			@RequestParam("image") MultipartFile photo,
-			@RequestParam("content") String content) throws IOException {
+			@RequestParam("content") String content
+//			@RequestParam("tags") List<String> tagsReq
+	) throws IOException {
 
 		// ファイルの保存
 		String uploadDir = "./uploads/";
@@ -119,12 +130,19 @@ public class PostsController {
 
 		Files.copy(photo.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
+		// タグを取得または作成
+//		List<Tag> tags = tagsReq.stream()
+//				.map(tagName -> tagRepository.findByName(tagName)
+//						.orElseGet(() -> tagRepository.save(new Tag(null, tagName, new ArrayList<>()))))
+//				.collect(Collectors.toList());
+
 		// ここからデータべースにファイル名を保存
 		Posts post = new Posts();
 		Users user = usersrepository.findById(id).orElse(null);
 		post.setUser(user);
 		post.setUrlPhoto(fileName);
 		post.setContent(content);
+//		post.setTags(tags);
 		postsrepository.save(post);
 		return post;
 	}
@@ -149,14 +167,14 @@ public class PostsController {
 
 	// ユーザ検索
 	@GetMapping("/search/users")
-	public List<Users> saerchUsers(@RequestBody String searchStr) {
+	public List<Users> saerchUsers(@RequestParam String searchStr) {
 		List<Users> users = usersrepository.findByUserNameContaining(searchStr);
 		return users;
 	}
 
 	// 投稿検索
 	@GetMapping("/search/posts")
-	public List<Posts> saerchPosts(@RequestBody String searchStr) {
+	public List<Posts> saerchPosts(@RequestParam String searchStr) {
 		List<Posts> posts = postsrepository.findByContentContaining(searchStr);
 		return posts;
 	}

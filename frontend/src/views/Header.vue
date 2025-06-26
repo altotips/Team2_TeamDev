@@ -22,13 +22,15 @@
   import { computed, ref } from 'vue'
   import { useRouter } from 'vue-router'
   import { onMounted, onBeforeUnmount } from 'vue'
+  import { useUserStore } from '@/stores/userStore'
+  import { computed } from 'vue'
 
-  export default {
-    name: 'Header',
-    setup() {
-      const userStore = useUserStore()
-      const userName = computed(() => userStore.userName)
-      const showMenu = ref(false)
+    export default {
+      name: 'Header',
+      setup() {
+        const userStore = useUserStore()
+        const userName = computed(() => userStore.userName)
+        const showMenu = ref(false)
       const router = useRouter()
 
       const toggleMenu = () => {
@@ -72,64 +74,32 @@
         goToFollow,
         goToRecommend,
       }
-    },
-  }
+      },
+    }
 </script>
 
-<style scoped>
-  .header {
-    height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background-color: #f5f5f5;
-    border-bottom: 1px solid #ccc;
-    padding: 0 20px;
-    position: relative;
-  }
+<style>
+.header {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* 左右に要素を振り分け */
+  background-color: #f5f5f5;
+  border-bottom: 1px solid #ccc;
+  padding: 0 20px; /* 左右に余白をつける */
+}
 
-  .title {
-    font-family: 'Dancing Script', cursive;
-    font-size: 30px;
-    font-weight: bold;
-    margin-left: 30px;
-    cursor: pointer;
-    user-select: none;
-  }
+/* 左端に配置 */
+.title {
+  font-family: 'Dancing Script', cursive;
+  font-size: 30px;
+  font-weight: bold;
+  margin-left: 30px;  /* 左に隙間 */
+}
 
-  .username {
-    font-size: 18px;
-    color: #333;
-    margin-right: 30px;
-  }
-
-  .dropdown {
-    position: absolute;
-    top: 60px;
-    left: 30px;
-    background-color: #ffffff;
-    border-radius: 12px;
-    border: 1px solid #ddd;
-    width: 160px;
-  }
-
-  .dropdown-menu {
-    list-style: none;
-    margin: 0;
-    padding: 8px 0;
-    border-radius: 12px;
-  }
-
-  .dropdown-menu li {
-    padding: 10px 16px;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-    font-size: 15px;
-    color: #333;
-  }
-
-  .dropdown-menu li:hover {
-    background-color: #f0f0f0;
-    border-radius: 8px;
-  }
+.username {
+  font-size: 18px;
+  color: #333;
+  margin-right: 30px; /* 右に隙間 */
+}
 </style>

@@ -7,7 +7,8 @@
 
       <div class="profile-details-row">
         <div class="icon-container">
-          <img :src="userStore.urlIcon ? `http://localhost:8080/uploads/${userStore.urlIcon}` : defaultIcon" alt="User Icon" class="profile-icon">
+          <img :src="userStore.urlIcon ? `http://localhost:8080/uploads/${userStore.urlIcon}` : defaultIcon"
+            alt="User Icon" class="profile-icon">
         </div>
 
         <div class="right-of-icon-info">
@@ -74,39 +75,39 @@ import defaultIcon from '@/assets/images/default_icon.png';
 // モーダルコンポーネントをインポート
 import ModalUserPostsView from '@/views/ModalUserPostsView.vue';
 
-const router = useRouter();
-const userStore = useUserStore();
-const postStore = usePostStore();
+  const router = useRouter();
+  const userStore = useUserStore();
+  const postStore = usePostStore();
 
-// モーダルの表示状態と選択された投稿データを管理するrefを追加
-const showModal = ref(false);
-const selectedPostObj = ref(null);
+  // モーダルの表示状態と選択された投稿データを管理するrefを追加
+  const showModal = ref(false);
+  const selectedPostObj = ref(null);
 
 // displayIconUrl は userStore.urlIcon を直接使用するため、不要
 // const displayIconUrl = computed(() => {
 //   return userStore.urlIcon;
 // });
 
-const postsCount = ref(0); // 初期値を0に設定
-const followingCount = ref(0); // 初期値を0に設定
-const userPosts = ref([]); // 初期値を空の配列に設定
+  const postsCount = ref(0); // 初期値を0に設定
+  const followingCount = ref(0); // 初期値を0に設定
+  const userPosts = ref([]); // 初期値を空の配列に設定
 
-const isLoading = ref(false);
+  const isLoading = ref(false);
 
-const editProfile = () => {
-  router.push('/ProfileEdit'); // プロフィール編集画面へ遷移
-};
+  const editProfile = () => {
+    router.push('/ProfileEdit'); // プロフィール編集画面へ遷移
+  };
 
-const logout = async () => {
-  console.log('ログアウト処理を実行します');
+  const logout = async () => {
+    console.log('ログアウト処理を実行します');
 
-  const success = await userStore.logout();
-  if (success) {
-    router.push('/'); // ログイン画面に遷移
-  } else {
-    alert('ログアウトに失敗しました');
-  }
-};
+    const success = await userStore.logout();
+    if (success) {
+      router.push('/'); // ログイン画面に遷移
+    } else {
+      alert('ログアウトに失敗しました');
+    }
+  };
 
 onMounted(
   async () => {
@@ -146,82 +147,91 @@ onMounted(
   }
 );
 
-// モーダルを開く関数
-const openModal = (post) => {
-  selectedPostObj.value = post; // クリックされた投稿データをセット
-  showModal.value = true; // モーダルを表示
-};
+  // モーダルを開く関数
+  const openModal = (post) => {
+    selectedPostObj.value = post; // クリックされた投稿データをセット
+    showModal.value = true; // モーダルを表示
+  };
 
-// モーダルを閉じる関数
-const closeModal = () => {
-  showModal.value = false; // モーダルを非表示
-  selectedPostObj.value = null; // 選択された投稿データをクリア
-};
+  // モーダルを閉じる関数
+  const closeModal = () => {
+    showModal.value = false; // モーダルを非表示
+    selectedPostObj.value = null; // 選択された投稿データをクリア
+  };
 </script>
 
 <style scoped>
-/* スタイルは以前の提案と同じで変更なし */
-.profile-page {
-  max-width: 935px;
-  margin: 0 auto;
-  padding: 30px 20px;
-  box-sizing: border-box;
-}
+  /* スタイルは以前の提案と同じで変更なし */
+  .profile-page {
+    max-width: 935px;
+    margin: 0 auto;
+    padding: 5px 20px 10px 20px;
+    box-sizing: border-box;
+  }
 
-.profile-header {
-  margin-bottom: 44px;
-}
+  .profile-header {
+    margin-bottom: 44px;
+  }
 
-/* ユーザーネームのトップエリア */
-.header-top {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start; /* 左寄せ */
-  margin-bottom: 20px; /* アイコン行との間隔 */
-}
+  /* ユーザーネームのトップエリア */
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    /* 左寄せ */
+    margin-bottom: 20px;
+    /* アイコン行との間隔 */
+  }
 
-.username {
-  font-size: 28px;
-  font-weight: 300;
-  margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+  .username {
+    font-size: 28px;
+    font-weight: 300;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 
-/* アイコンと右側情報の横並びコンテナ */
-.profile-details-row {
-  display: flex;
-  align-items: flex-start; /* アイコンと右側の情報の高さを上揃え */
-  margin-bottom: 20px; /* 自己紹介との間隔 */
-  gap: 80px; /* アイコンと右側情報の間隔 */
-}
+  /* アイコンと右側情報の横並びコンテナ */
+  .profile-details-row {
+    display: flex;
+    align-items: flex-start;
+    /* アイコンと右側の情報の高さを上揃え */
+    margin-bottom: 20px;
+    /* 自己紹介との間隔 */
+    gap: 80px;
+    /* アイコンと右側情報の間隔 */
+  }
 
-.icon-container {
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
-  overflow: hidden;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-shrink: 0;
-}
+  .icon-container {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+  }
 
-.profile-icon {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
+  .profile-icon {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 
-/* アイコン右側の情報すべてをまとめるコンテナ */
-.right-of-icon-info {
-  flex-grow: 1; /* 残りのスペースを埋める */
-  display: flex;
-  flex-direction: column; /* フルネーム、ボタン、統計情報を縦に並べる */
-  justify-content: center; /* 垂直方向の中央寄せ（アイコンとのバランスのため） */
-  min-height: 150px; /* アイコンの高さに合わせる */
-}
+  /* アイコン右側の情報すべてをまとめるコンテナ */
+  .right-of-icon-info {
+    flex-grow: 1;
+    /* 残りのスペースを埋める */
+    display: flex;
+    flex-direction: column;
+    /* フルネーム、ボタン、統計情報を縦に並べる */
+    justify-content: center;
+    /* 垂直方向の中央寄せ（アイコンとのバランスのため） */
+    min-height: 150px;
+    /* アイコンの高さに合わせる */
+  }
 
 /* フルネームとフォローボタンの横並びコンテナ */
 .name-and-button {
@@ -231,11 +241,11 @@ const closeModal = () => {
   gap: 30px; /* フルネームとボタンの間隔を広げた */
 }
 
-.full-name {
-  font-weight: bold;
-  font-size: 16px;
-  margin: 0;
-}
+  .full-name {
+    font-weight: bold;
+    font-size: 16px;
+    margin: 0;
+  }
 
 .follow-button { /* このボタンは今回は使われていませんが、既存CSSを残します */
   background-color: #0095f6;
@@ -265,17 +275,17 @@ const closeModal = () => {
   margin-bottom: 20px; /* 自己紹介との間隔 */
 }
 
-.stat-item {
-  display: flex;
-  flex-direction: row;
-  align-items: baseline;
-  gap: 5px;
-}
+  .stat-item {
+    display: flex;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 5px;
+  }
 
-.stat-value {
-  font-weight: bold;
-  font-size: 18px;
-}
+  .stat-value {
+    font-weight: bold;
+    font-size: 18px;
+  }
 
 .stat-label {
   color: #8e8e8e;
@@ -292,23 +302,24 @@ const closeModal = () => {
   text-decoration: underline;
 }
 
-.self-introduction {
-  font-size: 15px;
-  line-height: 1.5;
-  white-space: pre-wrap;
-  margin-bottom: 20px; /* 投稿グリッドとの間隔 */
-}
+  .self-introduction {
+    font-size: 15px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    margin-bottom: 20px;
+    /* 投稿グリッドとの間隔 */
+  }
 
-.profile-content {
-  border-top: 1px solid #dbdbdb;
-  padding-top: 20px;
-}
+  .profile-content {
+    border-top: 1px solid #dbdbdb;
+    padding-top: 20px;
+  }
 
-.posts-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 28px;
-}
+  .posts-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 28px;
+  }
 
 .post-thumbnail {
   width: 100%;
@@ -371,35 +382,37 @@ const closeModal = () => {
 /* --- 追加CSSここまで --- */
 
 
-.no-posts-message, .loading-message {
-  grid-column: 1 / -1;
-  text-align: center;
-  padding: 50px;
-  color: #8e8e8e;
-  font-size: 18px;
-}
-.my-profile-buttons {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
+  .no-posts-message,
+  .loading-message {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 50px;
+    color: #8e8e8e;
+    font-size: 18px;
+  }
 
-.edit-profile-button,
-.logout-button {
-  background-color: #fff;
-  color: #262626;
-  border: 1px solid #dbdbdb;
-  border-radius: 8px;
-  padding: 7px 16px;
-  font-size: 14px;
-  font-weight: bold;
-  cursor: pointer;
-}
+  .my-profile-buttons {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
 
-.edit-profile-button:hover,
-.logout-button:hover {
-  background-color: #fafafa;
-}
+  .edit-profile-button,
+  .logout-button {
+    background-color: #fff;
+    color: #262626;
+    border: 1px solid #dbdbdb;
+    border-radius: 8px;
+    padding: 7px 16px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  .edit-profile-button:hover,
+  .logout-button:hover {
+    background-color: #fafafa;
+  }
 
 
 /* レスポンシブ対応 */

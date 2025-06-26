@@ -60,7 +60,6 @@
   import { ref, reactive, computed, onMounted } from 'vue'
   import { usePostStore } from '@/stores/postStore'
   import { useUserStore } from '@/stores/userStore'
-  import axios from 'axios'
 
   // ストア読み込み
   const postStore = usePostStore()
@@ -74,10 +73,14 @@
 
   // データ取得
   onMounted(async () => {
-    if (userStore.id) {
-      await postStore.fetchFollowersPosts()
-    }
-  })
+  if (userStore.id) {
+    await postStore.fetchFollowersPosts()
+  }
+})
+
+
+
+
 
   // いいね処理（API呼び出し付き）
   const toggleLike = async (post) => {
@@ -196,12 +199,10 @@
     border: 1px solid #ddd;
     border-radius: 8px;
     max-width: 500px;
-    margin: 20px auto;
+    margin: 10px auto;
     background: white;
     padding: 12px;
   }
-
-
 
   .post-header {
     display: flex;
@@ -267,27 +268,8 @@
     padding: 4px 10px;
   }
 
-  .timeline {
+  /* .timeline {
     padding-bottom: 60px;
 
   }
-
-.no-posts-message {
-  display: flex;
-  justify-content: center;  /* 横中央 */
-  align-items: center;      /* 縦中央 */
-  height: 80vh;             /* 画面高さの60%に */
-  margin: 50 auto;
-  font-size: 1.5rem;
-  color: #777;
-  /* background: #f0f0f0; */
-  border-radius: 12px;
-  /* padding: 40px 40px; */
-  /* box-shadow: 0 4px 12px rgba(0,0,0,0.1); */
-  /* max-width: 400px; */
-  text-align: center;
-  font-weight: 600;
-  user-select: none;        /* うっかりテキスト選択防止 */
-}
-
 </style>
