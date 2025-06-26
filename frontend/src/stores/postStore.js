@@ -178,8 +178,12 @@ export const usePostStore = defineStore(
     }
 
     //コメント追加
-    async function addComment(postId, user, content) {
-      await axios.post(`/api/posts/${postId}/comments`, comment)
+    async function addComment(postId, {content:text}
+    ) {
+      console.log("メソッド")
+      await axios.post(`/posts/${postId}/comments/${userStore.id}`, {content:text})
+      console.log("メソッド２")
+      // "/{postId}/comments/{userId}"
       // ここで fetchAllPosts() は呼ばない
     }
 

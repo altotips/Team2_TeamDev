@@ -8,6 +8,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -165,7 +166,7 @@ public class PostsController {
 	public Comment addCommentWithoutDto(
 			@PathVariable Long postId,
 			@PathVariable Long userId, // ユーザーIDもパス変数で受け取る (一時的な措置)
-			@RequestBody String content // リクエストボディでコメント内容（文字列）のみを受け取る
+			@RequestBody Map<String, String> requestBody // リクエストボディでコメント内容（文字列）のみを受け取る
 	) {
 		// 1. 投稿を取得（見つからない場合は404エラー）
 		Posts post = postsrepository.findById(postId).orElse(null);
@@ -177,6 +178,7 @@ public class PostsController {
 
 		// 3. 新しいコメントエンティティを作成
 		Comment newComment = new Comment();
+		String content = requestBody.get("content");
 		newComment.setContent(content); // リクエストボディから受け取った文字列を設定
 		newComment.setUser(user); // 取得したユーザーエンティティを設定
 		newComment.setPosts(post); // 取得した投稿エンティティを設定
