@@ -87,11 +87,21 @@ import { useRoute, useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/userStore.js';
 import { usePostStore } from '@/stores/postStore.js';
 import ModalUserPostsView from '@/views/ModalUserPostsView.vue';
+<<<<<<< harada
+import { useToast } from '@/composables/useToast.js'
+// defaultIconのインポートはテンプレートで使用されていないためコメントアウトまたは削除
+// import defaultIcon from '@/images/default_icon.png';
+=======
+>>>>>>> main
 
 const route = useRoute();
 const router = useRouter();
 const userStore = useUserStore();
 const postStore = usePostStore();
+<<<<<<< harada
+const { showToastMessage } = useToast()
+=======
+>>>>>>> main
 
 const targetUserId = ref(null); // 表示中のユーザーのID
 
@@ -219,6 +229,73 @@ watch(
       idToFetch = newUserStoreId;
     }
 
+<<<<<<< harada
+  const initiateFetch = async (userId) => {
+  if (userId) {
+    targetUserId.value = userId; // targetUserId を設定
+    await fetchUserProfileData(targetUserId.value);
+  } else {
+    error.value = "有効なユーザーIDが指定されていないか、ログインしていません。";
+    isLoading.value = false;
+  }
+};
+
+async function fetchUserProfileData(userIdToFetch) {
+  isLoading.value = true;
+  error.value = null;
+  userPosts.value = [];
+
+  try {
+    const response = await userStore.getUser(userIdToFetch); // 対象ユーザーの基本情報を取得
+
+    if (response && response.data) {
+      const data = response.data;
+
+      userName.value = data.userName || '';
+      userIconUrl.value = data.urlIcon || '/images/default_profile_icon.png'; // デフォルトアイコンパスも考慮
+      fullName.value = data.fullName || '';
+      selfIntroduction.value = data.selfIntroduction || '';
+
+      // ★ 自分のプロフィールかどうかを判定
+      isMyProfile.value = (userStore.id === userIdToFetch);
+
+      // ★ フォロー中の人数を取得 (userStore.userFollowers を使用)
+      // userStore.jsにこのメソッドがあることを前提としています
+      const targetUserFollowingList = await userStore.userFollowers(userIdToFetch);
+      displayedFollowingCount.value = targetUserFollowingList ? targetUserFollowingList.length : 0;
+
+      // ユーザーの投稿を取得
+      await postStore.fetchUserPosts(userIdToFetch);
+      userPosts.value = postStore.userPosts;
+      postsCount.value = userPosts.value.length;
+
+    } else {
+      throw new Error(`ユーザーID '${userIdToFetch}' のデータが見つかりませんでした。`);
+    }
+  } catch (err) {
+    error.value = err.message;
+    console.error("Error fetching user profile:", err);
+  } finally {
+    isLoading.value = false;
+  }
+}
+
+
+
+// ルートパラメータ (userId) とログインID (userStore.id) の変更を監視
+    watch(
+    () => [route.params.userId, userStore.id],
+    async ([newRouteUserId, newUserStoreId]) => {
+      let idToFetch = null;
+      const routeIdNum = parseInt(newRouteUserId);
+
+      if (!isNaN(routeIdNum) && routeIdNum > 0) {
+        idToFetch = routeIdNum;
+      } else if (newUserStoreId && newUserStoreId > 0) {
+        // route.params.userId がない場合や、不正な値の場合は、ログイン中のユーザーのプロフィールを表示
+        idToFetch = newUserStoreId;
+      }
+=======
     // 取得対象のユーザーIDが変更された場合、または同じIDでもログイン状態が変わった場合に再フェッチ
     if (idToFetch && (idToFetch !== targetUserId.value || (userStore.id !== null && isMyProfile.value !== (newUserStoreId === idToFetch)))) {
       console.log("Watch triggered by ID change or login status. Fetching user profile for:", idToFetch);
@@ -252,6 +329,7 @@ const toggleFollow = async () => {
     return;
   }
   if (!targetUserId.value) return;
+>>>>>>> main
 
   try {
     if (isFollowing.value) {
@@ -261,6 +339,50 @@ const toggleFollow = async () => {
       } else {
         alert('フォロー解除に失敗しました。');
       }
+<<<<<<< harada
+    },
+    { immediate: true } // コンポーネントがマウントされた直後にも実行
+  );
+
+  // ログインユーザーが対象ユーザーをフォローしているかのcomputedプロパティの変更を監視
+  watch(
+    loggedInUserIsFollowing,
+    (newValue) => {
+      isFollowing.value = newValue;
+    },
+    { immediate: true }
+  );
+
+const toggleFollow = async () => {
+  if (!userStore.id) {
+    showToastMessage('ログインしていません。フォローできません。');
+    return;
+  }
+  if (!targetUserId.value) return;
+
+  try {
+    if (isFollowing.value) {
+      const success = await userStore.unfollow(targetUserId.value);
+      if (success) {
+        showToastMessage('フォローを解除しました。');
+      } else {
+        showToastMessage('フォロー解除に失敗しました。');
+      }
+    } else {
+      const success = await userStore.follow(targetUserId.value);
+      if (success) {
+        showToastMessage('フォローしました。');
+      } else {
+        showToastMessage('フォローに失敗しました。');
+      }
+    }
+    // フォロー/フォロー解除後、ユーザーのプロフィールデータとログインユーザーのフォローリストを再フェッチして表示を更新
+    await fetchUserProfileData(targetUserId.value);
+    await userStore.followers();
+  } catch (err) {
+    console.error('フォロー処理中にエラー:', err);
+    showToastMessage('フォロー処理中にエラーが発生しました。');
+=======
     } else {
       const success = await userStore.follow(targetUserId.value);
       if (success) {
@@ -275,6 +397,7 @@ const toggleFollow = async () => {
   } catch (err) {
     console.error('フォロー処理中にエラー:', err);
     alert('フォロー処理中にエラーが発生しました。');
+>>>>>>> main
   }
 };
 
