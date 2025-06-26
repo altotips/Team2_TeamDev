@@ -268,8 +268,8 @@
     padding: 4px 10px;
   }
 
-  /* .timeline {
+  /* /* .timeline {
     padding-bottom: 60px;
 
-  }
+  } */
 </style>
