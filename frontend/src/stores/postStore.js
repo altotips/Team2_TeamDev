@@ -185,13 +185,13 @@ export const usePostStore = defineStore(
 
     //ユーザ検索
     async function searchUsers(searchStr) {
-      const res = await axios.post(`/api/posts/search/users`, searchStr)
+      const res = await axios.post(`/api/posts/search/users?searchStr=${searchStr}`)
       return res
     }
 
     //投稿検索
     async function searchPosts(searchStr) {
-      const res = await axios.post(`/api/posts/search/posts`, searchStr)
+      const res = await axios.post(`/api/posts/search/posts?searchStr=${searchStr}`)
       return res
     }
 

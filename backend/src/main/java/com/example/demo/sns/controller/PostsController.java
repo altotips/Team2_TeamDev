@@ -148,14 +148,14 @@ public class PostsController {
 
 	// ユーザ検索
 	@GetMapping("/search/users")
-	public List<Users> saerchUsers(@RequestBody String searchStr) {
+	public List<Users> saerchUsers(@RequestParam String searchStr) {
 		List<Users> users = usersrepository.findByUserNameContaining(searchStr);
 		return users;
 	}
 
 	// 投稿検索
 	@GetMapping("/search/posts")
-	public List<Posts> saerchPosts(@RequestBody String searchStr) {
+	public List<Posts> saerchPosts(@RequestParam String searchStr) {
 		List<Posts> posts = postsrepository.findByContentContaining(searchStr);
 		return posts;
 	}
