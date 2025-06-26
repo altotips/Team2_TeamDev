@@ -60,7 +60,6 @@
   import { ref, reactive, computed, onMounted } from 'vue'
   import { usePostStore } from '@/stores/postStore'
   import { useUserStore } from '@/stores/userStore'
-  import axios from 'axios'
 
   // ストア読み込み
   const postStore = usePostStore()
@@ -169,8 +168,6 @@
     background: white;
     padding: 12px;
   }
-
-
 
   .post-header {
     display: flex;
