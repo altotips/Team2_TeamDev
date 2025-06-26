@@ -15,11 +15,14 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.example.demo.sns.entity.Comment;
 import com.example.demo.sns.entity.Follows;
 import com.example.demo.sns.entity.Posts;
 import com.example.demo.sns.entity.Users;
@@ -54,7 +57,7 @@ public class PostsController {
 		if (response == null) {
 			System.out.println(1);
 		}
-		
+
 		return response;
 	}
 
@@ -79,7 +82,7 @@ public class PostsController {
 		return posts;
 	}
 
-//	フォローユーザ全員の全投稿を取得
+	//	フォローユーザ全員の全投稿を取得
 	@GetMapping("users/{id}/follow")
 	public List<Posts> follwersPosts(@PathVariable Long id) {
 		Users me = usersrepository.findById(id).orElse(null);
@@ -96,11 +99,7 @@ public class PostsController {
 		return posts;
 	}
 
-	//	投稿を登録
-	//	postするオブジェクトは
-	//	{
-	//		content : String
-	//	}
+	//	コメントのを登録
 	@PostMapping("/{id}")
 	public Posts post(@PathVariable Long id,
 			@RequestParam("image") MultipartFile photo,
@@ -129,6 +128,7 @@ public class PostsController {
 		return post;
 	}
 
+	// いいねする
 	@PatchMapping("/{id}/good")
 	public Posts good(@PathVariable Long id) {
 		Posts post = postsrepository.findById(id).orElse(null);
@@ -137,11 +137,68 @@ public class PostsController {
 		return post;
 	}
 
-	@PatchMapping("/{id}/ungood")
+	// いいね解除
+	@PutMapping("/{id}/unGood")
 	public Posts unGood(@PathVariable Long id) {
 		Posts post = postsrepository.findById(id).orElse(null);
 		post.setGood(post.getGood() - 1);
 		postsrepository.save(post);
 		return post;
 	}
+
+	// ユーザ検索
+	@GetMapping("/search/users")
+	public List<Users> saerchUsers(@RequestBody String searchStr) {
+		List<Users> users = usersrepository.findByUserNameContaining(searchStr);
+		return users;
+	}
+
+	// 投稿検索
+	@GetMapping("/search/posts")
+	public List<Posts> saerchPosts(@RequestBody String searchStr) {
+		List<Posts> posts = postsrepository.findByContentContaining(searchStr);
+		return posts;
+	}
+
+	// コメント投稿
+	@PostMapping("/{postId}/comments/{userId}") // 投稿IDとユーザーIDをパス変数で受け取る
+	public Comment addCommentWithoutDto(
+			@PathVariable Long postId,
+			@PathVariable Long userId, // ユーザーIDもパス変数で受け取る (一時的な措置)
+			@RequestBody String content // リクエストボディでコメント内容（文字列）のみを受け取る
+	) {
+		// 1. 投稿を取得（見つからない場合は404エラー）
+		Posts post = postsrepository.findById(postId).orElse(null);
+
+		// 2. ユーザーを取得（見つからない場合は400エラー）
+		// !!! 注意 !!!: この方法はセキュリティリスクがあります。
+		//               本来は認証されたユーザーのIDを自動で取得すべきです。
+		Users user = usersrepository.findById(userId).orElse(null);
+
+		// 3. 新しいコメントエンティティを作成
+		Comment newComment = new Comment();
+		newComment.setContent(content); // リクエストボディから受け取った文字列を設定
+		newComment.setUser(user); // 取得したユーザーエンティティを設定
+		newComment.setPosts(post); // 取得した投稿エンティティを設定
+
+		// 4. コメントを保存
+		commentrepository.save(newComment);
+
+		// 5. 成功レスポンスを返す (HTTPステータス 201 Created)
+		return newComment;
+	}
+
+	//	@PostMapping("/{id}/comment")
+	//	public Comment comment(@PathVariable Long id,@RequestBody String comment,@RequestBody Users user) {
+	//		Comment newComment = new Comment();
+	//		newComment.setContent(comment);
+	//		newComment.setUser(user);
+	//		Posts post = postsrepository.findById(id).orElse(null);
+	//		newComment.setPosts(post);
+	//		
+	//		commentrepository.save(newComment);
+	//		
+	//		return newComment;
+	//	}
+
 }

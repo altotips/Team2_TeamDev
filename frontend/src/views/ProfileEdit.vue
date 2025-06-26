@@ -34,12 +34,14 @@
 </template>
 
 <script setup>
-  import { reactive, ref } from 'vue'
-  import { useRouter } from 'vue-router'
-  import { useUserStore } from '@/stores/userStore'
+import { reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useUserStore } from '@/stores/userStore'
+import { useToast } from '@/composables/useToast.js'
 
-  const userStore = useUserStore()
-  const router = useRouter()
+const userStore = useUserStore()
+const router = useRouter()
+const { showToastMessage } = useToast()
 
   // ① フォーム用データ初期化
   const form = reactive({

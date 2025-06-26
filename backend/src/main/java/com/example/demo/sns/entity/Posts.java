@@ -51,9 +51,9 @@ public class Posts {
 	@Column(columnDefinition = "LONG DEFAULT 0")
 	private Long good = 0l;
 
-	@Column(columnDefinition = "BOOLEAN DEFAULT 0")
-	private Boolean delFlag;
-	
+	@Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
+	private Boolean delFlag = false;
+
 	// ★★★ 修正点: @Transient を削除し、@OneToMany 関連を追加 ★★★
 	// mappedBy は Comment エンティティ内で Posts を参照しているフィールド名 ("posts") を指定
 	// cascade = CascadeType.ALL: Postsを保存/削除する際に、関連するコメントも一緒に操作されるように設定

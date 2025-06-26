@@ -10,7 +10,7 @@
         </router-link>
       </div>
 
-      <!-- <img class="post-image" :src="post.urlPhoto || '/images/default_post_image.png'" alt="投稿画像" /> -->
+
       <img :src="`http://localhost:8080/uploads/${post.urlPhoto}`" class="post-image" alt="image" />
 
       <div class="post-actions">
@@ -21,13 +21,13 @@
             {{ post.liked ? '❤️' : '♡' }}
           </span>
         </button>
-        <p>{{ post.good }} 件のいいね</p>
+        <p>{{ post.good }} </p>
         <button @click="toggleComment(post.id)" class="icon-button">
           💬
         </button>
 
         <p v-if="Array.isArray(post.comments)">
-          {{ post.comments.length }} 件のコメント
+          {{ post.comments.length }}
         </p>
 
       </div>
@@ -67,16 +67,21 @@
   const userStore = useUserStore()
 
   // 投稿リストは allPosts を使用。必要であれば postStore.followersPosts に差し替え可能
-  const posts = computed(() => postStore.allPosts)
+  const posts = computed(() => postStore.followersPosts)
 
   const showComment = reactive({})
   const newComments = reactive({})
 
   // データ取得
   onMounted(async () => {
-    await postStore.fetchAllPosts()
-    console.log(posts)
-  })
+  if (userStore.id) {
+    await postStore.fetchFollowersPosts()
+  }
+})
+
+
+
+
 
   // いいね処理（API呼び出し付き）
   const toggleLike = async (post) => {
@@ -84,23 +89,38 @@
       alert('ログインしていません。いいねできません。');
       return;
     }
-
-    if (post.liked) {
-      post.good = Math.max(0, post.good - 1) // 最小0を保証
-    } else {
-      post.good += 1
+    try {
+      if (post.liked) {
+        post.good = Math.max(0, post.good - 1) // 最小0を保証
+        console.log("マイナスしたよ")
+        console.log(post.good)
+        await postStore.unGood(post.id)
+      } else {
+        post.good += 1
+        console.log("ぷらすしたよ")
+        console.log(post.good)
+        await postStore.good(post.id)
+      }
+      //   if (post.liked) {
+      //   post.good += 1
+      //   await postStore.good(post.id)
+      // } else {
+      //    post.good = Math.max(0, post.good - 1) // 最小0を保証
+      //   await postStore.unGood(post.id)
+      // }
+    } catch (error) {
+      console.error("いいね処理中にエラー:", error);
+      alert("いいね処理中にエラーが発生しました。");
+      post.liked = !post.liked; // エラー時はUIを元に戻す
     }
-
 
     post.liked = !post.liked // UIを先に更新
 
-
-
     // try {
     //   if (post.liked) {
-    //     await postStore.good(post.id)
+    //     await postStore.good(postId)
     //   } else {
-    //     await postStore.unGood(post.id)
+    //     await postStore.unGood(postId)
     //   }
     // } catch (error) {
     //   console.error("いいね処理中にエラー:", error);

@@ -6,6 +6,10 @@
         <span class="icon">⌂</span>
       </RouterLink>
 
+      <RouterLink to="/Search" class="nav-item">
+        <img src="@/assets/images/image.png" alt="検索" class="search_icon" />
+      </RouterLink>
+
       <RouterLink to="/post" class="nav-item">
         <span class="icon">＋</span>
       </RouterLink>
@@ -52,7 +56,7 @@
     /* 横幅を親（container）に合わせる */
     width: 100%;
   }
-  
+
   /* .footer-nav {
     position: fixed;
     bottom: 0;
@@ -98,5 +102,12 @@
     object-fit: cover;
     border: 2px solid white;
     /* 任意で枠を付けたい場合 */
+  }
+
+  .search_icon {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    vertical-align: middle;
   }
 </style>
