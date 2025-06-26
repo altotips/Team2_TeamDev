@@ -26,7 +26,7 @@
   
   .container {
     max-width: 800px;
-    width: 100%;
+    width: 100vw;
     /* margin: 0 auto; */
     margin-left: auto;
     margin-right: auto;
@@ -37,18 +37,6 @@
     display: flex;
     justify-content: center;
   }
-
-/* .container {
-    width: 100%;
-    /* 画面幅いっぱい */
-  /* max-width: 50%; */
-  /* 最大は画面幅の半分 */
-  /* margin-left: auto;
-    margin-right: auto; */
-  /* これで中央に */
-  /* padding: 0 1rem;
-    box-sizing: border-box; */
-  /* } */ 
 
 
   .app-main {

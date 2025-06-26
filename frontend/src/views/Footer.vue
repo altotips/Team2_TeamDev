@@ -25,7 +25,7 @@
 <script setup>
   import { useUserStore } from '@/stores/userStore'
   import { computed } from 'vue'
-  import defaultIcon from '@/images/default_icon.png' // 画像が public にない場合は import
+  import defaultIcon from '@/assets/images/default_icon.png' // 画像が public にない場合は import
 
   const userStore = useUserStore()
   // 表示用のアイコンURLを computed で作成

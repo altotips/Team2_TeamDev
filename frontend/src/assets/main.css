@@ -34,4 +34,19 @@ a,
   }
 }
 
+html {
+  scrollbar-gutter: stable;
+}
 
+/* body {
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  overflow-x: hidden;
+  width: 100vw;
+} */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
