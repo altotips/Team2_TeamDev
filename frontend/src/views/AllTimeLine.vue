@@ -142,35 +142,39 @@
             return;
         }
 
-        const text = (newComments[postId] || '').trim()
-        if (!text) return alert('コメントを入力してください')
+        const text = (newComments[postId] || '').trim();
+        if (!text) {
+            alert('コメントを入力してください');
+            return;
+        }
 
         try {
-            // コメントを送信
-            await postStore.addComment(postId, {
-                content: text,
-            })
+            // コメント送信
+            await postStore.addComment(postId, { content: text });
 
-            // 送信成功 → 表示中の投稿に手動で追加
-            const post = postStore.followersPosts.find(p => p.id === postId)
-            if (post && Array.isArray(post.comments)) {
+            // 表示中の投稿に手動で追加（リアルタイム表示）
+            const post = posts.value.find(p => p.id === postId);
+            if (post) {
+                if (!Array.isArray(post.comments)) {
+                    post.comments = [];
+                }
                 post.comments.push({
                     content: text,
                     user: {
                         id: userStore.id,
-                        userName: userStore.userName,      // ← ここ重要！
-                        urlIcon: userStore.urlIcon || '',  // ← 必要ならこれも！
+                        userName: userStore.userName,
+                        urlIcon: userStore.urlIcon || '',
                     },
-                })
+                });
             }
 
-            newComments[postId] = '' // コメントフォームクリア
-            // alert('コメントを送信しました！') // 通知オフにしてもOK
+            // フォームをクリア
+            newComments[postId] = '';
         } catch (error) {
-            console.error("コメント送信中にエラー:", error)
-            alert("コメント送信中にエラーが発生しました。")
+            console.error("コメント送信中にエラー:", error);
+            alert("コメント送信中にエラーが発生しました。");
         }
-    }
+    };
 
 </script>
 
@@ -271,5 +275,27 @@
     .timeline {
         padding-bottom: 60px;
 
+    }
+
+    .no-posts-message {
+        display: flex;
+        justify-content: center;
+        /* 横中央 */
+        align-items: center;
+        /* 縦中央 */
+        height: 80vh;
+        /* 画面高さの60%に */
+        margin: 0 auto;
+        font-size: 1.5rem;
+        color: #777;
+        /* background: #f0f0f0; */
+        border-radius: 12px;
+        padding: 20px 40px;
+        /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); */
+        max-width: 400px;
+        text-align: center;
+        font-weight: 600;
+        user-select: none;
+        /* うっかりテキスト選択防止 */
     }
 </style>

@@ -268,6 +268,28 @@
     padding: 4px 10px;
   }
 
+  .no-posts-message {
+        display: flex;
+        justify-content: center;
+        /* 横中央 */
+        align-items: center;
+        /* 縦中央 */
+        height: 80vh;
+        /* 画面高さの60%に */
+        margin: 0 auto;
+        font-size: 1.5rem;
+        color: #777;
+        /* background: #f0f0f0; */
+        border-radius: 12px;
+        padding: 20px 40px;
+        /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); */
+        max-width: 400px;
+        text-align: center;
+        font-weight: 600;
+        user-select: none;
+        /* うっかりテキスト選択防止 */
+    }
+
   /* /* .timeline {
     padding-bottom: 60px;
 
