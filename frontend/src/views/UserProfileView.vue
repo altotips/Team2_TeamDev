@@ -83,6 +83,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/userStore.js';
 import { usePostStore } from '@/stores/postStore.js';
 import ModalUserPostsView from '@/views/ModalUserPostsView.vue';
+import { useToast } from '@/composables/useToast.js'
 // defaultIconのインポートはテンプレートで使用されていないためコメントアウトまたは削除
 // import defaultIcon from '@/images/default_icon.png';
 
@@ -90,6 +91,7 @@ const route = useRoute();
 const router = useRouter();
 const userStore = useUserStore();
 const postStore = usePostStore();
+const { showToastMessage } = useToast()
 
 const targetUserId = ref(null); // 表示中のユーザーのID
 
@@ -134,7 +136,7 @@ const handleLogout = async () => {
     if (success) {
       router.push('/login'); // ログアウト後にログイン画面に遷移
     } else {
-      alert('ログアウトに失敗しました');
+      showToastMessage('ログアウトに失敗しました');
     }
   }
 };
@@ -235,7 +237,7 @@ watch(
 
 const toggleFollow = async () => {
   if (!userStore.id) {
-    alert('ログインしていません。フォローできません。');
+    showToastMessage('ログインしていません。フォローできません。');
     return;
   }
   if (!targetUserId.value) return;
@@ -244,16 +246,16 @@ const toggleFollow = async () => {
     if (isFollowing.value) {
       const success = await userStore.unfollow(targetUserId.value);
       if (success) {
-        alert('フォローを解除しました。');
+        showToastMessage('フォローを解除しました。');
       } else {
-        alert('フォロー解除に失敗しました。');
+        showToastMessage('フォロー解除に失敗しました。');
       }
     } else {
       const success = await userStore.follow(targetUserId.value);
       if (success) {
-        alert('フォローしました。');
+        showToastMessage('フォローしました。');
       } else {
-        alert('フォローに失敗しました。');
+        showToastMessage('フォローに失敗しました。');
       }
     }
     // フォロー/フォロー解除後、ユーザーのプロフィールデータとログインユーザーのフォローリストを再フェッチして表示を更新
@@ -261,7 +263,7 @@ const toggleFollow = async () => {
     await userStore.followers();
   } catch (err) {
     console.error('フォロー処理中にエラー:', err);
-    alert('フォロー処理中にエラーが発生しました。');
+    showToastMessage('フォロー処理中にエラーが発生しました。');
   }
 };
 

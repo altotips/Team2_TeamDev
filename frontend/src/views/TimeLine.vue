@@ -32,7 +32,17 @@
 
       </div>
 
-      <p class="post-content">{{ post.content }}</p>
+      <p class="post-content">
+        <template v-for="(word, index) in parseContent(post.content)" :key="index">
+          <router-link
+            v-if="word.isMention && word.user"
+            :to="{ name: 'UserProfile', params: { userId: word.user.id } }"
+            class="mention-link"
+          >
+            {{ word.text }} </router-link>
+          <span v-else>{{ word.text }}</span>
+        </template>
+      </p>
 
       <div v-if="showComment[post.id]" class="comment-section">
         <div v-for="comment in post.comments" :key="comment.id" class="comment">
@@ -57,14 +67,16 @@
 </template>
 
 <script setup>
-  import { ref, reactive, computed, onMounted } from 'vue'
+  import { ref, reactive, computed, onMounted, nextTick } from 'vue'
   import { usePostStore } from '@/stores/postStore'
   import { useUserStore } from '@/stores/userStore'
+  import { useRouter } from 'vue-router'
   import axios from 'axios'
 
   // ストア読み込み
   const postStore = usePostStore()
   const userStore = useUserStore()
+  const router = useRouter()
 
   // 投稿リストは allPosts を使用。必要であれば postStore.followersPosts に差し替え可能
   const posts = computed(() => postStore.followersPosts)
@@ -72,16 +84,64 @@
   const showComment = reactive({})
   const newComments = reactive({})
 
-  // データ取得
-  onMounted(async () => {
-  if (userStore.id) {
-    await postStore.fetchFollowersPosts()
+  async function fetchAllUsers() {
+    try {
+      await userStore.fetchAllUsers()
+    } catch (error) {
+      console.error("ユーザー取得エラー:", error)
+    }
   }
-})
 
+  onMounted(async () => {
+    if (userStore.id) {
+      await postStore.fetchFollowersPosts()
+      await fetchAllUsers()  // ここで呼び出し
+      console.log('Fetched all users:', userStore.allUsers);
+      await nextTick()
+    }
+  })
 
+  function linkifyMentions(text) {
+    if (!text) return ''
 
+    return text.replace(/(@[a-zA-Z0-9_-]+)/g, (match, username) => {
+      const user = userStore.allUsers.find(u => u.userName === username)
 
+      if (user) {
+        return `<a href="/user/${user.id}" class="mention-link">@${username}</a>`
+      } else {
+        return `<span class="mention-link">@${username}</span>`
+      }
+    })
+  }
+  
+// <script setup> の中の parseContent 関数
+function parseContent(text) {
+  if (!text) return [];
+
+  // この正規表現は、メンションを検出し、その部分をキャプチャして配列に含める
+  // @の後に英数字、アンダースコア、またはハイフンが1文字以上続くパターン
+  const parts = text.split(/(@[a-zA-Z0-9_-]+)/g);
+  
+  const parsedContent = parts.map(part => {
+    if (part.startsWith('@')) {
+      const username = part.slice(1);
+      const user = userStore.allUsers.find(u => u.userName === username);
+      
+      return {
+        text: part,
+        isMention: true,
+        user: user || null,
+      };
+    }
+    return { text: part, isMention: false };
+  });
+
+  // デバッグ用に、修正後の結果をコンソールに出力
+  console.log('Parsed content (final check):', parsedContent); 
+  
+  return parsedContent;
+}
 
   // いいね処理（API呼び出し付き）
   const toggleLike = async (post) => {
@@ -158,6 +218,7 @@
       alert("コメント送信中にエラーが発生しました。");
     }
   }
+
 </script>
 
 <style scoped>
@@ -239,5 +300,14 @@
   .timeline {
     padding-bottom: 60px;
 
+  }
+
+  .mention-link {
+    color: #409eff;
+    text-decoration: none;
+    font-weight: bold;
+  }
+  .mention-link:hover {
+    text-decoration: underline;
   }
 </style>
