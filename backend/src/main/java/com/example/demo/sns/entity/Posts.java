@@ -10,6 +10,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany; // ★★★ 追加 ★★★
 import jakarta.persistence.Table;
@@ -61,4 +63,8 @@ public class Posts {
 	// fetchタイプはデフォルトのLAZYのままでOK。@EntityGraphでEAGERロードを制御します。
 	@OneToMany(mappedBy = "posts", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Comment> comments = new ArrayList<>(); // nullPointerExceptionを防ぐために初期化
+
+	@ManyToMany
+	@JoinTable(name = "post_tags", joinColumns = @JoinColumn(name = "post_id"), inverseJoinColumns = @JoinColumn(name = "tag_id"))
+	private List<Tag> tags = new ArrayList<>();
 }
