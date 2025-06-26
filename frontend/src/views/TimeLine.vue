@@ -160,7 +160,7 @@
     border: 1px solid #ddd;
     border-radius: 8px;
     max-width: 500px;
-    margin: 20px auto;
+    margin: 10px auto;
     background: white;
     padding: 12px;
   }
@@ -229,8 +229,7 @@
     padding: 4px 10px;
   }
 
-  .timeline {
+  /* .timeline {
     padding-bottom: 60px;
-
-  }
+  } */
 </style>
