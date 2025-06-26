@@ -10,10 +10,12 @@ import com.example.demo.sns.entity.Users;
 
 public interface PostsRepository extends JpaRepository<Posts, Long> {
 
-    // ★★★ 修正点: "commentList.user" を追加 ★★★
-    @EntityGraph(attributePaths = {"comments", "user", "comments.user"}) 
-    List<Posts> findByDelFlagFalse();
+	// ★★★ 修正点: "commentList.user" を追加 ★★★
+	@EntityGraph(attributePaths = { "comments", "user", "comments.user" })
+	List<Posts> findByDelFlagFalse();
 
-    @EntityGraph(attributePaths = {"comments", "user", "comments.user"})
-    List<Posts> findByUser(Users user);
+	@EntityGraph(attributePaths = { "comments", "user", "comments.user" })
+	List<Posts> findByUser(Users user);
+
+	List<Posts> findByContentContaining(String searchStr);
 }

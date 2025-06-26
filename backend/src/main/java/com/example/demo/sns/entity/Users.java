@@ -45,7 +45,8 @@ public class Users {
 
 	@Column(columnDefinition = "VARCHAR DEFAULT ''")
 	private String selfIntroduction;
-	
+
+	@Column(columnDefinition = "LONG DEFAULT 0")
 	private Long authId;
 
 	@Column(columnDefinition = "BOOLEAN DEFAULT FALSE")

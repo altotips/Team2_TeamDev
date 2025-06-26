@@ -41,6 +41,14 @@
       <div class="posts-grid">
         <div v-for="post in userPosts" :key="post.id" class="post-thumbnail" @click="openModal(post)">
           <img :src="post.urlPhoto ? `http://localhost:8080/uploads/${post.urlPhoto}` : '/images/default_post_image.png'" :alt="post.content" class="post-image" loading="lazy">
+          <div class="post-overlay">
+            <div class="overlay-stats">
+              <span class="stat-icon">❤️</span>
+              <span class="stat-number">{{ post.good }}</span>
+              <span class="stat-icon">💬</span>
+              <span class="stat-number">{{ post.comments.length }}</span>
+            </div>
+          </div>
         </div>
 
         <div v-if="userPosts.length === 0 && !isLoading" class="no-posts-message">
@@ -62,7 +70,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/userStore';
 import { usePostStore } from '@/stores/postStore';
-import defaultIcon from '@/images/default_icon.png';
+import defaultIcon from '@/assets/images/default_icon.png';
 // モーダルコンポーネントをインポート
 import ModalUserPostsView from '@/views/ModalUserPostsView.vue';
 
@@ -74,11 +82,10 @@ const postStore = usePostStore();
 const showModal = ref(false);
 const selectedPostObj = ref(null);
 
-const displayIconUrl = computed(() => {
-  // ここでのdisplayIconUrlはuserStore.urlIconを直接使うように変更します
-  // テンプレート内で直接条件式を使うため、このcomputedプロパティの複雑さを減らします
-  return userStore.urlIcon; 
-});
+// displayIconUrl は userStore.urlIcon を直接使用するため、不要
+// const displayIconUrl = computed(() => {
+//   return userStore.urlIcon;
+// });
 
 const postsCount = ref(0); // 初期値を0に設定
 const followingCount = ref(0); // 初期値を0に設定
@@ -105,20 +112,34 @@ onMounted(
   async () => {
     isLoading.value = true; // 読み込み開始
     try {
-      console.log(userStore.id);
+      // ログイン中のユーザーの情報を取得
+      if (userStore.id) { // userStore.id が存在することを確認
+        await userStore.getUser(userStore.id);
+        // userStore.followers() を呼び出して、ログインユーザーがフォローしているリストを更新
+        // followers() は userStore.follows を更新する想定
+        await userStore.followers(); 
+      } else {
+        // ログインしていない場合のエラーハンドリング
+        console.warn("ユーザーがログインしていません。プロフィール情報をロードできません。");
+        // ユーザーをログインページにリダイレクトするなどの処理
+        router.push('/login'); 
+        isLoading.value = false;
+        return;
+      }
+      
+      console.log(userStore.id); // デバッグ用
       await postStore.fetchMyPosts(userStore.id);
-      console.log(postStore.myPosts);
+      console.log(postStore.myPosts); // デバッグ用
       userPosts.value = postStore.myPosts;
       postsCount.value = postStore.myPosts.length;
       
-      // userStoreのfollowsがまだロードされていない可能性があるので、awaitで待つか、適切に処理する
-      // ここでは userStore.getUser を再度呼び出してフォローリストを更新する可能性も考慮
-      // もし userStore.follows が確実に最新のものを保持しているなら、以下でOK
+      // userStore.follows は userStore.followers() によって更新されるため、
+      // ここで直接参照して問題ありません
       followingCount.value = userStore.follows ? userStore.follows.length : 0;
 
     } catch (error) {
       console.error("プロフィールデータの読み込み中にエラーが発生しました:", error);
-      // エラーハンドリングを追加
+      // ユーザーへの通知や、特定のエラー処理を追加
     } finally {
       isLoading.value = false; // 読み込み終了
     }
@@ -206,9 +227,7 @@ const closeModal = () => {
 .name-and-button {
   display: flex;
   align-items: center; /* 垂直中央揃え */
-  /* ここを修正: margin-bottom を増やす */
   margin-bottom: 30px; /* 統計情報との間隔を広げた */
-  /* ここを修正: gap を増やす */
   gap: 30px; /* フルネームとボタンの間隔を広げた */
 }
 
@@ -218,7 +237,7 @@ const closeModal = () => {
   margin: 0;
 }
 
-.follow-button {
+.follow-button { /* このボタンは今回は使われていませんが、既存CSSを残します */
   background-color: #0095f6;
   color: white;
   border: none;
@@ -231,7 +250,7 @@ const closeModal = () => {
   flex-shrink: 0;
 }
 
-.follow-button.is-following {
+.follow-button.is-following { /* このクラスは今回は使われていませんが、既存CSSを残します */
   background-color: #efefef;
   color: #262626;
   border: 1px solid #dbdbdb;
@@ -240,7 +259,6 @@ const closeModal = () => {
 .user-stats {
   display: flex;
   justify-content: flex-start; /* 左寄せ */
-  /* ここを修正: gap を増やす */
   gap: 60px; /* 統計項目間の間隔を広げた */
   font-size: 16px;
   text-align: left;
@@ -264,6 +282,16 @@ const closeModal = () => {
   font-size: 14px;
 }
 
+.stat-label-link {
+  color: #8e8e8e;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.stat-label-link:hover {
+  text-decoration: underline;
+}
+
 .self-introduction {
   font-size: 15px;
   line-height: 1.5;
@@ -284,10 +312,11 @@ const closeModal = () => {
 
 .post-thumbnail {
   width: 100%;
-  padding-top: 100%;
+  padding-top: 100%; /* 1:1のアスペクト比を維持 */
   position: relative;
   overflow: hidden;
   background-color: #eee;
+  cursor: pointer; /* ホバーでクリック可能であることを示す */
 }
 
 .post-image {
@@ -297,7 +326,50 @@ const closeModal = () => {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.3s ease; /* ホバー時のアニメーション */
 }
+
+/* --- オーバーレイ表示のための追加CSS --- */
+.post-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6); /* 半透明の黒で画像を暗くする */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0; /* 初期状態では非表示 */
+  transition: opacity 0.3s ease; /* フェードイン/アウトのアニメーション */
+  /* pointer-events: none; は不要。クリックイベントが.post-thumbnailで捕捉されるため */
+}
+
+.post-thumbnail:hover .post-overlay {
+  opacity: 1; /* ホバー時に表示 */
+}
+
+.post-thumbnail:hover .post-image {
+  transform: scale(1.05); /* ホバー時に画像を少し拡大（任意） */
+}
+
+.overlay-stats {
+  display: flex;
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  gap: 20px; /* アイテム間のスペース */
+}
+
+.overlay-stats .stat-icon {
+  margin-right: 5px; /* アイコンと数字の間のスペース */
+}
+
+/* .overlay-stats .stat-number { */
+  /* ここは特に調整不要ですが、必要なら追加 */
+/* } */
+/* --- 追加CSSここまで --- */
+
 
 .no-posts-message, .loading-message {
   grid-column: 1 / -1;
@@ -348,18 +420,21 @@ const closeModal = () => {
   .name-and-button {
     justify-content: center;
     flex-wrap: wrap;
-    /* レスポンシブでも少し間隔を広げる */
     gap: 20px;
-    margin-bottom: 20px; /* レスポンシブでの間隔も調整 */
+    margin-bottom: 20px;
   }
   .user-stats {
     justify-content: space-around;
     width: 100%;
-    /* レスポンシブでも少し間隔を広げる */
     gap: 40px;
   }
   .posts-grid {
     gap: 10px;
+  }
+
+  /* モバイルではオーバーレイを非表示にする例。必要に応じて調整してください */
+  .post-overlay {
+    display: none;
   }
 }
 </style>

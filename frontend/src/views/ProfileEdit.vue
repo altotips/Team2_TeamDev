@@ -22,7 +22,7 @@
       <div class="field">
         <label>アイコン画像</label>
         <input type="file" @change="onFileChange" />
-        <img v-if="previewIcon" :src="`http://localhost:8080/uploads/${previewIcon}`" class="preview-icon" alt="image" />
+        <img v-if="previewIcon" :src="previewIcon" class="preview-icon" alt="image" />
       </div>
 
       <div class="buttons">
@@ -37,9 +37,11 @@
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/userStore'
+import { useToast } from '@/composables/useToast.js'
 
 const userStore = useUserStore()
 const router = useRouter()
+const { showToastMessage } = useToast()
 
 // ① フォーム用データ初期化
 const form = reactive({
@@ -51,7 +53,7 @@ const form = reactive({
 })
 
 // プレビュー用アイコン設定
-const previewIcon = ref(userStore.urlIcon ? userStore.urlIcon : null)
+const previewIcon = ref(userStore.urlIcon ? `http://localhost:8080/uploads/${userStore.urlIcon}` : null)
 
 // ファイル選択時にフォームに保持し、プレビューを更新
 function onFileChange(e) {
@@ -80,7 +82,7 @@ async function handleSubmit() {
   if (success) {
     router.push('/MyProfile')
   } else {
-    alert('更新に失敗しました')
+    showToastMessage('更新に失敗しました')
   }
 }
 

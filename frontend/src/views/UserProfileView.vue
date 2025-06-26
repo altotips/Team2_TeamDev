@@ -60,7 +60,15 @@
         <div v-else class="image-grid">
           <div v-for="post in userPosts" :key="post.id" class="image-item" @click="openModal(post)">
             <img :src="post.urlPhoto && !post.urlPhoto.startsWith('http') ? `http://localhost:8080/uploads/${post.urlPhoto}` : (post.urlPhoto || '/images/default_post_image.png')" :alt="post.content" class="post-image">
-          </div>
+            <div class="post-overlay">
+              <div class="overlay-stats">
+                <span class="stat-icon">❤️</span>
+                <span class="stat-number">{{ post.good }}</span>
+                <span class="stat-icon">💬</span>
+                <span class="stat-number">{{ post.comments.length }}</span>
+              </div>
+            </div>
+            </div>
         </div>
       </div>
     </main>
@@ -75,7 +83,8 @@ import { useRoute, useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/userStore.js';
 import { usePostStore } from '@/stores/postStore.js';
 import ModalUserPostsView from '@/views/ModalUserPostsView.vue';
-import defaultIcon from '@/images/default_icon.png'; // default_icon.png をインポート
+// defaultIconのインポートはテンプレートで使用されていないためコメントアウトまたは削除
+// import defaultIcon from '@/images/default_icon.png';
 
 const route = useRoute();
 const router = useRouter();
@@ -268,7 +277,7 @@ const closeModal = () => {
 </script>
 
 <style scoped>
-/* 提供されたCSSをそのままここに貼り付けます */
+/* 提供されたCSSと追加のCSSをここに貼り付けます */
 .profile-page {
   max-width: 935px;
   margin: 0 auto;
@@ -322,7 +331,6 @@ const closeModal = () => {
   justify-content: center;
   align-items: center;
   flex-shrink: 0;
-  /* プロフィール編集ボタンを配置するために必要 */
   position: relative;
 }
 
@@ -353,10 +361,9 @@ const closeModal = () => {
   margin: 0;
 }
 
-/* プロフィール関連のボタンを囲むコンテナ */
 .profile-buttons {
   display: flex;
-  gap: 10px; /* ボタン間のスペース */
+  gap: 10px;
   align-items: center;
 }
 
@@ -379,9 +386,9 @@ const closeModal = () => {
   border: 1px solid #dbdbdb;
 }
 
-/* プロフィール編集ボタンのスタイル */
-.edit-profile-button {
-  background-color: #efefef;
+.edit-profile-button,
+.logout-button {
+  background-color: #fff;
   color: #262626;
   border: 1px solid #dbdbdb;
   border-radius: 8px;
@@ -389,30 +396,12 @@ const closeModal = () => {
   font-size: 14px;
   font-weight: bold;
   cursor: pointer;
-  white-space: nowrap;
-  flex-shrink: 0;
+  white-space: nowrap; /* ボタンのテキストが改行されないように */
+  flex-shrink: 0; /* flexアイテムが縮小されないように */
 }
-
-.edit-profile-button:hover {
-  background-color: #e0e0e0;
-}
-
-/* ログアウトボタンのスタイル */
-.logout-button {
-  background-color: #dc3545; /* 赤系の色 */
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 7px 16px;
-  font-size: 14px;
-  font-weight: bold;
-  cursor: pointer;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
+.edit-profile-button:hover,
 .logout-button:hover {
-  background-color: #c82333;
+  background-color: #fafafa;
 }
 
 .user-stats {
@@ -475,6 +464,7 @@ const closeModal = () => {
   position: relative;
   overflow: hidden;
   background-color: #eee;
+  cursor: pointer; /* クリック可能であることを示す */
 }
 
 .image-item .post-image {
@@ -484,7 +474,53 @@ const closeModal = () => {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.3s ease; /* ホバー時のアニメーション */
 }
+
+/* --- オーバーレイ表示のための追加CSS --- */
+.post-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6); /* 半透明の黒で画像を暗くする */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0; /* 初期状態では非表示 */
+  transition: opacity 0.3s ease; /* フェードイン/アウトのアニメーション */
+  pointer-events: none; /* オーバーレイがクリックを妨げないようにする */
+}
+
+.image-item:hover .post-overlay {
+  opacity: 1; /* ホバー時に表示 */
+  pointer-events: auto; /* ホバー時にクリック可能にする */
+}
+
+.image-item:hover .post-image {
+  transform: scale(1.05); /* ホバー時に画像を少し拡大（任意） */
+}
+
+.overlay-stats {
+  display: flex;
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  gap: 20px; /* アイテム間のスペース */
+}
+
+.overlay-stats .stat-icon {
+  margin-right: 5px;
+  /* 例としてFont Awesomeなどのアイコンライブラリを使用する場合、
+     ここに適切なスタイルを追加してください。今回は絵文字を使用。 */
+}
+
+.overlay-stats .stat-number {
+  margin-right: 15px; /* 数字と次のアイコンの間のスペース */
+}
+/* --- 追加CSSここまで --- */
+
 
 .no-posts-message,
 .loading-message,
@@ -529,6 +565,12 @@ const closeModal = () => {
 
   .image-grid {
     gap: 10px;
+  }
+
+  /* モバイルではオーバーレイは通常表示しない、またはシンプルな表示にするなど検討 */
+  .post-overlay {
+    /* モバイルでのオーバーレイ表示を無効にする例 */
+    display: none;
   }
 }
 </style>

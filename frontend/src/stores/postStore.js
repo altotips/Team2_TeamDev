@@ -32,23 +32,21 @@ export const usePostStore = defineStore(
     }
 
     // 1ユーザのフォローしているすべてのユーザの投稿をすべて取得し、followersPostsに保存
-    async function fetchFollowersPosts(id) {
+    async function fetchFollowersPosts() {
       try {
-        if (!id) {
-          console.log('idがない')
+        if (!userStore.id) {
+          console.warn('ユーザーIDが取得できませんでした。ログイン済みか確認してください。')
           return
         }
 
-        const res = await axios.get('/posts/users/' + id + 'follow')
-        // console.log('ret : ' + res)
-        // console.log('ret : ' + res.data.length)
-        if (followersPosts.value.length != res.data.length) {
-          // 最新の投稿を上に表示するため、逆順にする
+        const res = await axios.get(`/posts/users/${userStore.id}/follow`)
+
+        // 差分がある場合のみ更新（パフォーマンス改善にもなる）
+        if (followersPosts.value.length !== res.data.length) {
           followersPosts.value = res.data.reverse()
         }
-        // console.log('followers : ' + followersPosts.value)
       } catch (err) {
-        console.error('全投稿の取得に失敗:', err)
+        console.error('フォロー投稿の取得に失敗:', err)
       }
     }
 
@@ -140,11 +138,11 @@ export const usePostStore = defineStore(
     async function good(postId) {
       try {
         if (!postId) {
-          alert('どの投稿わからないよ')
+          alert('どの投稿かわからないよ')
           return false
         }
 
-        const res = await axios.patch(`/posts/${userStore.id}/good`, postData)
+        const res = await axios.patch(`/posts/${postId}/good`)
         console.log('いいねしたよ')
 
         return res
@@ -154,7 +152,7 @@ export const usePostStore = defineStore(
         //   return false
         // }
       } catch (err) {
-        console.error('ユーザーの投稿に失敗:', err)
+        console.error('いいねに失敗:', err)
       }
     }
 
@@ -162,11 +160,11 @@ export const usePostStore = defineStore(
     async function unGood(postId) {
       try {
         if (!postId) {
-          alert('どの投稿わからないよ')
+          alert('どの投稿かわからないよ')
           return false
         }
 
-        const res = await axios.patch(`/posts/${userStore.id}/ungood`, postData)
+        const res = await axios.put(`/posts/${postId}/unGood`)
         console.log('いいね解除')
         return res
         // if (res) {
@@ -175,8 +173,26 @@ export const usePostStore = defineStore(
         //   return false
         // }
       } catch (err) {
-        console.error('ユーザーの投稿に失敗:', err)
+        console.error('いいね解除に失敗:', err)
       }
+    }
+
+    //コメント追加
+    async function addComment(postId, user, content) {
+      await axios.post(`/api/posts/${postId}/comments`, comment)
+      // ここで fetchAllPosts() は呼ばない
+    }
+
+    //ユーザ検索
+    async function searchUsers(searchStr) {
+      const res = await axios.post(`/api/posts/search/users`, searchStr)
+      return res
+    }
+
+    //投稿検索
+    async function searchPosts(searchStr) {
+      const res = await axios.post(`/api/posts/search/posts`, searchStr)
+      return res
     }
 
     return {
@@ -192,6 +208,9 @@ export const usePostStore = defineStore(
       post,
       good,
       unGood,
+      addComment,
+      searchUsers,
+      searchPosts,
     }
   },
   // {
