@@ -10,7 +10,9 @@
 
       <div class="profile-details-row" v-if="!isLoading && !error">
         <div class="icon-container">
-          <img :src="userIconUrl && !userIconUrl.startsWith('http') ? `http://localhost:8080/uploads/${userIconUrl}` : (userIconUrl || '/images/default_profile_icon.png')" alt="User Icon" class="profile-icon">
+          <img
+            :src="userIconUrl && !userIconUrl.startsWith('http') ? `http://localhost:8080/uploads/${userIconUrl}` : (userIconUrl || '/images/default_profile_icon.png')"
+            alt="User Icon" class="profile-icon">
         </div>
 
         <div class="right-of-icon-info">
@@ -93,57 +95,107 @@ const userStore = useUserStore();
 const postStore = usePostStore();
 const { showToastMessage } = useToast()
 
-const targetUserId = ref(null); // 表示中のユーザーのID
+  const targetUserId = ref(null); // 表示中のユーザーのID
 
-const userName = ref('');
-const userIconUrl = ref('');
-const fullName = ref('');
-const selfIntroduction = ref('');
-const postsCount = ref(0);
-const isMyProfile = ref(false); // 自分のプロフィールかどうかを判定
-const isFollowing = ref(false); // ログインユーザーがこのプロフィールをフォローしているか
+  const userName = ref('');
+  const userIconUrl = ref('');
+  const fullName = ref('');
+  const selfIntroduction = ref('');
+  const postsCount = ref(0);
+  const isMyProfile = ref(false); // 自分のプロフィールかどうかを判定
+  const isFollowing = ref(false); // ログインユーザーがこのプロフィールをフォローしているか
 
-const userPosts = ref([]);
+  const userPosts = ref([]);
 
-const isLoading = ref(true);
-const error = ref(null);
+  const isLoading = ref(true);
+  const error = ref(null);
 
-const displayedFollowingCount = ref(0); // 表示中のユーザーのフォロー中人数
+  const displayedFollowingCount = ref(0); // 表示中のユーザーのフォロー中人数
 
-const showModal = ref(false);
-const selectedPostObj = ref(null);
+  const showModal = ref(false);
+  const selectedPostObj = ref(null);
 
-// ログインユーザーが対象ユーザーをフォローしているかの判定ロジック
-// userStore.follows はログインユーザーがフォローしているリスト
-const loggedInUserIsFollowing = computed(() => {
-  if (!userStore.id || !targetUserId.value || !userStore.follows) {
-    return false;
-  }
-  // userStore.follows の各要素 f が持つ toUser.id と targetUserId.value を比較
-  // ※ f.toUser が存在することを前提としています。APIレスポンスの構造をご確認ください。
-  return userStore.follows.some(f => f.toUser && f.toUser.id === targetUserId.value);
-});
+  // ログインユーザーが対象ユーザーをフォローしているかの判定ロジック
+  // userStore.follows はログインユーザーがフォローしているリスト
+  const loggedInUserIsFollowing = computed(() => {
+    if (!userStore.id || !targetUserId.value || !userStore.follows) {
+      return false;
+    }
+    // userStore.follows の各要素 f が持つ toUser.id と targetUserId.value を比較
+    // ※ f.toUser が存在することを前提としています。APIレスポンスの構造をご確認ください。
+    return userStore.follows.some(f => f.toUser && f.toUser.id === targetUserId.value);
+  });
 
-const followButtonText = computed(() => {
-  return isFollowing.value ? 'フォロー中' : 'フォロー';
-});
+  const followButtonText = computed(() => {
+    return isFollowing.value ? 'フォロー中' : 'フォロー';
+  });
 
-// ログアウト処理
-const handleLogout = async () => {
-  if (confirm('ログアウトしますか？')) {
-    console.log('ログアウト処理を実行します');
-    const success = await userStore.logout();
-    if (success) {
-      router.push('/login'); // ログアウト後にログイン画面に遷移
-    } else {
-      showToastMessage('ログアウトに失敗しました');
+  // ログアウト処理
+  const handleLogout = async () => {
+    if (confirm('ログアウトしますか？')) {
+      console.log('ログアウト処理を実行します');
+      const success = await userStore.logout();
+      if (success) {
+        router.push('/login'); // ログアウト後にログイン画面に遷移
+      } else {
+        alert('ログアウトに失敗しました');
+      }
+    }
+  };
+
+  // プロフィール編集画面へ遷移
+  const goToEditProfile = () => {
+    router.push('/ProfileEdit'); // プロフィール編集画面へ遷移
+  };
+
+  async function fetchUserProfileData(userIdToFetch) {
+    isLoading.value = true;
+    error.value = null;
+    userPosts.value = [];
+
+    try {
+      const response = await userStore.getUser(userIdToFetch); // 対象ユーザーの基本情報を取得
+
+      if (response && response.data) {
+        const data = response.data;
+
+        userName.value = data.userName || '';
+        userIconUrl.value = data.urlIcon || '/images/default_profile_icon.png'; // デフォルトアイコンパスも考慮
+        fullName.value = data.fullName || '';
+        selfIntroduction.value = data.selfIntroduction || '';
+
+        // ★ 自分のプロフィールかどうかを判定
+        isMyProfile.value = (userStore.id === userIdToFetch);
+
+        // ★ フォロー中の人数を取得 (userStore.userFollowers を使用)
+        // userStore.jsにこのメソッドがあることを前提としています
+        const targetUserFollowingList = await userStore.userFollowers(userIdToFetch);
+        displayedFollowingCount.value = targetUserFollowingList ? targetUserFollowingList.length : 0;
+
+        // ユーザーの投稿を取得
+        await postStore.fetchUserPosts(userIdToFetch);
+        userPosts.value = postStore.userPosts;
+        postsCount.value = userPosts.value.length;
+
+      } else {
+        throw new Error(`ユーザーID '${userIdToFetch}' のデータが見つかりませんでした。`);
+      }
+    } catch (err) {
+      error.value = err.message;
+      console.error("Error fetching user profile:", err);
+    } finally {
+      isLoading.value = false;
     }
   }
-};
 
-// プロフィール編集画面へ遷移
-const goToEditProfile = () => {
-  router.push('/ProfileEdit'); // プロフィール編集画面へ遷移
+  const initiateFetch = async (userId) => {
+  if (userId) {
+    targetUserId.value = userId; // targetUserId を設定
+    await fetchUserProfileData(targetUserId.value);
+  } else {
+    error.value = "有効なユーザーIDが指定されていないか、ログインしていません。";
+    isLoading.value = false;
+  }
 };
 
 async function fetchUserProfileData(userIdToFetch) {
@@ -186,54 +238,46 @@ async function fetchUserProfileData(userIdToFetch) {
   }
 }
 
-const initiateFetch = async (userId) => {
-  if (userId) {
-    targetUserId.value = userId; // targetUserId を設定
-    await fetchUserProfileData(targetUserId.value);
-  } else {
-    error.value = "有効なユーザーIDが指定されていないか、ログインしていません。";
-    isLoading.value = false;
-  }
-};
+
 
 // ルートパラメータ (userId) とログインID (userStore.id) の変更を監視
-watch(
-  () => [route.params.userId, userStore.id],
-  async ([newRouteUserId, newUserStoreId]) => {
-    let idToFetch = null;
-    const routeIdNum = parseInt(newRouteUserId);
+    watch(
+    () => [route.params.userId, userStore.id],
+    async ([newRouteUserId, newUserStoreId]) => {
+      let idToFetch = null;
+      const routeIdNum = parseInt(newRouteUserId);
 
-    if (!isNaN(routeIdNum) && routeIdNum > 0) {
-      idToFetch = routeIdNum;
-    } else if (newUserStoreId && newUserStoreId > 0) {
-      // route.params.userId がない場合や、不正な値の場合は、ログイン中のユーザーのプロフィールを表示
-      idToFetch = newUserStoreId;
-    }
+      if (!isNaN(routeIdNum) && routeIdNum > 0) {
+        idToFetch = routeIdNum;
+      } else if (newUserStoreId && newUserStoreId > 0) {
+        // route.params.userId がない場合や、不正な値の場合は、ログイン中のユーザーのプロフィールを表示
+        idToFetch = newUserStoreId;
+      }
 
-    // 取得対象のユーザーIDが変更された場合、または同じIDでもログイン状態が変わった場合に再フェッチ
-    if (idToFetch && (idToFetch !== targetUserId.value || (userStore.id !== null && isMyProfile.value !== (newUserStoreId === idToFetch)))) {
-      console.log("Watch triggered by ID change or login status. Fetching user profile for:", idToFetch);
-      await initiateFetch(idToFetch);
-    } else if (!idToFetch && !targetUserId.value && !error.value) {
-      error.value = "有効なユーザーIDが指定されていないか、ログインしていません。";
-      isLoading.value = false;
-    }
-    // ログインユーザーのフォローリストを更新（フォローボタンの状態反映のため）
-    if (userStore.id) {
-      await userStore.followers();
-    }
-  },
-  { immediate: true } // コンポーネントがマウントされた直後にも実行
-);
+      // 取得対象のユーザーIDが変更された場合、または同じIDでもログイン状態が変わった場合に再フェッチ
+      if (idToFetch && (idToFetch !== targetUserId.value || (userStore.id !== null && isMyProfile.value !== (newUserStoreId === idToFetch)))) {
+        console.log("Watch triggered by ID change or login status. Fetching user profile for:", idToFetch);
+        await initiateFetch(idToFetch);
+      } else if (!idToFetch && !targetUserId.value && !error.value) {
+        error.value = "有効なユーザーIDが指定されていないか、ログインしていません。";
+        isLoading.value = false;
+      }
+      // ログインユーザーのフォローリストを更新（フォローボタンの状態反映のため）
+      if (userStore.id) {
+        await userStore.followers();
+      }
+    },
+    { immediate: true } // コンポーネントがマウントされた直後にも実行
+  );
 
-// ログインユーザーが対象ユーザーをフォローしているかのcomputedプロパティの変更を監視
-watch(
-  loggedInUserIsFollowing,
-  (newValue) => {
-    isFollowing.value = newValue;
-  },
-  { immediate: true }
-);
+  // ログインユーザーが対象ユーザーをフォローしているかのcomputedプロパティの変更を監視
+  watch(
+    loggedInUserIsFollowing,
+    (newValue) => {
+      isFollowing.value = newValue;
+    },
+    { immediate: true }
+  );
 
 const toggleFollow = async () => {
   if (!userStore.id) {
@@ -287,42 +331,42 @@ const closeModal = () => {
   box-sizing: border-box;
 }
 
-.profile-header {
-  margin-bottom: 44px;
-}
+  .profile-header {
+    margin-bottom: 44px;
+  }
 
-.header-top {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  margin-bottom: 20px;
-}
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    margin-bottom: 20px;
+  }
 
-.back-button {
-  background-color: transparent;
-  border: none;
-  color: #262626;
-  font-size: 24px;
-  margin-right: 15px;
-  cursor: pointer;
-  padding: 0;
-}
+  .back-button {
+    background-color: transparent;
+    border: none;
+    color: #262626;
+    font-size: 24px;
+    margin-right: 15px;
+    cursor: pointer;
+    padding: 0;
+  }
 
-.username {
-  font-size: 28px;
-  font-weight: 300;
-  margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+  .username {
+    font-size: 28px;
+    font-weight: 300;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 
-.profile-details-row {
-  display: flex;
-  align-items: flex-start;
-  margin-bottom: 20px;
-  gap: 80px;
-}
+  .profile-details-row {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    gap: 80px;
+  }
 
 .icon-container {
   width: 150px;
@@ -336,32 +380,32 @@ const closeModal = () => {
   position: relative;
 }
 
-.profile-icon {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
+  .profile-icon {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 
-.right-of-icon-info {
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  min-height: 150px;
-}
+  .right-of-icon-info {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 150px;
+  }
 
-.name-and-button {
-  display: flex;
-  align-items: center;
-  margin-bottom: 30px;
-  gap: 30px;
-}
+  .name-and-button {
+    display: flex;
+    align-items: center;
+    margin-bottom: 30px;
+    gap: 30px;
+  }
 
-.full-name {
-  font-weight: bold;
-  font-size: 16px;
-  margin: 0;
-}
+  .full-name {
+    font-weight: bold;
+    font-size: 16px;
+    margin: 0;
+  }
 
 .profile-buttons {
   display: flex;
@@ -369,24 +413,24 @@ const closeModal = () => {
   align-items: center;
 }
 
-.follow-button {
-  background-color: #0095f6;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 7px 16px;
-  font-size: 14px;
-  font-weight: bold;
-  cursor: pointer;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
+  .follow-button {
+    background-color: #0095f6;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 7px 16px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
 
-.follow-button.is-following {
-  background-color: #efefef;
-  color: #262626;
-  border: 1px solid #dbdbdb;
-}
+  .follow-button.is-following {
+    background-color: #efefef;
+    color: #262626;
+    border: 1px solid #dbdbdb;
+  }
 
 .edit-profile-button,
 .logout-button {
@@ -406,59 +450,59 @@ const closeModal = () => {
   background-color: #fafafa;
 }
 
-.user-stats {
-  display: flex;
-  justify-content: flex-start;
-  gap: 60px;
-  font-size: 16px;
-  text-align: left;
-  margin-bottom: 20px;
-}
+  .user-stats {
+    display: flex;
+    justify-content: flex-start;
+    gap: 60px;
+    font-size: 16px;
+    text-align: left;
+    margin-bottom: 20px;
+  }
 
-.stat-item {
-  display: flex;
-  flex-direction: row;
-  align-items: baseline;
-  gap: 5px;
-}
+  .stat-item {
+    display: flex;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 5px;
+  }
 
-.stat-value {
-  font-weight: bold;
-  font-size: 18px;
-}
+  .stat-value {
+    font-weight: bold;
+    font-size: 18px;
+  }
 
-.stat-label {
-  color: #8e8e8e;
-  font-size: 14px;
-}
+  .stat-label {
+    color: #8e8e8e;
+    font-size: 14px;
+  }
 
-.stat-label-link {
-  color: #8e8e8e;
-  font-size: 14px;
-  text-decoration: none;
-}
+  .stat-label-link {
+    color: #8e8e8e;
+    font-size: 14px;
+    text-decoration: none;
+  }
 
-.stat-label-link:hover {
-  text-decoration: underline;
-}
+  .stat-label-link:hover {
+    text-decoration: underline;
+  }
 
-.self-introduction {
-  font-size: 15px;
-  line-height: 1.5;
-  white-space: pre-wrap;
-  margin-bottom: 20px;
-}
+  .self-introduction {
+    font-size: 15px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    margin-bottom: 20px;
+  }
 
-.profile-content {
-  border-top: 1px solid #dbdbdb;
-  padding-top: 20px;
-}
+  .profile-content {
+    border-top: 1px solid #dbdbdb;
+    padding-top: 20px;
+  }
 
-.image-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 28px;
-}
+  .image-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 28px;
+  }
 
 .image-item {
   width: 100%;
@@ -524,46 +568,46 @@ const closeModal = () => {
 /* --- 追加CSSここまで --- */
 
 
-.no-posts-message,
-.loading-message,
-.error-message {
-  grid-column: 1 / -1;
-  text-align: center;
-  padding: 50px;
-  color: #8e8e8e;
-  font-size: 18px;
-}
-
-/* レスポンシブ対応 */
-@media (max-width: 768px) {
-  .profile-details-row {
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
+  .no-posts-message,
+  .loading-message,
+  .error-message {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 50px;
+    color: #8e8e8e;
+    font-size: 18px;
   }
 
-  .icon-container {
-    width: 100px;
-    height: 100px;
-  }
+  /* レスポンシブ対応 */
+  @media (max-width: 768px) {
+    .profile-details-row {
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
 
-  .right-of-icon-info {
-    align-items: center;
-    min-height: auto;
-  }
+    .icon-container {
+      width: 100px;
+      height: 100px;
+    }
 
-  .name-and-button {
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 20px;
-    margin-bottom: 20px;
-  }
+    .right-of-icon-info {
+      align-items: center;
+      min-height: auto;
+    }
 
-  .user-stats {
-    justify-content: space-around;
-    width: 100%;
-    gap: 40px;
-  }
+    .name-and-button {
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .user-stats {
+      justify-content: space-around;
+      width: 100%;
+      gap: 40px;
+    }
 
   .image-grid {
     gap: 10px;

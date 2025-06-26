@@ -61,7 +61,7 @@
       エラーが発生しました: {{ postStore.error.message }}
     </div>
     <div v-else-if="posts.length === 0 && !postStore.isLoading" class="no-posts-message">
-      まだ投稿がありません。
+      ほかのユーザーをフォローして思い出をシェアしよう！！
     </div>
   </div>
 </template>
@@ -150,6 +150,7 @@ function parseContent(text) {
       return;
     }
     try {
+      post.animateHeart = true;
       if (post.liked) {
         post.good = Math.max(0, post.good - 1) // 最小0を保証
         console.log("マイナスしたよ")
@@ -187,6 +188,9 @@ function parseContent(text) {
     //   alert("いいね処理中にエラーが発生しました。");
     //   post.liked = !post.liked; // エラー時はUIを元に戻す
     // }
+    setTimeout(() => {
+      post.animateHeart = false
+    }, 500)
   }
 
   // コメント欄トグル
@@ -205,33 +209,61 @@ function parseContent(text) {
     if (!text) return alert('コメントを入力してください')
 
     try {
+      // コメントを送信
       await postStore.addComment(postId, {
-        user: await userStore.getUser(userStore.id), // コメント送信時もgetUserを使用
         content: text,
-      });
+      })
+
+      // 送信成功 → 表示中の投稿に手動で追加
+      const post = postStore.followersPosts.find(p => p.id === postId)
+      if (post && Array.isArray(post.comments)) {
+        post.comments.push({
+          content: text,
+          user: {
+            id: userStore.id,
+            userName: userStore.userName,      // ← ここ重要！
+            urlIcon: userStore.urlIcon || '',  // ← 必要ならこれも！
+          },
+        })
+      }
 
       newComments[postId] = '' // コメントフォームクリア
-      alert('コメントを送信しました！');
-      await postStore.fetchAllPosts(); // コメント送信後、最新のコメントリストを反映するために再フェッチ
+      // alert('コメントを送信しました！') // 通知オフにしてもOK
     } catch (error) {
-      console.error("コメント送信中にエラー:", error);
-      alert("コメント送信中にエラーが発生しました。");
+      console.error("コメント送信中にエラー:", error)
+      alert("コメント送信中にエラーが発生しました。")
     }
   }
 
 </script>
 
 <style scoped>
+  .liked {
+    animation: pop 0.5s ease;
+  }
+
+  @keyframes pop {
+    0% {
+      transform: scale(1);
+    }
+
+    50% {
+      transform: scale(1.8);
+    }
+
+    100% {
+      transform: scale(1);
+    }
+  }
+
   .post-card {
     border: 1px solid #ddd;
     border-radius: 8px;
     max-width: 500px;
-    margin: 20px auto;
+    margin: 10px auto;
     background: white;
     padding: 12px;
   }
-
-
 
   .post-header {
     display: flex;
@@ -297,17 +329,30 @@ function parseContent(text) {
     padding: 4px 10px;
   }
 
-  .timeline {
+  .no-posts-message {
+        display: flex;
+        justify-content: center;
+        /* 横中央 */
+        align-items: center;
+        /* 縦中央 */
+        height: 80vh;
+        /* 画面高さの60%に */
+        margin: 0 auto;
+        font-size: 1.5rem;
+        color: #777;
+        /* background: #f0f0f0; */
+        border-radius: 12px;
+        padding: 20px 40px;
+        /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); */
+        max-width: 400px;
+        text-align: center;
+        font-weight: 600;
+        user-select: none;
+        /* うっかりテキスト選択防止 */
+    }
+
+  /* /* .timeline {
     padding-bottom: 60px;
 
-  }
-
-  .mention-link {
-    color: #409eff;
-    text-decoration: none;
-    font-weight: bold;
-  }
-  .mention-link:hover {
-    text-decoration: underline;
-  }
+  } */
 </style>
