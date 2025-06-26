@@ -2,14 +2,14 @@ import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import axios from '@/utils/axios'
 import { useUserStore } from '@/stores/userStore'
-// import { useToast } from '@/composables/useToast.js'
+import { useToast } from '@/composables/useToast.js'
 
 // 投稿一覧の取得や投稿などをまとめる
 export const usePostStore = defineStore(
   'post',
   () => {
     const userStore = useUserStore()
-    // const { showToastMessage } = useToast()
+    const { showToastMessage } = useToast()
     const allPosts = ref([])
     const followersPosts = ref([])
     const myPosts = ref([])
@@ -108,11 +108,13 @@ export const usePostStore = defineStore(
       try {
         // console.log(id)
         if (!userStore.id) {
-          alert('ログインしてね。')
+          showToastMessage('ログインしてね。')
+          // alert('ログインしてね。')
           return false
         }
         if (!postData.image) {
-          alert('写真を選択してね。')
+          showToastMessage('写真を選択してね。')
+          // alert('写真を選択してね。')
           return false
         }
         // console.log(postData.content)
@@ -130,7 +132,7 @@ export const usePostStore = defineStore(
           return false
         }
       } catch (err) {
-        console.error('ユーザーの投稿に失敗1:', err)
+        console.error('投稿に失敗:', err)
       }
     }
 
@@ -138,7 +140,8 @@ export const usePostStore = defineStore(
     async function good(postId) {
       try {
         if (!postId) {
-          alert('どの投稿かわからないよ')
+          showToastMessage('どの投稿かわからないよ')
+          // alert('どの投稿かわからないよ')
           return false
         }
 
@@ -160,7 +163,8 @@ export const usePostStore = defineStore(
     async function unGood(postId) {
       try {
         if (!postId) {
-          alert('どの投稿かわからないよ')
+          showToastMessage('どの投稿かわからないよ')
+          // alert('どの投稿かわからないよ')
           return false
         }
 
