@@ -183,16 +183,48 @@ export const usePostStore = defineStore(
       // ここで fetchAllPosts() は呼ばない
     }
 
-    //ユーザ検索
+    // //ユーザ検索
+    // async function searchUsers(searchStr) {
+    //   const res = await axios.post(`/posts/search/users?searchStr=${searchStr}`)
+    //   return res
+    // }
+
+    // //投稿検索
+    // async function searchPosts(searchStr) {
+    //   const res = await axios.post(`/posts/search/posts?searchStr=${searchStr}`)
+    //   return res
+    // }
+
+    // ユーザ検索
     async function searchUsers(searchStr) {
-      const res = await axios.post(`/api/posts/search/users?searchStr=${searchStr}`)
-      return res
+      try {
+        // GET リクエストに変更し、クエリパラメータで searchStr を渡す
+        const res = await axios.get(`/posts/search/users`, {
+          params: {
+            searchStr: searchStr
+          }
+        });
+        return res;
+      } catch (error) {
+        console.error('ユーザー検索に失敗:', error);
+        throw error;
+      }
     }
 
-    //投稿検索
+    // 投稿検索
     async function searchPosts(searchStr) {
-      const res = await axios.post(`/api/posts/search/posts?searchStr=${searchStr}`)
-      return res
+      try {
+        // GET リクエストに変更し、クエリパラメータで searchStr を渡す
+        const res = await axios.get(`/posts/search/posts`, {
+          params: {
+            searchStr: searchStr
+          }
+        });
+        return res;
+      } catch (error) {
+        console.error('投稿検索に失敗:', error);
+        throw error;
+      }
     }
 
     return {
