@@ -130,7 +130,7 @@ export const usePostStore = defineStore(
           return false
         }
       } catch (err) {
-        console.error('ユーザーの投稿に失敗:', err)
+        console.error('ユーザーの投稿に失敗1:', err)
       }
     }
 
