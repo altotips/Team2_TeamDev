@@ -22,7 +22,6 @@
   import { computed, ref } from 'vue'
   import { useRouter } from 'vue-router'
   import { onMounted, onBeforeUnmount } from 'vue'
-  import { useUserStore } from '@/stores/userStore'
   import { computed } from 'vue'
 
     export default {
