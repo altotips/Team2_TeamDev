@@ -127,8 +127,10 @@ export const usePostStore = defineStore(
         })
 
         if (res) {
+          showToastMessage('投稿成功！')
           return true
         } else {
+          showToastMessage('投稿失敗')
           return false
         }
       } catch (err) {
@@ -193,9 +195,15 @@ export const usePostStore = defineStore(
       return res
     }
 
-    //投稿検索
+    // 投稿検索
     async function searchPosts(searchStr) {
       const res = await axios.post(`/api/posts/search/posts?searchStr=${searchStr}`)
+      return res
+    }
+
+    // タグ検索
+    async function searchTags(searchStr) {
+      const res = await axios.post(`/api/posts/search/tags?searchStr=${searchStr}`)
       return res
     }
 
@@ -215,6 +223,7 @@ export const usePostStore = defineStore(
       addComment,
       searchUsers,
       searchPosts,
+      searchTags,
     }
   },
   // {

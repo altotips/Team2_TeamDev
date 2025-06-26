@@ -126,8 +126,6 @@ public class PostsController {
 
 		String fileName = System.currentTimeMillis() + "_" + photo.getOriginalFilename();
 		Path filePath = Paths.get(uploadDir, fileName);
-		//		System.out.println(filePath);
-
 		Files.copy(photo.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
 		// タグを取得または作成
@@ -140,8 +138,6 @@ public class PostsController {
 							return tagsrepository.save(tag);
 						}))
 				.collect(Collectors.toList());
-
-		System.out.println("tags : " + tags);
 
 		// ここからデータべースにファイル名を保存
 		Posts post = new Posts();
@@ -183,6 +179,13 @@ public class PostsController {
 	@GetMapping("/search/posts")
 	public List<Posts> saerchPosts(@RequestParam String searchStr) {
 		List<Posts> posts = postsrepository.findByContentContaining(searchStr);
+		return posts;
+	}
+
+	// タグ検索
+	@GetMapping("/search/tags")
+	public List<Posts> saerchTags(@RequestParam String searchStr) {
+		List<Posts> posts = postsrepository.findByTagsNameContaining(searchStr);
 		return posts;
 	}
 

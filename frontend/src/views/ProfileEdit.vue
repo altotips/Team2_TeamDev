@@ -82,7 +82,8 @@ const { showToastMessage } = useToast()
     if (success) {
       router.push('/MyProfile')
     } else {
-      alert('更新に失敗しました')
+      showToastMessage('更新に失敗しました')
+      // alert('更新に失敗しました')
     }
   }
 
