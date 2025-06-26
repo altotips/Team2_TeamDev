@@ -1,36 +1,21 @@
-<!-- 検索したときに候補が出るようにする -->
 <template>
   <div class="search-view">
     <div class="search-bar">
-      <input
-        type="text"
-        v-model="searchQuery"
-        @input="handleInput"
-        @keyup.enter="handleSearch"
-        placeholder="検索"
-        class="search-input"
-      />
+      <input type="text" v-model="searchQuery" @input="handleInput" @keyup.enter="handleSearch" placeholder="検索"
+        class="search-input" />
       <div v-if="showSuggestions && searchQuery" class="suggestions">
         <div v-if="suggestedUsers.length > 0">
           <div class="suggestion-category">ユーザー</div>
-          <div
-            v-for="user in suggestedUsers"
-            :key="user.id"
-            @click="selectSuggestion(user.name, 'user')"
-            class="suggestion-item"
-          >
-            <img :src="user.profileImage || 'default-profile.png'" alt="プロフィール画像" class="profile-thumbnail" />
-            <span>{{ user.name }}</span>
+          <div v-for="user in suggestedUsers" :key="user.id" @click="selectSuggestion(user.userName, 'user')"
+            class="suggestion-item">
+            <img :src="getImageUrl(user.urlIcon, 'user')" alt="User Icon" class="profile-thumbnail">
+            <span>{{ user.userName }}</span>
           </div>
         </div>
         <div v-if="suggestedPosts.length > 0">
           <div class="suggestion-category">投稿</div>
-          <div
-            v-for="post in suggestedPosts"
-            :key="post.id"
-            @click="selectSuggestion(post.content, 'post')"
-            class="suggestion-item"
-          >
+          <div v-for="post in suggestedPosts" :key="post.id" @click="selectSuggestion(post.content, 'post')"
+            class="suggestion-item">
             <span>{{ post.content.substring(0, 50) }}{{ post.content.length > 50 ? '...' : '' }}</span>
           </div>
         </div>
@@ -43,22 +28,24 @@
     <div v-if="showResults" class="search-results">
       <div v-if="searchedUsers.length > 0">
         <h2>ユーザー検索結果</h2>
-        <div class="user-results-grid">
-          <div v-for="user in searchedUsers" :key="user.id" class="user-card">
-            <img :src="user.profileImage || 'default-profile.png'" alt="プロフィール画像" class="profile-image" />
-            <p>{{ user.name }}</p>
-            <p class="user-bio">{{ user.bio || '自己紹介がありません' }}</p>
+        <div class="user-list">
+          <div v-for="user in searchedUsers" :key="user.id" class="user-list-item" @click="goToUserProfile(user.id)">
+            <div class="icon-container">
+              <img :src="getImageUrl(user.urlIcon, 'user')" alt="User Icon" class="user-icon">
             </div>
+            <div class="text-info">
+              <span class="username">{{ user.userName }}</span>
+              <span class="fullname">{{ user.fullName }}</span>
+            </div>
+          </div>
         </div>
-      </div>
+        </div>
       <div v-if="searchedPosts.length > 0">
         <h2>投稿検索結果</h2>
         <div class="post-results-grid">
-          <div v-for="post in searchedPosts" :key="post.id" class="post-card">
-            <img :src="post.image" alt="投稿画像" class="post-image" />
-            <p class="post-content">{{ post.content }}</p>
-            <p class="post-user">By: {{ post.userName }}</p>
-            </div>
+          <div v-for="post in searchedPosts" :key="post.id" class="post-card" @click="openPostModal(post)">
+            <img :src="getImageUrl(post.urlPhoto, 'post')" :alt="post.content" class="post-image">
+          </div>
         </div>
       </div>
       <div v-if="searchedUsers.length === 0 && searchedPosts.length === 0 && searchPerformed" class="no-results">
@@ -67,23 +54,20 @@
     </div>
 
     <div v-if="!showResults && !searchQuery" class="initial-display">
-      <!-- <div class="image-grid">
-        <div class="image-placeholder">写真①</div>
-        <div class="image-placeholder">写真②</div>
-        <div class="image-placeholder">写真③</div>
-        <div class="image-placeholder">写真④</div>
-        <div class="image-placeholder">写真⑤</div>
-        <div class="image-placeholder">写真⑥</div>
-      </div> -->
     </div>
+
+    <ModalUserPostsView :show="showModal" :postData="selectedPost" @close="closePostModal" />
   </div>
 </template>
 
 <script setup>
 import { ref, watch } from 'vue'
-import { usePostStore } from '@/stores/postStore' // usePostStoreのパスを適切に修正してください
+import { useRouter } from 'vue-router'
+import { usePostStore } from '@/stores/postStore'
+import ModalUserPostsView from '@/views/ModalUserPostsView.vue'
 
 const postStore = usePostStore()
+const router = useRouter()
 
 const searchQuery = ref('')
 const showSuggestions = ref(false)
@@ -93,22 +77,34 @@ const suggestedPosts = ref([])
 const showResults = ref(false)
 const searchedUsers = ref([])
 const searchedPosts = ref([])
-const searchPerformed = ref(false) // 検索が実行されたかどうかを追跡する
+const searchPerformed = ref(false)
+
+const showModal = ref(false)
+const selectedPost = ref(null)
 
 let debounceTimer = null
 
+const getImageUrl = (path, type) => {
+  if (!path) {
+    return type === 'user' ? '/images/default_profile_icon.png' : '/images/default_post_image.png';
+  }
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+  return `http://localhost:8080/uploads/${path}`;
+};
+
 const handleInput = async () => {
-  showResults.value = false; // 入力があるたびに検索結果を非表示にする
-  searchPerformed.value = false; // 新しい入力があったら検索実行フラグをリセット
+  showResults.value = false;
+  searchPerformed.value = false;
 
   if (searchQuery.value.length > 0) {
     showSuggestions.value = true;
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(async () => {
-      // ユーザーと投稿の検索候補を取得
       try {
         const userRes = await postStore.searchUsers(searchQuery.value);
-        suggestedUsers.value = userRes.data || []; // APIの戻り値に合わせて調整
+        suggestedUsers.value = userRes.data || [];
       } catch (error) {
         console.error("ユーザー検索候補の取得に失敗:", error);
         suggestedUsers.value = [];
@@ -116,12 +112,12 @@ const handleInput = async () => {
 
       try {
         const postRes = await postStore.searchPosts(searchQuery.value);
-        suggestedPosts.value = postRes.data || []; // APIの戻り値に合わせて調整
+        suggestedPosts.value = postRes.data || [];
       } catch (error) {
         console.error("投稿検索候補の取得に失敗:", error);
         suggestedPosts.value = [];
       }
-    }, 300); // 300msのデバウンス
+    }, 300);
   } else {
     showSuggestions.value = false;
     suggestedUsers.value = [];
@@ -136,15 +132,16 @@ const handleSearch = async () => {
     return;
   }
 
-  showSuggestions.value = false; // エンターで検索結果を表示するので、サジェストは非表示
-  searchPerformed.value = true; // 検索が実行されたことをマーク
+  showSuggestions.value = false;
+  searchPerformed.value = true;
 
   try {
-    // ユーザー検索
     const userRes = await postStore.searchUsers(searchQuery.value);
     searchedUsers.value = userRes.data || [];
+    // デバッグ用ログを追加: 検索結果のユーザーデータを確認
+    console.log('検索結果のユーザーデータ (searchedUsers):', searchedUsers.value);
 
-    // 投稿検索
+
     const postRes = await postStore.searchPosts(searchQuery.value);
     searchedPosts.value = postRes.data || [];
 
@@ -153,25 +150,51 @@ const handleSearch = async () => {
     console.error("検索に失敗:", error);
     searchedUsers.value = [];
     searchedPosts.value = [];
-    showResults.value = true; // エラー時でも結果エリアを表示（何も表示されない状態）
+    showResults.value = true;
   }
 };
 
 const selectSuggestion = (text, type) => {
   searchQuery.value = text;
-  handleSearch(); // サジェストを選択したら即座に検索を実行
+  handleSearch();
 };
 
-// 検索クエリが空になったら初期表示に戻す
 watch(searchQuery, (newValue) => {
   if (newValue === '') {
     showResults.value = false;
     searchPerformed.value = false;
   }
 });
+
+const openPostModal = (post) => {
+  selectedPost.value = post;
+  showModal.value = true;
+};
+
+const closePostModal = () => {
+  showModal.value = false;
+  selectedPost.value = null;
+};
+
+// ★ ユーザープロフィールへの遷移 - ここを修正しました！
+const goToUserProfile = (userId) => {
+  // userId が null, undefined, または空文字列でないかを確認
+  if (userId === null || userId === undefined || userId === '') {
+    console.error('goToUserProfile: Received an invalid userId. Navigation aborted.', userId);
+    // 必要であればユーザーにフィードバック
+    alert('ユーザー情報が不完全なため、プロフィールを表示できません。');
+    return;
+  }
+
+  // Vue Routerのルート定義で 'UserProfile' ルートが 'userId' パラメータを期待している場合、
+  // ここでも 'userId' というキー名で渡す必要があります。
+  router.push({ name: 'UserProfile', params: { userId: userId } });
+  console.log('ユーザープロフィールへ移動:', userId);
+};
 </script>
 
 <style scoped>
+/* スタイルは変更なし */
 .search-view {
   padding: 20px;
   max-width: 600px;
@@ -249,7 +272,8 @@ watch(searchQuery, (newValue) => {
 
 .initial-display .image-placeholder {
   width: 100%;
-  padding-bottom: 100%; /* 1:1のアスペクト比を維持 */
+  padding-bottom: 100%;
+  /* 1:1のアスペクト比を維持 */
   background-color: #f0f0f0;
   display: flex;
   justify-content: center;
@@ -258,7 +282,8 @@ watch(searchQuery, (newValue) => {
   box-sizing: border-box;
   font-size: 1.2em;
   color: #666;
-  position: relative; /* 子要素の配置のため */
+  position: relative;
+  /* 子要素の配置のため */
 }
 
 .search-results {
@@ -272,42 +297,73 @@ watch(searchQuery, (newValue) => {
   padding-bottom: 5px;
 }
 
-.user-results-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 20px;
+/* user-results-grid のスタイルを削除し、user-list に置き換える */
+.user-list {
+  display: flex;
+  flex-direction: column; /* ユーザーを縦に並べる */
+  gap: 10px; /* 各ユーザー間のスペース */
   margin-bottom: 30px;
 }
 
-.user-card {
+.user-list-item {
+  display: flex; /* アイコンとテキスト情報を横並びにする */
+  align-items: center; /* 垂直方向の中央揃え */
+  gap: 15px; /* アイコンとテキスト間のスペース */
+  padding: 10px 15px;
   border: 1px solid #eee;
   border-radius: 8px;
-  padding: 15px;
-  text-align: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
 }
 
-.user-card .profile-image {
-  width: 80px;
-  height: 80px;
+.user-list-item:hover {
+  background-color: #f0f0f0;
+}
+
+/* 既存の .icon-container, .user-icon, .text-info, .username, .fullname はそのまま使用 */
+.icon-container {
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
-  object-fit: cover;
-  margin-bottom: 10px;
-}
-
-.user-card p {
-  margin: 5px 0;
-  font-weight: bold;
-}
-
-.user-card .user-bio {
-  font-size: 0.9em;
-  color: #666;
-  white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
 }
+
+.user-icon {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.text-info {
+  display: flex;
+  flex-direction: column; /* ユーザーネームとフルネームを縦に並べる */
+  /* ここで flex-grow: 1 を追加すると、テキストが残りのスペースを占有し、
+     右端に寄るように見えますが、テキストが長すぎるとellipsisが効きます。*/
+  flex-grow: 1;
+}
+
+.username {
+  font-weight: bold;
+  font-size: 16px;
+  color: #262626;
+  white-space: nowrap; /* 1行で表示 */
+  overflow: hidden; /* はみ出た部分を非表示 */
+  text-overflow: ellipsis; /* はみ出た部分を...で表示 */
+}
+
+.fullname {
+  font-size: 14px;
+  color: #8e8e8e;
+  white-space: nowrap; /* 1行で表示 */
+  overflow: hidden; /* はみ出た部分を非表示 */
+  text-overflow: ellipsis; /* はみ出た部分を...で表示 */
+}
+
 
 .post-results-grid {
   display: grid;
@@ -321,11 +377,14 @@ watch(searchQuery, (newValue) => {
   overflow: hidden;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   background-color: #fff;
+  cursor: pointer;
+  /* クリック可能であることを示す */
 }
 
 .post-card .post-image {
   width: 100%;
-  height: 200px; /* 固定の高さ、またはobject-fit: contain/cover を使う */
+  height: 200px;
+  /* 固定の高さ、またはobject-fit: contain/cover を使う */
   object-fit: cover;
   display: block;
 }
