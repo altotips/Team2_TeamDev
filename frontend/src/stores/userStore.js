@@ -132,7 +132,7 @@ export const useUserStore = defineStore(
         const res = await axios.put(`users/${id.value}/follow/${followId}`)
         //   console.log('res: ' + res.data)
         if (!res.data) {
-          // showToastMessage('ログインに失敗しました')
+          showToastMessage('フォローに失敗しました')
           // throw new Error('ログイン失敗')
           return false
         }
@@ -154,6 +154,7 @@ export const useUserStore = defineStore(
 
         // showToastMessage('ログインしました')
         // alert('ログインしました')
+        showToastMessage('フォローしました')
         return true
       } catch (error) {
         console.error('ログイン失敗', error)
@@ -174,6 +175,7 @@ export const useUserStore = defineStore(
         const res = await axios.delete(`users/${id.value}/unfollow/${unfollowId}`)
         //   console.log('res: ' + res.data)
         if (!res.data) {
+          showToastMessage('フォロー解除に失敗しました')
           // showToastMessage('ログインに失敗しました')
           // throw new Error('ログイン失敗')
           return false
@@ -196,6 +198,7 @@ export const useUserStore = defineStore(
 
         // showToastMessage('ログインしました')
         // alert('ログインしました')
+        showToastMessage('フォロー解除しました')
         return true
       } catch (error) {
         console.error('ログイン失敗', error)
@@ -305,8 +308,10 @@ export const useUserStore = defineStore(
           },
         })
         //   console.log('res: ' + res.data)
-        if (res.status !== 200 && res.status !== 204) return false
-
+        if (res.status !== 200 && res.status !== 204){
+        showToastMessage('プロフィール変更に失敗しました')
+          return false
+        }
 
         // id.value = res.data.id
         urlIcon.value = res.data.urlIcon
@@ -324,6 +329,7 @@ export const useUserStore = defineStore(
 
         // showToastMessage('ログインしました')
         // alert('ログインしました')
+        showToastMessage('プロフィール変更しました')
         return true
       } catch (error) {
         console.error('プロフィール変更失敗', error)
