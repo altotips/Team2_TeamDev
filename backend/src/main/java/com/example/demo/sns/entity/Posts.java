@@ -66,5 +66,5 @@ public class Posts {
 
 	@ManyToMany
 	@JoinTable(name = "post_tags", joinColumns = @JoinColumn(name = "post_id"), inverseJoinColumns = @JoinColumn(name = "tag_id"))
-	private List<Tag> tags = new ArrayList<>();
+	private List<Tags> tags = new ArrayList<>();
 }

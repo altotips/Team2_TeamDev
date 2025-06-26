@@ -27,6 +27,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.example.demo.sns.entity.Comment;
 import com.example.demo.sns.entity.Follows;
 import com.example.demo.sns.entity.Posts;
+import com.example.demo.sns.entity.Tags;
 import com.example.demo.sns.entity.Users;
 import com.example.demo.sns.repository.CommentRepository;
 import com.example.demo.sns.repository.FollowsRepository;
@@ -101,6 +102,7 @@ public class PostsController {
 			List<Posts> userPosts = postsrepository.findByUser(user);
 			posts.addAll(userPosts);
 		}
+
 		posts.addAll(postsrepository.findByUser(me));
 		List<Posts> sortedPosts = posts.stream()
 				.sorted(Comparator.comparing(Posts::getId)) // 昇順
@@ -112,9 +114,8 @@ public class PostsController {
 	@PostMapping("/{id}")
 	public Posts post(@PathVariable Long id,
 			@RequestParam("image") MultipartFile photo,
-			@RequestParam("content") String content
-//			@RequestParam("tags") List<String> tagsReq
-	) throws IOException {
+			@RequestParam("content") String content,
+			@RequestParam("tags") List<String> tagsReq) throws IOException {
 
 		// ファイルの保存
 		String uploadDir = "./uploads/";
@@ -130,10 +131,17 @@ public class PostsController {
 		Files.copy(photo.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
 		// タグを取得または作成
-//		List<Tag> tags = tagsReq.stream()
-//				.map(tagName -> tagRepository.findByName(tagName)
-//						.orElseGet(() -> tagRepository.save(new Tag(null, tagName, new ArrayList<>()))))
-//				.collect(Collectors.toList());
+		List<Tags> tags = tagsReq
+				.stream()
+				.map(tagName -> tagsrepository.findByName(tagName)
+						.orElseGet(() -> {
+							Tags tag = new Tags();
+							tag.setName(tagName);
+							return tagsrepository.save(tag);
+						}))
+				.collect(Collectors.toList());
+
+		System.out.println("tags : " + tags);
 
 		// ここからデータべースにファイル名を保存
 		Posts post = new Posts();
@@ -141,7 +149,7 @@ public class PostsController {
 		post.setUser(user);
 		post.setUrlPhoto(fileName);
 		post.setContent(content);
-//		post.setTags(tags);
+		post.setTags(tags);
 		postsrepository.save(post);
 		return post;
 	}
