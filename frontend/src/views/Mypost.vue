@@ -11,18 +11,58 @@
     const selectedFile = ref(null)
     const previewFile = ref(null)
 
+
+    //ユーザー候補リスト
+    const mentionSearchTag = ref('')
+    const mention = ref([])
     // 入力キャプションとタグのデータ
     const description = ref('')
     const tags = ref([])
+    
+    // 仮のユーザーリスト
+    const allUsers = ref([
+        { id: 1, userName: 'wani' },
+        { id: 2, userName: 'hiyoko' },
+        { id: 3, userName: 'okapi' },
+    ])
+
+    // ＠メンション部分を抽出（末尾の @〇〇 だけを取得）
+    watch(description, (val) => {
+        const mentionMatch = val.match(/@([^\s@ ]*)$/);
+        mentionSearchTag.value = mentionMatch ? mentionMatch[1] : ''
+    })
+
+    //＠メンション候補リストの用意
+    const mentionCandidates = computed(() => {
+        if (!mentionSearchTag.value) return []
+        return allUsers.value.filter(user =>
+            user.userName.toLowerCase().startsWith(mentionSearchTag.value.toLowerCase())
+        )
+    })
+
+    function insertMention(username) {
+        description.value = description.value.replace(/@([^\s@ ]*)$/, `@${username} `)
+        mentionSearchTag.value = ''
+    }
+
+
 
     // 今！入力中の #〇〇 の部分をに反応する（検出して使う）変数
     const searchTag = ref('');
-
     // タグの候補リスト
-    const candidateTags = ref(['いぬ', '犬', 'イッヌ', '筋トレ', 'ひよこ']);
-    // toHiragana('イヌ') 
-    // toHiragana('犬')    
-    // toHiragana('いぬ')  
+    const candidateTags = ref([
+        'いぬ',
+        '犬',
+        'イッヌ',
+        '筋トレ',
+        'ひよこ'
+    ]);
+
+    // キャプションが変わるたびに、最後の #〇〇 を拾ってくる
+    watch(description, (val) => {
+        const match = val.match(/#([^\s# ]*)$/);
+        searchTag.value = match ? match[1] : '';
+    });
 
     // キャプション内の最後の「#」以降の単語を拾って、ひらがなで一致する候補を出す
     const suggestions = computed(() => {
@@ -33,13 +73,6 @@
                 toHiragana(tag).startsWith(keyword) // タグもひらがな変換して比較
             )
             : [];
-    });
-
-
-    // キャプションが変わるたびに、最後の #〇〇 を拾ってくる
-    watch(description, (val) => {
-        const match = val.match(/#([^\s# ]*)$/);
-        searchTag.value = match ? match[1] : '';
     });
 
     // 候補タグをクリックしたときの処理
@@ -53,8 +86,7 @@
             tags.value.push(tag);
         }
 
-        // 候補クリア
-        currentTagText.value = '';
+       
     }
 
 
@@ -86,7 +118,8 @@
             const res = await postStore.post({
                 image: selectedFile.value,
                 content: description.value,
-                tags: tags.value
+                tags: tags.value,
+                mention: mention.value
             })
             console.log('レスポンス:', res)
 
@@ -127,14 +160,21 @@
         <!-- 右カラム：テキスト入力 -->
         <div class="right-column">
             <!-- <input type="text" v-model="description" placeholder="キャプションを入力" class="caption-box" /> -->
-            <textarea v-model="description" placeholder="キャプションを入力" class="caption-box"></textarea>
+            <textarea v-model="description" placeholder="キャプションを入力…" class="caption-box"></textarea>
 
-            <!-- タグ候補があれば表示 -->
+            <!-- #タグ候補があれば表示 -->
             <ul v-if="suggestions.length" class="tag-suggestions">
-                <li v-for="tag in suggestions" :key="tag" @click="insertTag(tag)">
-                    #{{ tag }}
+                <li v-for="tag in suggestions" :key="tag" @click="insertTag(tag)" class="tag-item">
+                    <span class="tag-icon">#</span>
+                    {{ tag }}
                 </li>
             </ul>
+
+            <ul v-if="mentionCandidates.length > 0" class="mention-list">
+                <li v-for="user in mentionCandidates" :key="user.id" @click="insertMention(user.userName)">
+                    @{{ user.userName }}
+                </li>
+                </ul>
         </div>
 
         <!-- ボタンエリア -->
@@ -262,5 +302,51 @@
 
     .submit-button:hover {
         background-color: #66b1ff;
+    }
+
+
+    /* #タグ */
+
+
+    .tag-suggestions {
+        list-style: none;
+        /* デフォルトの・は消す */
+        padding: 0;
+        margin: 0;
+        max-height: 200px;
+        /* 高さ制限（必要ならスクロール可） */
+        overflow-y: auto;
+    }
+
+    .tag-item {
+        display: flex;
+        align-items: center;
+        padding: 6px 12px;
+        cursor: pointer;
+        border-bottom: 1px solid #eee;
+        font-size: 16px;
+        line-height: 1.5;
+    }
+
+    .tag-item:hover {
+        background-color: #f0f0f0;
+    }
+
+    .tag-icon {
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        width: 20px;
+        height: 20px;
+        margin-right: 8px;
+        border-radius: 50%;
+        /* これで丸くなる */
+        background-color: #eee;
+        /* 薄いグレーの背景 */
+        color: #333;
+        font-weight: bold;
+        font-size: 14px;
+        user-select: none;
+        /* 選択できなくする */
     }
 </style>
