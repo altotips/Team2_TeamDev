@@ -127,6 +127,8 @@ export const usePostStore = defineStore(
             'Content-Type': 'multipart/form-data',
           },
         })
+        // console.log(res)
+        // return res;
 
         if (res) {
           // showToastMessage('投稿成功！')

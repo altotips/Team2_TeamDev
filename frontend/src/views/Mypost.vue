@@ -21,7 +21,7 @@
     // 入力キャプションとタグのデータ
     const description = ref('')
     const tags = ref([])
-    
+
     // 仮のユーザーリスト
     const allUsers = ref([
         { id: 1, userName: 'wani' },
@@ -118,13 +118,16 @@
                 .match(/#[^\s# ]+/g) // #付き文字列を全部抜き出す
                 ?.map(tag => tag.slice(1)) || []; //#なしの文字列に変換(#のない状態でデータを送ってほしいから)
 
+            console.log(description.value); // ["楽しい", "カフェ", "日常の記録"]
             console.log(tags.value); // ["楽しい", "カフェ", "日常の記録"]
-
+            if(description.value.length > 0 && description.value.includes('#') && tags.value.length===0){
+                showToastMessage('空のタグは消してね')
+                return 
+            }
             const res = await postStore.post({
                 image: selectedFile.value,
                 content: description.value,
                 tags: tags.value,
-                mention: mention.value
             })
             console.log('レスポンス:', res)
 
@@ -175,11 +178,13 @@
                 </li>
             </ul>
 
-            <ul v-if="mentionCandidates.length > 0" class="mention-list">
-                <li v-for="user in mentionCandidates" :key="user.id" @click="insertMention(user.userName)">
-                    @{{ user.userName }}
+            <ul v-if="mentionCandidates.length > 0" class="tag-suggestions">
+                <li v-for="user in mentionCandidates" :key="user.id" @click="insertMention(user.userName)"
+                    class="tag-item">
+                    <span class="mention-icon">@</span>
+                    {{ user.userName }}
                 </li>
-                </ul>
+            </ul>
         </div>
 
         <!-- ボタンエリア -->
@@ -353,5 +358,25 @@
         font-size: 14px;
         user-select: none;
         /* 選択できなくする */
+        padding-bottom: 1px;
+    }
+
+    .mention-icon {
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        width: 20px;
+        height: 20px;
+        margin-right: 8px;
+        border-radius: 50%;
+        /* これで丸くなる */
+        background-color: #eee;
+        /* 薄いグレーの背景 */
+        color: #333;
+        font-weight: bold;
+        font-size: 14px;
+        user-select: none;
+        /* 選択できなくする */
+        padding-bottom: 2px
     }
 </style>
