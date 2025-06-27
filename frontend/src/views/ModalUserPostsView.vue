@@ -119,6 +119,7 @@ watch(() => [props.show, props.postData], async ([newShowVal, newPostDataVal]) =
     showComment[post.value.id] = false;
     newComments[post.value.id] = '';
 
+
     document.body.style.overflow = 'hidden'; // スクロール禁止
   } else {
     post.value = null; // モーダルが閉じる際に投稿データをクリア
@@ -139,6 +140,7 @@ const toggleLike = async () => {
   }
 
   const currentPost = post.value;
+
 
   // オプティミスティックUI更新のための事前状態保存
   const previousLiked = currentPost.liked;
@@ -194,12 +196,19 @@ const toggleComment = () => {
     showComment[post.value.id] = !showComment[post.value.id];
   }
 };
+  // コメント送信
+  const submitComment = async (postId) => {
+    if (!userStore.id) {
+      showToastMessage('ログインしていません。コメントできません。');
+      // alert('ログインしていません。コメントできません。');
+      return;
+    }
 
-const submitComment = async () => {
-  if (!userStore.id || !post.value) {
-    alert('ログインしていません、または投稿データがありません。コメントできません。');
-    return;
-  }
+    const text = (newComments[postId] || '').trim()
+    if (!text){
+      return showToastMessage('コメントを入力してください')
+      // return alert('コメントを入力してください')
+    }
 
   const postId = post.value.id;
   const text = (newComments[postId] || '').trim();
@@ -212,17 +221,14 @@ const submitComment = async () => {
     // postStore.addComment はバックエンドからCommentオブジェクトを返すことを想定
     const response = await postStore.addComment(postId, { content: text });
 
-    if (response && response.data) {
-      // バックエンドから返されたコメントデータを使用
-      const newCommentFromServer = response.data;
-
-      // post.value.comments が存在しない場合は初期化
-      if (!post.value.comments) {
-        post.value.comments = [];
-      }
-      
-      // コメントリストに新しいコメントを追加
-      post.value.comments.push(newCommentFromServer);
+      newComments[postId] = '' // コメントフォームクリア
+      showToastMessage('コメントを送信しました！');
+      // alert('コメントを送信しました！');
+      await postStore.fetchAllPosts(); // コメント送信後、最新のコメントリストを反映するために再フェッチ
+    } catch (error) {
+      console.error("コメント送信中にエラー:", error);
+      showToastMessage("コメント送信中にエラーが発生しました。");
+      // alert("コメント送信中にエラーが発生しました。");
     }
     
     // コメント入力フィールドをクリア

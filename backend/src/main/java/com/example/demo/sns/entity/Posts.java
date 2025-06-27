@@ -65,6 +65,10 @@ public class Posts {
 	private List<Comment> comments = new ArrayList<>(); // nullPointerExceptionを防ぐために初期化
 
 	@ManyToMany
+	@JoinTable(name = "good_users", joinColumns = @JoinColumn(name = "post_id"), inverseJoinColumns = @JoinColumn(name = "users_id"))
+	private List<Users> goodUsers = new ArrayList<>();
+	
+	@ManyToMany
 	@JoinTable(name = "post_tags", joinColumns = @JoinColumn(name = "post_id"), inverseJoinColumns = @JoinColumn(name = "tag_id"))
-	private List<Tag> tags = new ArrayList<>();
+	private List<Tags> tags = new ArrayList<>();
 }

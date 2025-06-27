@@ -2,17 +2,21 @@
   <div class="profile-page">
     <header class="profile-header">
       <div class="header-top">
-        <button class="back-button" @click="$router.go(-1)">
-          ＜
-        </button>
+        <button class="back-button" @click="$router.go(-1)">＜</button>
         <h1 class="username">{{ userName }}</h1>
       </div>
 
       <div class="profile-details-row" v-if="!isLoading && !error">
         <div class="icon-container">
           <img
-            :src="userIconUrl && !userIconUrl.startsWith('http') ? `http://localhost:8080/uploads/${userIconUrl}` : (userIconUrl || '/images/default_profile_icon.png')"
-            alt="User Icon" class="profile-icon">
+            :src="
+              userIconUrl && !userIconUrl.startsWith('http')
+                ? `http://localhost:8080/uploads/${userIconUrl}`
+                : userIconUrl || '/images/default_profile_icon.png'
+            "
+            alt="User Icon"
+            class="profile-icon"
+          />
         </div>
 
         <div class="right-of-icon-info">
@@ -36,7 +40,10 @@
             </div>
             <div class="stat-item">
               <span class="stat-value">{{ displayedFollowingCount }}</span>
-              <router-link :to="`/followlist?userId=${targetUserId}&type=following`" class="stat-label-link">
+              <router-link
+                :to="`/followlist?userId=${targetUserId}&type=following`"
+                class="stat-label-link"
+              >
                 <span class="stat-label">フォロー中</span>
               </router-link>
             </div>
@@ -49,9 +56,7 @@
 
     <main class="profile-content">
       <div class="posts-grid">
-        <div v-if="isLoading" class="loading-message">
-          投稿を読み込み中...
-        </div>
+        <div v-if="isLoading" class="loading-message">投稿を読み込み中...</div>
 
         <div v-else-if="error" class="error-message">
           投稿の読み込み中にエラーが発生しました。: {{ error }}
@@ -64,8 +69,15 @@
         <div v-else class="image-grid">
           <div v-for="post in userPosts" :key="post.id" class="image-item" @click="openModal(post)">
             <img
-              :src="post.urlPhoto && !post.urlPhoto.startsWith('http') ? `http://localhost:8080/uploads/${post.urlPhoto}` : (post.urlPhoto || '/images/default_post_image.png')"
-              :alt="post.content" class="post-image">
+              :src="
+                post.urlPhoto && !post.urlPhoto.startsWith('http')
+                  ? `http://localhost:8080/uploads/${post.urlPhoto}`
+                  : post.urlPhoto || '/images/default_post_image.png'
+              "
+              :alt="post.content"
+              class="post-image"
+            />
+
             <div class="post-overlay">
               <div class="overlay-stats">
                 <span class="stat-icon">❤️</span>
@@ -89,12 +101,15 @@ import { ref, watch, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/userStore.js';
 import { usePostStore } from '@/stores/postStore.js';
-import ModalUserPostsView from '@/views/ModalUserPostsView.vue'; // Correct path
+import ModalUserPostsView from '@/views/ModalUserPostsView.vue';
+import { useToast } from '@/composables/useToast.js'
+
 
 const route = useRoute();
 const router = useRouter();
 const userStore = useUserStore();
 const postStore = usePostStore();
+const { showToastMessage } = useToast()
 
 const targetUserId = ref(null);
 
@@ -106,12 +121,14 @@ const postsCount = ref(0);
 const isMyProfile = ref(false);
 const isFollowing = ref(false);
 
-const userPosts = ref([]);
+const userPosts = ref([])
 
-const isLoading = ref(true);
-const error = ref(null);
+const isLoading = ref(true)
+const error = ref(null)
 
-const displayedFollowingCount = ref(0);
+
+const displayedFollowingCount = ref(0) // 表示中のユーザーのフォロー中人数
+
 
 const showModal = ref(false);
 const selectedPostObj = ref(null);
@@ -144,6 +161,20 @@ const goToEditProfile = () => {
   router.push('/ProfileEdit');
 };
 
+const initiateFetch = async (userId) => {
+  if (userId) {
+    targetUserId.value = userId; // targetUserId を設定
+    await fetchUserProfileData(targetUserId.value);
+  } else if (userStore.id) { // route.params.userId がない場合はログイン中のユーザーのプロフィールを表示
+    targetUserId.value = userStore.id;
+    await fetchUserProfileData(targetUserId.value);
+  } else {
+    error.value = "有効なユーザーIDが指定されていないか、ログインしていません。";
+    isLoading.value = false;
+    router.push('/login'); // ログインしていない場合はログインページへリダイレクト
+  }
+};
+
 async function fetchUserProfileData(userIdToFetch) {
   isLoading.value = true;
   error.value = null;
@@ -163,7 +194,10 @@ async function fetchUserProfileData(userIdToFetch) {
       isMyProfile.value = (userStore.id === userIdToFetch);
 
       const targetUserFollowingList = await userStore.userFollowers(userIdToFetch);
-      displayedFollowingCount.value = targetUserFollowingList ? targetUserFollowingList.filter(f => f.fromUser && f.fromUser.id === userIdToFetch).length : 0;
+
+      displayedFollowingCount.value = targetUserFollowingList ? targetUserFollowingList.length : 0;
+
+      // ユーザーの投稿を取得
 
       await postStore.fetchUserPosts(userIdToFetch);
       // ここで、投稿のliked状態をuserStore.likesに基づいて設定します
@@ -188,31 +222,21 @@ async function fetchUserProfileData(userIdToFetch) {
   }
 }
 
-const initiateFetch = async (userId) => {
-  if (userId) {
-    targetUserId.value = userId;
-    await fetchUserProfileData(targetUserId.value);
-  } else if (userStore.id) {
-    targetUserId.value = userStore.id;
-    await fetchUserProfileData(targetUserId.value);
-  } else {
-    error.value = "有効なユーザーIDが指定されていないか、ログインしていません。";
-    isLoading.value = false;
-    router.push('/');
-  }
-};
 
-watch(
-  () => [route.params.userId, userStore.id],
-  async ([newRouteUserId, newUserStoreId]) => {
-    let idToFetch = null;
-    const routeIdNum = parseInt(newRouteUserId);
+// ルートパラメータ (userId) とログインID (userStore.id) の変更を監視
+    watch(
+    () => [route.params.userId, userStore.id],
+    async ([newRouteUserId, newUserStoreId]) => {
+      let idToFetch = null;
+      const routeIdNum = parseInt(newRouteUserId);
 
-    if (!isNaN(routeIdNum) && routeIdNum > 0) {
-      idToFetch = routeIdNum;
-    } else if (newUserStoreId && newUserStoreId > 0) {
-      idToFetch = newUserStoreId;
-    }
+      if (!isNaN(routeIdNum) && routeIdNum > 0) {
+        idToFetch = routeIdNum;
+      } else if (newUserStoreId && newUserStoreId > 0) {
+        // route.params.userId がない場合や、不正な値の場合は、ログイン中のユーザーのプロフィールを表示
+        idToFetch = newUserStoreId;
+      }
+    // 取得対象のユーザーIDが変更された場合、または同じIDでもログイン状態が変わった場合に再フェッチ
 
     if (idToFetch && (idToFetch !== targetUserId.value || (userStore.id !== null && isMyProfile.value !== (newUserStoreId === idToFetch)))) {
       console.log("Watch triggered by ID change or login status. Fetching user profile for:", idToFetch);
@@ -243,9 +267,7 @@ watch(
 
 const toggleFollow = async () => {
   if (!userStore.id) {
-    // showToastMessage('ログインしていません。フォローできません。'); // Assuming showToastMessage is available
-    alert('ログインしていません。フォローできません。');
-    router.push('/');
+    showToastMessage('ログインしていません。フォローできません。');
     return;
   }
   if (!targetUserId.value) return;
@@ -254,28 +276,24 @@ const toggleFollow = async () => {
     if (isFollowing.value) {
       const success = await userStore.unfollow(targetUserId.value);
       if (success) {
-        // showToastMessage('フォローを解除しました。'); // Assuming showToastMessage is available
-        alert('フォローを解除しました。');
+        showToastMessage('フォローを解除しました。');
       } else {
-        // showToastMessage('フォロー解除に失敗しました。'); // Assuming showToastMessage is available
-        alert('フォロー解除に失敗しました。');
+        showToastMessage('フォロー解除に失敗しました。');
       }
     } else {
       const success = await userStore.follow(targetUserId.value);
       if (success) {
-        // showToastMessage('フォローしました。'); // Assuming showToastMessage is available
-        alert('フォローしました。');
+        showToastMessage('フォローしました。');
       } else {
-        // showToastMessage('フォローに失敗しました。'); // Assuming showToastMessage is available
-        alert('フォローに失敗しました。');
+        showToastMessage('フォローに失敗しました。');
       }
     }
+    // フォロー/フォロー解除後、ユーザーのプロフィールデータとログインユーザーのフォローリストを再フェッチして表示を更新
     await fetchUserProfileData(targetUserId.value);
     await userStore.followers();
   } catch (err) {
     console.error('フォロー処理中にエラー:', err);
-    // showToastMessage('フォロー処理中にエラーが発生しました。'); // Assuming showToastMessage is available
-    alert('フォロー処理中にエラーが発生しました。');
+    showToastMessage('フォロー処理中にエラーが発生しました。');
   }
 };
 
@@ -570,7 +588,6 @@ const handlePostUpdate = (updatedPost) => {
 
 /* --- 追加CSSここまで --- */
 
-
 .no-posts-message,
 .loading-message,
 .error-message {
@@ -618,10 +635,22 @@ const handlePostUpdate = (updatedPost) => {
     gap: 10px;
   }
 
-  /* モバイルではオーバーレイは通常表示しない、またはシンプルな表示にするなど検討 */
-  .post-overlay {
-    /* モバイルでのオーバーレイ表示を無効にする例 */
-    display: none;
+  .follow-button {
+    width: 100%;
+    /* モバイルでは幅いっぱいに表示 */
+    margin-top: 10px;
+  }
+
+  .my-profile-actions {
+    width: 100%;
+    /* モバイルで幅いっぱいに表示 */
+    margin-top: 10px; /* モバイルでの縦方向の間隔を調整 */
+  }
+
+  .edit-profile-button,
+  .logout-button {
+    width: 48%;
+    /* モバイルで横に並べる場合の例 */
   }
 
   .follow-button {

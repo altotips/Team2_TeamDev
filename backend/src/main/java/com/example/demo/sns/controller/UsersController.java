@@ -51,6 +51,11 @@ public class UsersController {
 	@Autowired
 	private final FollowsRepository followsrepository;
 
+	@GetMapping("")
+	public List<Users> getAllUsers() {
+		return usersrepository.findAll();
+	}
+
 	// 1ユーザの情報を取得
 	@GetMapping("/{id}")
 	public Users getOne(@PathVariable Long id) {

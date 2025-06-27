@@ -2,18 +2,23 @@ import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import axios from '@/utils/axios'
 import { useUserStore } from '@/stores/userStore'
-// import { useToast } from '@/composables/useToast.js' // 必要であればコメントアウトを解除
+
+import { useToast } from '@/composables/useToast.js'
+
 
 // 投稿一覧の取得や投稿などをまとめる
 export const usePostStore = defineStore(
   'post',
   () => {
     const userStore = useUserStore()
-    // const { showToastMessage } = useToast() // 必要であればコメントアウトを解除
+
+    const { showToastMessage } = useToast()
     const allPosts = ref([])
     const followersPosts = ref([])
     const myPosts = ref([])
-    const userPosts = ref([]) // 特定のユーザーの投稿
+    const userPosts = ref([])
+    const tags = ref([])
+
 
     // すべての投稿を取得し、allPostsに保存
     async function fetchAllPosts() {
@@ -103,11 +108,13 @@ export const usePostStore = defineStore(
     async function post(postData) {
       try {
         if (!userStore.id) {
-          alert('ログインしてね。')
+          showToastMessage('ログインしてね。')
+          // alert('ログインしてね。')
           return false
         }
         if (!postData.image) {
-          alert('写真を選択してね。')
+          showToastMessage('写真を選択してね。')
+          // alert('写真を選択してね。')
           return false
         }
 
@@ -117,6 +124,7 @@ export const usePostStore = defineStore(
           },
         })
 
+
         // 新しい投稿が成功したら、関連する投稿リストを更新（例: 自分の投稿リストを再フェッチ）
         // 必要に応じて、他のリストも更新
         await fetchMyPosts(userStore.id); 
@@ -124,6 +132,7 @@ export const usePostStore = defineStore(
         await fetchAllPosts();
 
         return !!res
+
       } catch (err) {
         console.error('投稿に失敗:', err)
         return false
@@ -139,16 +148,15 @@ export const usePostStore = defineStore(
           return;
         }
         if (!postId) {
-          alert('投稿IDがありません。コメントできません。');
-          return;
-        }
-        if (!text || text.trim() === '') {
-          alert('コメント内容を入力してください。');
-          return;
+
+          showToastMessage('どの投稿かわからないよ')
+          // alert('どの投稿かわからないよ')
+          return false
         }
 
-        const response = await axios.post(`/posts/${postId}/comments/${userStore.id}`, { content: text })
-        console.log("コメントが正常に追加されました。")
+        const res = await axios.patch(`/posts/${postId}/good/${userStore.id}`)
+        console.log('いいねしたよ')
+
 
         // ★ コメント追加後、関連する投稿リスト内のコメント数を更新
         // ここで返されたコメントデータを使ってストアを更新することもできるが、
@@ -159,6 +167,7 @@ export const usePostStore = defineStore(
         throw error; // エラーを再スローして呼び出し元で処理させる
       }
     }
+
 
     /**
      * Piniaストア内の投稿を更新する汎用アクション
@@ -173,6 +182,7 @@ export const usePostStore = defineStore(
         Object.assign(postInAllPosts, updates);
         console.log(`postStore: allPosts内の投稿ID ${postId} を更新しました。`, updates);
       }
+
 
       // followersPosts を更新
       const postInFollowersPosts = followersPosts.value.find(p => p.id === postId);
@@ -194,6 +204,15 @@ export const usePostStore = defineStore(
         Object.assign(postInUserPosts, updates);
         console.log(`postStore: userPosts内の投稿ID ${postId} を更新しました。`, updates);
       }
+    }
+
+    //コメント追加
+    async function addComment(postId, {content:text}) {
+      console.log("メソッド")
+      await axios.post(`/posts/${postId}/comments/${userStore.id}`, {content:text})
+      console.log("メソッド２")
+      // "/{postId}/comments/{userId}"
+      // ここで fetchAllPosts() は呼ばない
     }
 
     // ユーザ検索
@@ -226,6 +245,22 @@ export const usePostStore = defineStore(
       }
     }
 
+    // タグ検索
+    async function searchTags(searchStr) {
+      const res = await axios.post(`/api/posts/search/tags?searchStr=${searchStr}`)
+      return res
+    }
+
+
+    // 全タグ一覧取得
+    async function getTags() {
+      const res = await axios.post(`/api/posts/tags`)
+      tags.value = res.data
+      return res
+    }
+
+
+
     return {
       allPosts,
       followersPosts,
@@ -241,6 +276,8 @@ export const usePostStore = defineStore(
       updatePostInStore, // 追加
       searchUsers,
       searchPosts,
+      searchTags,
+      getTags,
     }
   },
   // 必要であればPinia persistの設定を再検討

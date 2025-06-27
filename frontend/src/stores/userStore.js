@@ -1,14 +1,13 @@
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import axios from '@/utils/axios' // axiosのインポートパスが正しいことを確認してください
 import { useToast } from '@/composables/useToast.js'
 
-// ユーザ情報やログインなどをまとめる
 export const useUserStore = defineStore(
   'user',
   () => {
-    // トースト表示のため使用
     const { showToastMessage } = useToast()
+
 
     const id = ref(null) // ユーザのID(主キー)
     const urlIcon = ref(null) // ユーザアイコンのurl
@@ -19,6 +18,22 @@ export const useUserStore = defineStore(
     const follows = ref(null) // フォローユーザ一覧
     const likes = ref([]) // ★追加: ユーザーがいいねした投稿のリスト
     const authId = ref(null) // 管理権限
+   
+    // 新規追加：全ユーザー一覧
+    const allUsers = ref([])
+
+    // ログイン判定 (idがあればログイン中とみなす)
+    const isLoggedIn = computed(() => !!id.value)
+
+    async function fetchAllUsers() {
+      try {
+        const res = await axios.get('/users')
+        allUsers.value = res.data
+      } catch (error) {
+        console.error("ユーザー取得エラー:", error)
+      }
+    }
+
 
     // ログイン処理
     async function login(userData) {
@@ -88,9 +103,31 @@ export const useUserStore = defineStore(
       try {
         const res = await axios.put(`users/${id.value}/follow/${followId}`)
         if (!res.data) {
+
+          showToastMessage('フォローに失敗しました')
+          // throw new Error('ログイン失敗')
           return false
         }
-        await followers() // フォローリストを更新
+
+        // id.value = res.data.id
+        // urlIcon.value = res.data.urlIcon
+        // fullName.value = res.data.fullName
+        // userName.value = res.data.userName
+        // email.value = res.data.email
+        // selfIntroduction.value = res.data.selfIntroduction
+
+        followers()
+        // res = await axios.get('users/' + id.value + '/follow')
+        // follows.value = res.data
+
+        //   console.log('id : ' + id.value)
+        //   console.log('userName : ' + userName.value)
+        //   console.log('userId : ' + userId.value)
+
+        // showToastMessage('ログインしました')
+        // alert('ログインしました')
+        showToastMessage('フォローしました')
+
         return true
       } catch (error) {
         console.error('フォロー失敗', error)
@@ -103,9 +140,32 @@ export const useUserStore = defineStore(
       try {
         const res = await axios.delete(`users/${id.value}/unfollow/${unfollowId}`)
         if (!res.data) {
+
+          showToastMessage('フォロー解除に失敗しました')
+          // showToastMessage('ログインに失敗しました')
+          // throw new Error('ログイン失敗')
           return false
         }
-        await followers() // フォローリストを更新
+
+        // id.value = res.data.id
+        // urlIcon.value = res.data.urlIcon
+        // fullName.value = res.data.fullName
+        // userName.value = res.data.userName
+        // email.value = res.data.email
+        // selfIntroduction.value = res.data.selfIntroduction
+
+        followers()
+        // res = await axios.get('users/' + id.value + '/follow')
+        // follows.value = res.data.follows
+
+        //   console.log('id : ' + id.value)
+        //   console.log('userName : ' + userName.value)
+        //   console.log('userId : ' + userId.value)
+
+        // showToastMessage('ログインしました')
+        // alert('ログインしました')
+        showToastMessage('フォロー解除しました')
+
         return true
       } catch (error) {
         console.error('フォロー解除失敗', error)
@@ -147,15 +207,32 @@ export const useUserStore = defineStore(
             'Content-Type': 'multipart/form-data',
           },
         })
-        if (res.status !== 200 && res.status !== 204) return false
+
+        //   console.log('res: ' + res.data)
+        if (res.status !== 200 && res.status !== 204){
+        showToastMessage('プロフィール変更に失敗しました')
+          return false
+        }
+
+        // id.value = res.data.id
 
         urlIcon.value = res.data.urlIcon
         fullName.value = res.data.fullName
         userName.value = res.data.userName
         email.value = res.data.email
         selfIntroduction.value = res.data.selfIntroduction
-        
-        showToastMessage('プロフィールを更新しました')
+
+        // res = await axios.get('users/'+id.value+'/follow')
+        // follows.value = res.data.follows
+
+        //   console.log('id : ' + id.value)
+        //   console.log('userName : ' + userName.value)
+        //   console.log('userId : ' + userId.value)
+
+        // showToastMessage('ログインしました')
+        // alert('ログインしました')
+        showToastMessage('プロフィール変更しました')
+
         return true
       } catch (error) {
         console.error('プロフィール変更失敗', error)
@@ -261,6 +338,7 @@ export const useUserStore = defineStore(
       follows,
       likes, // ★追加: likesを公開
       authId,
+      isLoggedIn,
       login,
       logout,
       register,
@@ -273,11 +351,15 @@ export const useUserStore = defineStore(
       fetchLikes, // ★追加: fetchLikesを公開
       toggleLikeApi, // ★追加: toggleLikeApiを公開
       updateLikes, // ★追加: updateLikesを公開
+
+      // 追加
+      allUsers,
+      fetchAllUsers,
     }
   },
   {
     persist: {
-      storage: sessionStorage, // セッション中だけ保存
+      storage: sessionStorage,
       paths: [
         'id',
         'urlIcon',
@@ -288,7 +370,7 @@ export const useUserStore = defineStore(
         'follows',
         'likes', // ★追加: likesも永続化対象に含める
         'authId',
-      ], // 保存するキーの指定
+      ],
     },
   },
 )

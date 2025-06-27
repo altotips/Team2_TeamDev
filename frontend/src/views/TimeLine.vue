@@ -10,7 +10,7 @@
         </router-link>
       </div>
 
-      <img :src="post.urlPhoto ? `http://localhost:8080/uploads/${post.urlPhoto}` : '/images/default_post_image.png'" class="post-image" :alt="post.content" />
+      <img :src="`http://localhost:8080/uploads/${post.urlPhoto}`" class="post-image" alt="image" />
 
       <div class="post-actions">
         <button @click="toggleLike(post)" class="icon-button"
@@ -29,7 +29,19 @@
         </p>
       </div>
 
-      <p class="post-content">{{ post.content }}</p>
+      <p class="post-content">
+        <template v-for="(word, index) in parseContent(post.content)" :key="index">
+          <router-link v-if="word.isMention && word.user"
+            :to="{ name: 'UserProfile', params: { userId: word.user.id } }" class="mention-link">
+            {{ word.text }}
+          </router-link>
+          <router-link v-else-if="word.isHashtag" :to="{ name: 'Search', query: { q: word.tag } }" class="hashtag">
+            {{ word.text }}
+          </router-link>
+          <span v-else>{{ word.text }}</span>
+        </template>
+      </p>
+
 
       <div v-if="showComment[post.id]" class="comment-section">
         <div v-for="comment in post.comments" :key="comment.id" class="comment">
@@ -54,18 +66,25 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch } from 'vue'; // computed は不要になるため削除
-import { usePostStore } from '@/stores/postStore';
-import { useUserStore } from '@/stores/userStore';
 
-const postStore = usePostStore();
-const userStore = useUserStore();
+  import { ref, reactive, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
+  import { usePostStore } from '@/stores/postStore'
+  import { useUserStore } from '@/stores/userStore'
+  import { useRouter } from 'vue-router'
+
+  // ストア読み込み
+  const postStore = usePostStore()
+  const userStore = useUserStore()
+  const router = useRouter()
+  let intervalId
+
 
 // ★ 修正点1: posts を computed から ref に変更
 const posts = ref([]);
 
 const showComment = reactive({});
 const newComments = reactive({});
+
 
 onMounted(async () => {
   if (userStore.id) {
@@ -122,11 +141,40 @@ watch(() => postStore.followersPosts, (newFollowersPosts) => {
       return like.id === newPost.id;
     });
 
+
     newPost.liked = isLikedByUser;
     newPost.animateHeart = false;
     return newPost;
   });
 }, { deep: true });
+
+  onMounted(async () => {
+    if (userStore.id) {
+      await postStore.fetchFollowersPosts()
+      await fetchAllUsers()  // ここで呼び出し
+      console.log('Fetched all users:', userStore.allUsers);
+      await nextTick()
+    }
+  })
+
+  function linkifyMentions(text) {
+    if (!text) return ''
+
+    return text.replace(/(@[a-zA-Z0-9_-]+)/g, (match, username) => {
+      const user = userStore.allUsers.find(u => u.userName === username)
+
+      if (user) {
+        return `<a href="/user/${user.id}" class="mention-link">@${username}</a>`
+      } else {
+        return `<span class="mention-link">@${username}</span>`
+      }
+    })
+  }
+
+  // <script setup> の中の parseContent 関数
+  // メンションテキストを解析
+  function parseContent(text) {
+    if (!text) return []
 
 
 const toggleLike = async (postItem) => {
@@ -180,6 +228,24 @@ const toggleLike = async (postItem) => {
   }
 };
 
+    // 半角スペース or @ または # の直前で分割し、空文字を除去
+    const parts = text.split(/(\s|(?=[@#]))+/).filter(Boolean)
+
+    return parts.map(part => {
+      if (part.startsWith('@')) {
+        const username = part.slice(1)
+        const user = userStore.allUsers.find(u => u.userName === username)
+        return { text: part, isMention: true, user: user || null }
+      }
+      if (part.startsWith('#')) {
+        const tag = part.slice(1)
+        return { text: part, isHashtag: true, tag }
+      }
+      return { text: part, isMention: false, isHashtag: false }
+    })
+  }
+
+
 const toggleComment = (postId) => {
   if (typeof showComment[postId] === 'undefined') {
     showComment[postId] = false;
@@ -193,25 +259,48 @@ const submitComment = async (postId) => {
     return;
   }
 
-  const text = (newComments[postId] || '').trim();
-  if (!text) {
-    alert('コメントを入力してください。');
-    return;
-  }
 
-  try {
-    const response = await postStore.addComment(postId, { content: text });
+  // コメント送信
+  const submitComment = async (postId) => {
+    if (!userStore.id) {
+      showToastMessage('ログインしていません。コメントできません。');
+      // alert('ログインしていません。コメントできません。');
+      return;
+    }
 
-    // タイムラインの投稿リストから対象の投稿を見つける
-    const targetPost = posts.value.find(p => p.id === postId); // ★ posts.value を使う
+    const text = (newComments[postId] || '').trim()
+    if (!text) {
+      return showToastMessage('コメントを入力してください')
+      // return alert('コメントを入力してください')
+    }
 
-    if (targetPost && response && response.data) {
-      const newCommentFromServer = response.data;
-      
-      if (!targetPost.comments) {
-        targetPost.comments = [];
+    try {
+      // コメントを送信
+      await postStore.addComment(postId, {
+        content: text,
+      })
+
+      // 送信成功 → 表示中の投稿に手動で追加
+      const post = postStore.followersPosts.find(p => p.id === postId)
+      if (post && Array.isArray(post.comments)) {
+        post.comments.push({
+          content: text,
+          user: {
+            id: userStore.id,
+            userName: userStore.userName,      // ← ここ重要！
+            urlIcon: userStore.urlIcon || '',  // ← 必要ならこれも！
+          },
+        })
       }
-      targetPost.comments.push(newCommentFromServer);
+
+      newComments[postId] = '' // コメントフォームクリア
+      showToastMessage('コメントを送信しました！');
+      // alert('コメントを送信しました！');
+      await postStore.fetchAllPosts(); // コメント送信後、最新のコメントリストを反映するために再フェッチ
+    } catch (error) {
+      console.error("コメント送信中にエラー:", error);
+      showToastMessage("コメント送信中にエラーが発生しました。");
+      // alert("コメント送信中にエラーが発生しました。");
     }
 
     newComments[postId] = '';
@@ -316,26 +405,44 @@ const submitComment = async (postId) => {
   }
 
   .no-posts-message {
-        display: flex;
-        justify-content: center;
-        /* 横中央 */
-        align-items: center;
-        /* 縦中央 */
-        height: 80vh;
-        /* 画面高さの60%に */
-        margin: 0 auto;
-        font-size: 1.5rem;
-        color: #777;
-        /* background: #f0f0f0; */
-        border-radius: 12px;
-        padding: 20px 40px;
-        /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); */
-        max-width: 400px;
-        text-align: center;
-        font-weight: 600;
-        user-select: none;
-        /* うっかりテキスト選択防止 */
-    }
+    display: flex;
+    justify-content: center;
+    /* 横中央 */
+    align-items: center;
+    /* 縦中央 */
+    height: 80vh;
+    /* 画面高さの60%に */
+    margin: 0 auto;
+    font-size: 1.5rem;
+    color: #777;
+    /* background: #f0f0f0; */
+    border-radius: 12px;
+    padding: 20px 40px;
+    /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); */
+    max-width: 400px;
+    text-align: center;
+    font-weight: 600;
+    user-select: none;
+    /* うっかりテキスト選択防止 */
+  }
+
+  .post-tags {
+    margin-top: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .hashtag {
+    color: #3b82f6;
+    text-decoration: none;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  .hashtag:hover {
+    text-decoration: underline;
+  }
 
   /* /* .timeline {
     padding-bottom: 60px;
