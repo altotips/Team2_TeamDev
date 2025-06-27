@@ -6,7 +6,6 @@
     import { useToast } from '@/composables/useToast.js'
     import { toHiragana } from 'wanakana';
 
-
     const postStore = usePostStore()
     const router = useRouter()
     const { showToastMessage } = useToast()
