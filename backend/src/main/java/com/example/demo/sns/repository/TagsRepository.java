@@ -1,11 +1,11 @@
 package com.example.demo.sns.repository;
 
-import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.example.demo.sns.entity.Tag;
+import com.example.demo.sns.entity.Tags;
 
-public interface TagsRepository extends JpaRepository<Tag, Long> {
-	List<Tag> findByName(String tagName);
+public interface TagsRepository extends JpaRepository<Tags, Long> {
+	Optional<Tags> findByName(String name);
 }

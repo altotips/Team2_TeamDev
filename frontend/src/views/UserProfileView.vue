@@ -2,17 +2,21 @@
   <div class="profile-page">
     <header class="profile-header">
       <div class="header-top">
-        <button class="back-button" @click="$router.go(-1)">
-          ＜
-        </button>
+        <button class="back-button" @click="$router.go(-1)">＜</button>
         <h1 class="username">{{ userName }}</h1>
       </div>
 
       <div class="profile-details-row" v-if="!isLoading && !error">
         <div class="icon-container">
           <img
-            :src="userIconUrl && !userIconUrl.startsWith('http') ? `http://localhost:8080/uploads/${userIconUrl}` : (userIconUrl || '/images/default_profile_icon.png')"
-            alt="User Icon" class="profile-icon">
+            :src="
+              userIconUrl && !userIconUrl.startsWith('http')
+                ? `http://localhost:8080/uploads/${userIconUrl}`
+                : userIconUrl || '/images/default_profile_icon.png'
+            "
+            alt="User Icon"
+            class="profile-icon"
+          />
         </div>
 
         <div class="right-of-icon-info">
@@ -36,7 +40,10 @@
             </div>
             <div class="stat-item">
               <span class="stat-value">{{ displayedFollowingCount }}</span>
-              <router-link :to="`/followlist?userId=${targetUserId}&type=following`" class="stat-label-link">
+              <router-link
+                :to="`/followlist?userId=${targetUserId}&type=following`"
+                class="stat-label-link"
+              >
                 <span class="stat-label">フォロー中</span>
               </router-link>
             </div>
@@ -49,9 +56,7 @@
 
     <main class="profile-content">
       <div class="posts-grid">
-        <div v-if="isLoading" class="loading-message">
-          投稿を読み込み中...
-        </div>
+        <div v-if="isLoading" class="loading-message">投稿を読み込み中...</div>
 
         <div v-else-if="error" class="error-message">
           投稿の読み込み中にエラーが発生しました。: {{ error }}
@@ -63,7 +68,15 @@
 
         <div v-else class="image-grid">
           <div v-for="post in userPosts" :key="post.id" class="image-item" @click="openModal(post)">
-            <img :src="post.urlPhoto && !post.urlPhoto.startsWith('http') ? `http://localhost:8080/uploads/${post.urlPhoto}` : (post.urlPhoto || '/images/default_post_image.png')" :alt="post.content" class="post-image">
+            <img
+              :src="
+                post.urlPhoto && !post.urlPhoto.startsWith('http')
+                  ? `http://localhost:8080/uploads/${post.urlPhoto}`
+                  : post.urlPhoto || '/images/default_post_image.png'
+              "
+              :alt="post.content"
+              class="post-image"
+            />
             <div class="post-overlay">
               <div class="overlay-stats">
                 <span class="stat-icon">❤️</span>
@@ -105,13 +118,12 @@ const postsCount = ref(0);
 const isMyProfile = ref(false); // 自分のプロフィールかどうかを判定
 const isFollowing = ref(false); // ログインユーザーがこのプロフィールをフォローしているか
 
-const userPosts = ref([]);
+const userPosts = ref([])
 
-const isLoading = ref(true);
-const error = ref(null);
+const isLoading = ref(true)
+const error = ref(null)
 
-const displayedFollowingCount = ref(0); // 表示中のユーザーのフォロー中人数
-// const displayedFollowersCount = ref(0); // 表示中のユーザーのフォロワー人数 (必要に応じて追加)
+const displayedFollowingCount = ref(0) // 表示中のユーザーのフォロー中人数
 
 const showModal = ref(false);
 const selectedPostObj = ref(null);
@@ -551,7 +563,6 @@ const closeModal = () => {
 
 /* --- 追加CSSここまで --- */
 
-
 .no-posts-message,
 .loading-message,
 .error-message {
@@ -602,7 +613,25 @@ const closeModal = () => {
   /* モバイルではオーバーレイは通常表示しない、またはシンプルな表示にするなど検討 */
   .post-overlay {
     /* モバイルでのオーバーレイ表示を無効にする例 */
-    display: none;
+    /* display: none; */
+  }
+
+  .follow-button {
+    width: 100%;
+    /* モバイルでは幅いっぱいに表示 */
+    margin-top: 10px;
+  }
+
+  .my-profile-actions {
+    width: 100%;
+    /* モバイルで幅いっぱいに表示 */
+    margin-top: 10px; /* モバイルでの縦方向の間隔を調整 */
+  }
+
+  .edit-profile-button,
+  .logout-button {
+    width: 48%;
+    /* モバイルで横に並べる場合の例 */
   }
 
   .follow-button {

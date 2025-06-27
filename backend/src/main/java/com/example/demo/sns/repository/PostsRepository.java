@@ -19,7 +19,9 @@ public interface PostsRepository extends JpaRepository<Posts, Long> {
 
 	List<Posts> findByContentContaining(String searchStr);
 
-	List<Posts> findByTags_Name(String tagName);
+	List<Posts> findByTagsName(String tagName);
 
-	List<Posts> findByTags_NameIn(List<String> tagNames);
+	List<Posts> findByTagsNameContaining(String tagName);
+
+	List<Posts> findByTagsNameIn(List<String> tagNames);
 }

@@ -10,7 +10,6 @@
         </router-link>
       </div>
 
-
       <img :src="`http://localhost:8080/uploads/${post.urlPhoto}`" class="post-image" alt="image" />
 
       <div class="post-actions">
@@ -71,7 +70,6 @@
   import { usePostStore } from '@/stores/postStore'
   import { useUserStore } from '@/stores/userStore'
   import { useRouter } from 'vue-router'
-  import axios from 'axios'
 
   // ストア読み込み
   const postStore = usePostStore()
@@ -146,7 +144,8 @@ function parseContent(text) {
   // いいね処理（API呼び出し付き）
   const toggleLike = async (post) => {
     if (!userStore.id) {
-      alert('ログインしていません。いいねできません。');
+      showToastMessage('ログインしていません。いいねできません。');
+      // alert('ログインしていません。いいねできません。');
       return;
     }
     try {
@@ -171,7 +170,8 @@ function parseContent(text) {
       // }
     } catch (error) {
       console.error("いいね処理中にエラー:", error);
-      alert("いいね処理中にエラーが発生しました。");
+      showToastMessage("いいね処理中にエラーが発生しました。");
+      // alert("いいね処理中にエラーが発生しました。");
       post.liked = !post.liked; // エラー時はUIを元に戻す
     }
 
@@ -201,12 +201,16 @@ function parseContent(text) {
   // コメント送信
   const submitComment = async (postId) => {
     if (!userStore.id) {
-      alert('ログインしていません。コメントできません。');
+      showToastMessage('ログインしていません。コメントできません。');
+      // alert('ログインしていません。コメントできません。');
       return;
     }
 
     const text = (newComments[postId] || '').trim()
-    if (!text) return alert('コメントを入力してください')
+    if (!text){
+      return showToastMessage('コメントを入力してください')
+      // return alert('コメントを入力してください')
+    }
 
     try {
       // コメントを送信
@@ -228,10 +232,13 @@ function parseContent(text) {
       }
 
       newComments[postId] = '' // コメントフォームクリア
-      // alert('コメントを送信しました！') // 通知オフにしてもOK
+      showToastMessage('コメントを送信しました！');
+      // alert('コメントを送信しました！');
+      await postStore.fetchAllPosts(); // コメント送信後、最新のコメントリストを反映するために再フェッチ
     } catch (error) {
-      console.error("コメント送信中にエラー:", error)
-      alert("コメント送信中にエラーが発生しました。")
+      console.error("コメント送信中にエラー:", error);
+      showToastMessage("コメント送信中にエラーが発生しました。");
+      // alert("コメント送信中にエラーが発生しました。");
     }
   }
 

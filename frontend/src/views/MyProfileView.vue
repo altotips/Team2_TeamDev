@@ -11,8 +11,12 @@
       <div class="profile-details-row" v-if="!isLoading && !error">
         <div class="icon-container">
           <img
-            :src="userIconUrl && !userIconUrl.startsWith('http') ? `http://localhost:8080/uploads/${userIconUrl}` : (userIconUrl || '/images/default_profile_icon.png')"
-            alt="User Icon" class="profile-icon">
+            :src="
+              userStore.urlIcon ? `http://localhost:8080/uploads/${userStore.urlIcon}` : defaultIcon
+            "
+            alt="User Icon"
+            class="profile-icon"
+          />
         </div>
 
         <div class="right-of-icon-info">
@@ -82,16 +86,18 @@
 </template>
 
 <script setup>
-import { ref, watch, computed } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { useUserStore } from '@/stores/userStore.js';
-import { usePostStore } from '@/stores/postStore.js';
-import ModalUserPostsView from '@/views/ModalUserPostsView.vue';
+import { ref, watch,computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useUserStore } from '@/stores/userStore'
+import { usePostStore } from '@/stores/postStore'
+import defaultIcon from '@/assets/images/default_icon.png'
+// モーダルコンポーネントをインポート
+import ModalUserPostsView from '@/views/ModalUserPostsView.vue'
 
 const route = useRoute();
-const router = useRouter();
-const userStore = useUserStore();
-const postStore = usePostStore();
+const router = useRouter()
+const userStore = useUserStore()
+const postStore = usePostStore()
 
 const targetUserId = ref(null); // 表示中のユーザーのID
 
@@ -471,6 +477,7 @@ const closeModal = () => {
   padding-top: 20px;
 }
 
+.posts-grid,
 .image-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -550,15 +557,36 @@ const closeModal = () => {
 
 /* --- 追加CSSここまで --- */
 
-
 .no-posts-message,
-.loading-message,
-.error-message {
+.loading-message {
   grid-column: 1 / -1;
   text-align: center;
   padding: 50px;
   color: #8e8e8e;
   font-size: 18px;
+}
+
+.my-profile-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.edit-profile-button,
+.logout-button {
+  background-color: #fff;
+  color: #262626;
+  border: 1px solid #dbdbdb;
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.edit-profile-button:hover,
+.logout-button:hover {
+  background-color: #fafafa;
 }
 
 /* レスポンシブ対応 */
@@ -600,8 +628,25 @@ const closeModal = () => {
 
   /* モバイルではオーバーレイは通常表示しない、またはシンプルな表示にするなど検討 */
   .post-overlay {
-    /* モバイルでのオーバーレイ表示を無効にする例 */
-    display: none;
+    /* display: none; */
+  }
+
+  .follow-button {
+    width: 100%;
+    /* モバイルでは幅いっぱいに表示 */
+    margin-top: 10px;
+  }
+
+  .my-profile-actions {
+    width: 100%;
+    /* モバイルで幅いっぱいに表示 */
+    margin-top: 10px; /* モバイルでの縦方向の間隔を調整 */
+  }
+
+  .edit-profile-button,
+  .logout-button {
+    width: 48%;
+    /* モバイルで横に並べる場合の例 */
   }
 
   .follow-button {
