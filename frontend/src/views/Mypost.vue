@@ -3,9 +3,12 @@
     import { usePostStore } from '@/stores/postStore'
     import { useRouter } from 'vue-router'
     // import { preview } from 'vite'
+    import { useToast } from '@/composables/useToast.js'
 
     const postStore = usePostStore()
     const router = useRouter()
+    const { showToastMessage } = useToast()
+
 
     const selectedFile = ref(null)
     const previewFile = ref(null)
@@ -33,6 +36,7 @@
             const res = await postStore.post({
                 image: selectedFile.value,
                 content: description.value,
+                tags:[],
             })
             console.log('レスポンス:', res)
             if (res) {

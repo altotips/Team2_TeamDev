@@ -91,14 +91,14 @@
   const showComment = reactive({})
   const newComments = reactive({})
 
-<<<<<<< HEAD
+
   // データ取得
   onMounted(async () => {
     if (userStore.id) {
       await postStore.fetchFollowersPosts()
     }
   })
-=======
+
   async function fetchAllUsers() {
     try {
       await userStore.fetchAllUsers()
@@ -106,7 +106,7 @@
       console.error("ユーザー取得エラー:", error)
     }
   }
->>>>>>> main
+
 
   onMounted(async () => {
     if (userStore.id) {
