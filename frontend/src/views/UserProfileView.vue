@@ -135,7 +135,7 @@ const handleLogout = async () => {
     console.log('ログアウト処理を実行します');
     const success = await userStore.logout();
     if (success) {
-      router.push('/login'); // ログアウト後にログイン画面に遷移
+      router.push('/'); // ログアウト後にログイン画面に遷移
     } else {
       alert('ログアウトに失敗しました');
     }
@@ -201,7 +201,7 @@ const initiateFetch = async (userId) => {
   } else {
     error.value = "有効なユーザーIDが指定されていないか、ログインしていません。";
     isLoading.value = false;
-    router.push('/login'); // ログインしていない場合はログインページへリダイレクト
+    router.push('/'); // ログインしていない場合はログインページへリダイレクト
   }
 };
 
@@ -226,7 +226,7 @@ watch(
     } else if (!idToFetch && !targetUserId.value && !error.value) {
       error.value = "有効なユーザーIDが指定されていないか、ログインしていません。";
       isLoading.value = false;
-      router.push('/login'); // ログインしていない場合はログインページへリダイレクト
+      router.push('/'); // ログインしていない場合はログインページへリダイレクト
     }
     // ログインユーザーのフォローリストを更新（フォローボタンの状態反映のため）
     if (userStore.id) {
@@ -248,7 +248,7 @@ watch(
 const toggleFollow = async () => {
   if (!userStore.id) {
     alert('ログインしていません。フォローできません。');
-    router.push('/login'); // ログインページへリダイレクト
+    router.push('/'); // ログインページへリダイレクト
     return;
   }
   if (!targetUserId.value) return;
