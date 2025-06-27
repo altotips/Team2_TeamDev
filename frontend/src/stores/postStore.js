@@ -148,7 +148,7 @@ export const usePostStore = defineStore(
           return false
         }
 
-        const res = await axios.patch(`/posts/${postId}/good`)
+        const res = await axios.patch(`/posts/${postId}/good/${userStore.id}`)
         console.log('いいねしたよ')
 
         return res
@@ -171,7 +171,7 @@ export const usePostStore = defineStore(
           return false
         }
 
-        const res = await axios.put(`/posts/${postId}/unGood`)
+        const res = await axios.put(`/posts/${postId}/unGood/${userStore.id}`)
         console.log('いいね解除')
         return res
         // if (res) {
