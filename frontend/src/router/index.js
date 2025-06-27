@@ -43,7 +43,7 @@ const router = createRouter({
       component: () => import('../views/TimeLine.vue'),
       meta: { requiresAuth: true }
     },
-     {
+    {
       path: '/AllTimeLine',
       name: 'AllTimeLine',
       component: () => import('../views/AllTimeLine.vue'),
@@ -66,6 +66,12 @@ const router = createRouter({
       path: '/search', // 検索画面へのパス
       name: 'Search', // ルートの名前
       component: () => import('../views/SearchView.vue'), // SearchView.vueのインポート
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/search/:tag?',
+      name: 'Search',
+      component: () => import('../views/SearchView.vue'),
       meta: { requiresAuth: true }
     },
   ],

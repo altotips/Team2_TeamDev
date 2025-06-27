@@ -33,23 +33,16 @@
 
       <p class="post-content">
         <template v-for="(word, index) in parseContent(post.content)" :key="index">
-          <router-link
-            v-if="word.isMention && word.user"
-            :to="{ name: 'UserProfile', params: { userId: word.user.id } }"
-            class="mention-link"
-          >
-            {{ word.text }} </router-link>
+          <router-link v-if="word.isMention && word.user"
+            :to="{ name: 'UserProfile', params: { userId: word.user.id } }" class="mention-link">
+            {{ word.text }}
+          </router-link>
+          <router-link v-else-if="word.isHashtag" :to="{ name: 'Search', query: { q: word.tag } }" class="hashtag">
+            {{ word.text }}
+          </router-link>
           <span v-else>{{ word.text }}</span>
         </template>
       </p>
-
-
-      <!-- タグ表示（クリック可能なハッシュタグ） -->
-      <div class="post-tags" v-if="Array.isArray(post.tagu)">
-        <router-link v-for="tag in post.tagu" :key="tag" :to="{ name: 'Search', params: { tag } }" class="hashtag">
-          #{{ tag }}
-        </router-link>
-      </div>
 
 
       <div v-if="showComment[post.id]" class="comment-section">
@@ -75,7 +68,7 @@
 </template>
 
 <script setup>
-  import { ref, reactive, computed, onMounted, nextTick } from 'vue'
+  import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue'
   import { usePostStore } from '@/stores/postStore'
   import { useUserStore } from '@/stores/userStore'
   import { useRouter } from 'vue-router'
@@ -84,6 +77,7 @@
   const postStore = usePostStore()
   const userStore = useUserStore()
   const router = useRouter()
+  let intervalId
 
   // 投稿リストは allPosts を使用。必要であれば postStore.followersPosts に差し替え可能
   const posts = computed(() => postStore.followersPosts)
@@ -94,9 +88,19 @@
 
   // データ取得
   onMounted(async () => {
+    await postStore.fetchAllPosts()
+
+    intervalId = setInterval(async () => {
+      await postStore.fetchAllPosts()
+    }, 5000)
+
     if (userStore.id) {
       await postStore.fetchFollowersPosts()
     }
+  })
+
+  onUnmounted(() => {
+    clearInterval(intervalId)
   })
 
   async function fetchAllUsers() {
@@ -130,34 +134,28 @@
       }
     })
   }
-  
-// <script setup> の中の parseContent 関数
-function parseContent(text) {
-  if (!text) return [];
 
-  // この正規表現は、メンションを検出し、その部分をキャプチャして配列に含める
-  // @の後に英数字、アンダースコア、またはハイフンが1文字以上続くパターン
-  const parts = text.split(/(@[a-zA-Z0-9_-]+)/g);
-  
-  const parsedContent = parts.map(part => {
-    if (part.startsWith('@')) {
-      const username = part.slice(1);
-      const user = userStore.allUsers.find(u => u.userName === username);
-      
-      return {
-        text: part,
-        isMention: true,
-        user: user || null,
-      };
-    }
-    return { text: part, isMention: false };
-  });
+  // <script setup> の中の parseContent 関数
+  // メンションテキストを解析
+  function parseContent(text) {
+    if (!text) return []
 
-  // デバッグ用に、修正後の結果をコンソールに出力
-  console.log('Parsed content (final check):', parsedContent); 
-  
-  return parsedContent;
-}
+    // 半角スペース or @ または # の直前で分割し、空文字を除去
+    const parts = text.split(/(\s|(?=[@#]))+/).filter(Boolean)
+
+    return parts.map(part => {
+      if (part.startsWith('@')) {
+        const username = part.slice(1)
+        const user = userStore.allUsers.find(u => u.userName === username)
+        return { text: part, isMention: true, user: user || null }
+      }
+      if (part.startsWith('#')) {
+        const tag = part.slice(1)
+        return { text: part, isHashtag: true, tag }
+      }
+      return { text: part, isMention: false, isHashtag: false }
+    })
+  }
 
   // いいね処理（API呼び出し付き）
   const toggleLike = async (post) => {
@@ -225,7 +223,7 @@ function parseContent(text) {
     }
 
     const text = (newComments[postId] || '').trim()
-    if (!text){
+    if (!text) {
       return showToastMessage('コメントを入力してください')
       // return alert('コメントを入力してください')
     }
