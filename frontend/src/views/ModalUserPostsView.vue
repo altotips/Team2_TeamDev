@@ -211,11 +211,7 @@ const toggleComment = () => {
     }
 
   const postId = post.value.id;
-  const text = (newComments[postId] || '').trim();
-  if (!text) {
-    alert('コメントを入力してください。');
-    return;
-  }
+ 
 
   try {
     // postStore.addComment はバックエンドからCommentオブジェクトを返すことを想定
@@ -238,11 +234,7 @@ const toggleComment = () => {
     // ★ 修正点: コメント送信後、投稿データを更新したことを親に通知
     emit('update:post', post.value);
 
-  } catch (error) {
-    console.error("コメント送信中にエラー:", error);
-    alert("コメント送信中にエラーが発生しました。");
-  }
-};
+  } 
 </script>
 
 

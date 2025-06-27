@@ -304,10 +304,7 @@ const submitComment = async (postId) => {
     }
 
     newComments[postId] = '';
-  } catch (error) {
-    console.error("コメント送信中にエラー:", error);
-    alert("コメント送信中にエラーが発生しました。");
-  }
+  } 
 };
 </script>
 
