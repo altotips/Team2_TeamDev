@@ -14,6 +14,7 @@ export const usePostStore = defineStore(
     const followersPosts = ref([])
     const myPosts = ref([])
     const userPosts = ref([])
+    const tags = ref([])
 
     // すべての投稿を取得し、allPostsに保存
     async function fetchAllPosts() {
@@ -185,26 +186,13 @@ export const usePostStore = defineStore(
     }
 
     //コメント追加
-    async function addComment(postId, {content:text}
-    ) {
+    async function addComment(postId, {content:text}) {
       console.log("メソッド")
       await axios.post(`/posts/${postId}/comments/${userStore.id}`, {content:text})
       console.log("メソッド２")
       // "/{postId}/comments/{userId}"
       // ここで fetchAllPosts() は呼ばない
     }
-
-    // //ユーザ検索
-    // async function searchUsers(searchStr) {
-    //   const res = await axios.post(`/posts/search/users?searchStr=${searchStr}`)
-    //   return res
-    // }
-
-    // //投稿検索
-    // async function searchPosts(searchStr) {
-    //   const res = await axios.post(`/posts/search/posts?searchStr=${searchStr}`)
-    //   return res
-    // }
 
     // ユーザ検索
     async function searchUsers(searchStr) {
@@ -244,6 +232,13 @@ export const usePostStore = defineStore(
       return res
     }
 
+    // タグ一覧取得
+    async function getTags() {
+      const res = await axios.post(`/api/posts/tags`)
+      tags.value = res.data
+      return res
+    }
+
     return {
       allPosts,
       followersPosts,
@@ -261,6 +256,7 @@ export const usePostStore = defineStore(
       searchUsers,
       searchPosts,
       searchTags,
+      getTags,
     }
   },
   // {
