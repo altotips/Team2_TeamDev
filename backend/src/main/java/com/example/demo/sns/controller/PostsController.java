@@ -183,11 +183,30 @@ public class PostsController {
 		return posts;
 	}
 
-	// タグ検索
+	// 全タグ一覧
 	@GetMapping("/search/tags")
 	public List<Posts> saerchTags(@RequestParam String searchStr) {
 		List<Posts> posts = postsrepository.findByTagsNameContaining(searchStr);
 		return posts;
+	}
+
+	// タグ一覧取得
+	@GetMapping("/tags")
+	public List<String> getTags() {
+		List<Tags> tags = tagsrepository.findAll();
+		List<String> tagsStr = tags.stream()
+				.map(Tags::getName)
+				.collect(Collectors.toList());
+		return tagsStr;
+	}
+
+	// タグ追加(テスト用)
+	@PostMapping("/tags")
+	public Tags postTags(@RequestParam String str) {
+		Tags tag = new Tags();
+		tag.setName(str);
+		tagsrepository.save(tag);
+		return tag;
 	}
 
 	// コメント投稿
