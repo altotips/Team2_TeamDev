@@ -25,14 +25,14 @@
       <li v-for="user in usersInList" :key="user.id" class="follow-item">
         <div class="user-info" @click="goToUserProfile(user.id)">
           <div class="icon-container">
-            <img :src="user.urlIcon ? `http://localhost:8080/uploads/${user.urlIcon}` : '/images/default_profile_icon.png'" alt="User Icon" class="user-icon">
+            <img :src="getUserIconUrl(user.urlIcon)" alt="User Icon" class="user-icon" @error="handleImageError">
           </div>
           <div class="text-info">
             <span class="username">{{ user.userName }}</span>
             <span class="fullname">{{ user.fullName }}</span>
           </div>
         </div>
-        <button v-if="userStore.id && userStore.id === currentListOwnerId && listType === 'following'"
+        <button v-if="userStore.id && userStore.id === currentListOwnerId"
                 class="unfollow-button" @click="unfollow(user.id)">解除</button>
       </li>
     </ul>
@@ -53,9 +53,25 @@ const error = ref(null);
 const usersInList = ref([]);
 const currentUserName = ref('');
 const currentListOwnerId = ref(null);
-const listType = ref(''); // 'following' のみになる想定
+const listType = ref('following'); // このページは常に'following'なので固定
+
+// プロフィールアイコンのURLを生成するヘルパー関数
+// デフォルト画像は public/images/default_profile_icon.png に配置する想定
+const getUserIconUrl = (fileName) => {
+  if (!fileName) {
+    return '/images/default_profile_icon.png'; // ファイル名がない場合の代替アイコン
+  }
+  return `http://localhost:8080/uploads/${fileName}`; // バックエンドの画像配信パス
+};
+
+// 画像の読み込みに失敗した場合のハンドラー
+const handleImageError = (event) => {
+  event.target.src = '/images/default_profile_icon.png'; // エラー時の代替アイコン
+};
+
 
 const goToUserProfile = (userId) => {
+  // 既にそのユーザーのプロフィールページにいる場合は何もしない
   if (route.params.userId && parseInt(route.params.userId) === userId) {
     return;
   }
@@ -67,25 +83,24 @@ const fetchUsersList = async () => {
   error.value = null;
   usersInList.value = [];
 
-  const routeUserId = parseInt(route.query.userId);
-  const routeListType = route.query.type; // この値は常に 'following' になる想定
+  const routeUserId = parseInt(route.query.userId); // URLクエリパラメータからユーザーIDを取得
+  // const routeListType = route.query.type; // このページは'following'固定なので不要
 
   try {
     let targetId = null;
 
     if (!isNaN(routeUserId)) {
-      targetId = routeUserId;
-      listType.value = 'following'; // 「フォロワー」リストは取得しないため、常に'following'
+      targetId = routeUserId; // URLに指定があればそれを使う
     } else if (userStore.id) {
-      targetId = userStore.id;
-      listType.value = 'following';
+      targetId = userStore.id; // なければログインユーザーのIDを使う
     } else {
+      // どちらも特定できない場合
       error.value = new Error('表示するユーザー情報が特定できません（ログインが必要です）。');
       currentUserName.value = '不明なユーザー';
       return;
     }
 
-    currentListOwnerId.value = targetId;
+    currentListOwnerId.value = targetId; // 現在表示しているリストのオーナーIDを保存
 
     // ユーザー基本情報を取得
     const userRes = await userStore.getUser(targetId);
@@ -97,12 +112,14 @@ const fetchUsersList = async () => {
       return;
     }
 
-    // ★ 常に 'userFollowers' を呼び出す
-    const listData = await userStore.userFollowers(targetId);
+    // ★ ここで userStore.userFollowers(targetId) が
+    // targetId がフォローしているユーザーのリストを返すことを期待
+    const listData = await userStore.userFollowers(targetId); 
     
     // APIレスポンスの構造に合わせてマッピング
     // listDataが { id, fromUser, toUser } の配列を返し、
     // その中の toUser がフォローしているユーザー情報を持つ場合を想定
+    // toUserが存在しない場合や、res.dataが直接ユーザー配列の場合は適宜調整
     usersInList.value = listData?.map(f => f.toUser) || [];
 
   } catch (err) {
@@ -115,40 +132,48 @@ const fetchUsersList = async () => {
 
 const unfollow = async (userIdToUnfollow) => {
   if (!userStore.id) {
-    alert('ログインしていません。フォロー解除できません。');
+    showToastMessage('ログインしていません。フォロー解除できません。');
+    // alert('ログインしていません。フォロー解除できません。');
     return;
   }
-  if (!confirm(`${userIdToUnfollow} 番のユーザーのフォローを解除しますか？`)) {
+  if (!confirm(`${usersInList.value.find(u => u.id === userIdToUnfollow)?.userName || userIdToUnfollow + '番のユーザー'} のフォローを解除しますか？`)) {
     return;
   }
 
-  const success = await userStore.unfollow(userIdToUnfollow);
-  if (success) {
-    alert(`${userIdToUnfollow} 番のユーザーのフォローを解除しました。`);
-    // フォロー解除後、表示しているリストが自分のフォローリストであれば再フェッチして更新
-    if (userStore.id === currentListOwnerId.value) { // listTypeは常に'following'なので条件から外しました
-      await fetchUsersList();
+  try {
+    const success = await userStore.unfollow(userIdToUnfollow);
+    if (success) {
+      showToastMessage(`${usersInList.value.find(u => u.id === userIdToUnfollow)?.userName || 'ユーザー'} のフォローを解除しました。`);
+      // フォロー解除後、表示しているリストが自分のフォローリストであれば再フェッチして更新
+      if (userStore.id === currentListOwnerId.value) {
+        await fetchUsersList();
+      }
+      // ログインユーザーの followers プロパティも更新しておく (useUserStoreのfollowers関数がフォロー/フォロワー数を更新する想定)
+      await userStore.followers(); 
+    } else {
+      showToastMessage('フォロー解除に失敗しました。');
     }
-    // ログインユーザーの follows プロパティも更新しておく
-    await userStore.followers(); 
-  } else {
-    alert('フォロー解除に失敗しました。');
+  } catch (err) {
+    console.error('フォロー解除中にエラー:', err);
+    showToastMessage('フォロー解除中にエラーが発生しました。');
   }
 };
 
 watch(
-  () => route.query.userId, // typeは常に'following'になるので、userIdのみを監視
+  () => route.query.userId, 
   async (newUserId, oldUserId) => {
+    // URLのクエリパラメータuserIdが変更されたらリストを再フェッチ
     if (newUserId !== oldUserId) {
       console.log("Watch triggered by query change. Fetching list...");
       await fetchUsersList();
     }
   },
-  { immediate: true }
+  { immediate: true } // コンポーネントがマウントされた直後にも一度実行
 );
 </script>
 
 <style scoped>
+/* スタイルは変更なし */
 .follow-list-page {
   max-width: 500px;
   margin: 40px auto;
@@ -159,9 +184,32 @@ watch(
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
+.header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.back-button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  margin-right: 15px;
+  color: #262626;
+}
+
+.followed-user-name {
+  font-size: 20px;
+  font-weight: bold;
+  color: #262626;
+  flex-grow: 1; /* ユーザー名を中央に寄せつつ、スペースを占有 */
+  text-align: center; /* 中央寄せ */
+  transform: translateX(-20px); /* 戻るボタンの分を相殺して見た目を中央に寄せる */
+}
+
 .page-title {
-  /* text-align: center;  これを left に変更 */
-  text-align: left; /* ★ここを変更 */
+  text-align: left;
   font-size: 24px;
   font-weight: bold;
   margin-bottom: 30px;
@@ -196,6 +244,8 @@ watch(
   display: flex;
   align-items: center;
   gap: 15px;
+  cursor: pointer; /* クリック可能であることを視覚的に示す */
+  flex-grow: 1; /* スペースを占有してクリックしやすくする */
 }
 
 .icon-container {
@@ -224,7 +274,6 @@ watch(
   font-weight: bold;
   font-size: 16px;
   color: #262626;
-  cursor: pointer; /* <--- ADDED THIS LINE */
 }
 
 .fullname {

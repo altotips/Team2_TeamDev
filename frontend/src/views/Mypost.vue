@@ -69,7 +69,8 @@
 
         //写真が選択されていないときにアラートを出す
         if (!selectedFile.value) {
-            alert('画像を選択してください!📸')
+            showToastMessage('画像を選択してください!📸')
+            // alert('画像を選択してください!📸')
             return
         }
 
@@ -90,13 +91,16 @@
             console.log('レスポンス:', res)
 
             if (res) {
-                alert('投稿完了！タイムラインに移動します🌟')
+                showToastMessage('投稿完了！タイムラインに移動します🌟')
+                // alert('投稿完了！タイムラインに移動します🌟')
                 router.push('/TimeLine')
             } else {
-                alert('投稿失敗！😢')
+                showToastMessage('投稿失敗！😢')
+                // alert('投稿失敗！😢')
             }
         } catch (error) {
-            alert('投稿に失敗しました😢')
+            showToastMessage('投稿に失敗しました😢')
+            // alert('投稿に失敗しました😢')
             console.error(error)
         }
     }

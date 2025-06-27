@@ -10,7 +10,6 @@
         </router-link>
       </div>
 
-
       <img :src="`http://localhost:8080/uploads/${post.urlPhoto}`" class="post-image" alt="image" />
 
       <div class="post-actions">
@@ -32,7 +31,17 @@
 
       </div>
 
-      <p class="post-content">{{ post.content }}</p>
+      <p class="post-content">
+        <template v-for="(word, index) in parseContent(post.content)" :key="index">
+          <router-link
+            v-if="word.isMention && word.user"
+            :to="{ name: 'UserProfile', params: { userId: word.user.id } }"
+            class="mention-link"
+          >
+            {{ word.text }} </router-link>
+          <span v-else>{{ word.text }}</span>
+        </template>
+      </p>
 
       <div v-if="showComment[post.id]" class="comment-section">
         <div v-for="comment in post.comments" :key="comment.id" class="comment">
@@ -51,19 +60,21 @@
       エラーが発生しました: {{ postStore.error.message }}
     </div>
     <div v-else-if="posts.length === 0 && !postStore.isLoading" class="no-posts-message">
-      まだ投稿がありません。
+      ほかのユーザーをフォローして思い出をシェアしよう！！
     </div>
   </div>
 </template>
 
 <script setup>
-  import { ref, reactive, computed, onMounted } from 'vue'
+  import { ref, reactive, computed, onMounted, nextTick } from 'vue'
   import { usePostStore } from '@/stores/postStore'
   import { useUserStore } from '@/stores/userStore'
+  import { useRouter } from 'vue-router'
 
   // ストア読み込み
   const postStore = usePostStore()
   const userStore = useUserStore()
+  const router = useRouter()
 
   // 投稿リストは allPosts を使用。必要であれば postStore.followersPosts に差し替え可能
   const posts = computed(() => postStore.followersPosts)
@@ -71,20 +82,74 @@
   const showComment = reactive({})
   const newComments = reactive({})
 
-  // データ取得
-  onMounted(async () => {
-  if (userStore.id) {
-    await postStore.fetchFollowersPosts()
+  async function fetchAllUsers() {
+    try {
+      await userStore.fetchAllUsers()
+    } catch (error) {
+      console.error("ユーザー取得エラー:", error)
+    }
   }
-})
+
+  onMounted(async () => {
+    if (userStore.id) {
+      await postStore.fetchFollowersPosts()
+      await fetchAllUsers()  // ここで呼び出し
+      console.log('Fetched all users:', userStore.allUsers);
+      await nextTick()
+    }
+  })
+
+  function linkifyMentions(text) {
+    if (!text) return ''
+
+    return text.replace(/(@[a-zA-Z0-9_-]+)/g, (match, username) => {
+      const user = userStore.allUsers.find(u => u.userName === username)
+
+      if (user) {
+        return `<a href="/user/${user.id}" class="mention-link">@${username}</a>`
+      } else {
+        return `<span class="mention-link">@${username}</span>`
+      }
+    })
+  }
+  
+// <script setup> の中の parseContent 関数
+function parseContent(text) {
+  if (!text) return [];
+
+  // この正規表現は、メンションを検出し、その部分をキャプチャして配列に含める
+  // @の後に英数字、アンダースコア、またはハイフンが1文字以上続くパターン
+  const parts = text.split(/(@[a-zA-Z0-9_-]+)/g);
+  
+  const parsedContent = parts.map(part => {
+    if (part.startsWith('@')) {
+      const username = part.slice(1);
+      const user = userStore.allUsers.find(u => u.userName === username);
+      
+      return {
+        text: part,
+        isMention: true,
+        user: user || null,
+      };
+    }
+    return { text: part, isMention: false };
+  });
+
+  // デバッグ用に、修正後の結果をコンソールに出力
+  console.log('Parsed content (final check):', parsedContent); 
+  
+  return parsedContent;
+}
 
   // いいね処理（API呼び出し付き）
   const toggleLike = async (post) => {
     if (!userStore.id) {
-      alert('ログインしていません。いいねできません。');
+      showToastMessage('ログインしていません。いいねできません。');
+      // alert('ログインしていません。いいねできません。');
       return;
     }
     try {
+      post.animateHeart = true;
       if (post.liked) {
         post.good = Math.max(0, post.good - 1) // 最小0を保証
         console.log("マイナスしたよ")
@@ -105,7 +170,8 @@
       // }
     } catch (error) {
       console.error("いいね処理中にエラー:", error);
-      alert("いいね処理中にエラーが発生しました。");
+      showToastMessage("いいね処理中にエラーが発生しました。");
+      // alert("いいね処理中にエラーが発生しました。");
       post.liked = !post.liked; // エラー時はUIを元に戻す
     }
 
@@ -122,6 +188,9 @@
     //   alert("いいね処理中にエラーが発生しました。");
     //   post.liked = !post.liked; // エラー時はUIを元に戻す
     // }
+    setTimeout(() => {
+      post.animateHeart = false
+    }, 500)
   }
 
   // コメント欄トグル
@@ -132,30 +201,68 @@
   // コメント送信
   const submitComment = async (postId) => {
     if (!userStore.id) {
-      alert('ログインしていません。コメントできません。');
+      showToastMessage('ログインしていません。コメントできません。');
+      // alert('ログインしていません。コメントできません。');
       return;
     }
 
     const text = (newComments[postId] || '').trim()
-    if (!text) return alert('コメントを入力してください')
+    if (!text){
+      return showToastMessage('コメントを入力してください')
+      // return alert('コメントを入力してください')
+    }
 
     try {
+      // コメントを送信
       await postStore.addComment(postId, {
-        user: await userStore.getUser(userStore.id), // コメント送信時もgetUserを使用
         content: text,
-      });
+      })
+
+      // 送信成功 → 表示中の投稿に手動で追加
+      const post = postStore.followersPosts.find(p => p.id === postId)
+      if (post && Array.isArray(post.comments)) {
+        post.comments.push({
+          content: text,
+          user: {
+            id: userStore.id,
+            userName: userStore.userName,      // ← ここ重要！
+            urlIcon: userStore.urlIcon || '',  // ← 必要ならこれも！
+          },
+        })
+      }
 
       newComments[postId] = '' // コメントフォームクリア
-      alert('コメントを送信しました！');
+      showToastMessage('コメントを送信しました！');
+      // alert('コメントを送信しました！');
       await postStore.fetchAllPosts(); // コメント送信後、最新のコメントリストを反映するために再フェッチ
     } catch (error) {
       console.error("コメント送信中にエラー:", error);
-      alert("コメント送信中にエラーが発生しました。");
+      showToastMessage("コメント送信中にエラーが発生しました。");
+      // alert("コメント送信中にエラーが発生しました。");
     }
   }
+
 </script>
 
 <style scoped>
+  .liked {
+    animation: pop 0.5s ease;
+  }
+
+  @keyframes pop {
+    0% {
+      transform: scale(1);
+    }
+
+    50% {
+      transform: scale(1.8);
+    }
+
+    100% {
+      transform: scale(1);
+    }
+  }
+
   .post-card {
     border: 1px solid #ddd;
     border-radius: 8px;
@@ -229,7 +336,30 @@
     padding: 4px 10px;
   }
 
-  /* .timeline {
+  .no-posts-message {
+        display: flex;
+        justify-content: center;
+        /* 横中央 */
+        align-items: center;
+        /* 縦中央 */
+        height: 80vh;
+        /* 画面高さの60%に */
+        margin: 0 auto;
+        font-size: 1.5rem;
+        color: #777;
+        /* background: #f0f0f0; */
+        border-radius: 12px;
+        padding: 20px 40px;
+        /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); */
+        max-width: 400px;
+        text-align: center;
+        font-weight: 600;
+        user-select: none;
+        /* うっかりテキスト選択防止 */
+    }
+
+  /* /* .timeline {
     padding-bottom: 60px;
+
   } */
 </style>
