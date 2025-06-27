@@ -6,10 +6,10 @@
     import { useToast } from '@/composables/useToast.js'
     import { toHiragana } from 'wanakana';
 
-    const { showToastMessage } = useToast()
-
     const postStore = usePostStore()
     const router = useRouter()
+    const { showToastMessage } = useToast()
+
 
     const selectedFile = ref(null)
     const previewFile = ref(null)
