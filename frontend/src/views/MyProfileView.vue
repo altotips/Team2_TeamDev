@@ -477,7 +477,6 @@ const closeModal = () => {
   padding-top: 20px;
 }
 
-/* .posts-grid, */
 .image-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -624,11 +623,6 @@ const closeModal = () => {
 
   .image-grid {
     gap: 10px;
-  }
-
-  /* モバイルではオーバーレイは通常表示しない、またはシンプルな表示にするなど検討 */
-  .post-overlay {
-    /* display: none; */
   }
 
   .follow-button {

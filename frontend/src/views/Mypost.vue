@@ -54,9 +54,6 @@
         if (!tags.value.includes(tag)) {
             tags.value.push(tag);
         }
-
-        // 候補クリア
-        currentTagText.value = '';
     }
 
     //inputで選んだ画像ファイルを取得
