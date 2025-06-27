@@ -137,7 +137,7 @@ const handleLogout = async () => {
     if (success) {
       router.push('/'); // ログアウト後にログイン画面に遷移
     } else {
-      alert('ログアウトに失敗しました');
+      showToastMessage('ログアウトに失敗しました');
     }
   }
 };
@@ -247,7 +247,7 @@ watch(
 
 const toggleFollow = async () => {
   if (!userStore.id) {
-    alert('ログインしていません。フォローできません。');
+    showToastMessage('ログインしていません。フォローできません。');
     router.push('/'); // ログインページへリダイレクト
     return;
   }
@@ -257,16 +257,16 @@ const toggleFollow = async () => {
     if (isFollowing.value) {
       const success = await userStore.unfollow(targetUserId.value);
       if (success) {
-        alert('フォローを解除しました。');
+        showToastMessage('フォローを解除しました。');
       } else {
-        alert('フォロー解除に失敗しました。');
+        showToastMessage('フォロー解除に失敗しました。');
       }
     } else {
       const success = await userStore.follow(targetUserId.value);
       if (success) {
-        alert('フォローしました。');
+        showToastMessage('フォローしました。');
       } else {
-        alert('フォローに失敗しました。');
+        showToastMessage('フォローに失敗しました。');
       }
     }
     // フォロー/フォロー解除後、ユーザーのプロフィールデータとログインユーザーのフォローリストを再フェッチして表示を更新
@@ -274,7 +274,7 @@ const toggleFollow = async () => {
     await userStore.followers(); // ログインユーザーがフォローしているリストを更新
   } catch (err) {
     console.error('フォロー処理中にエラー:', err);
-    alert('フォロー処理中にエラーが発生しました。');
+    showToastMessage('フォロー処理中にエラーが発生しました。');
   }
 };
 
