@@ -137,6 +137,7 @@ export const usePostStore = defineStore(
         }
       } catch (err) {
         console.error('投稿に失敗:', err)
+        return false
       }
     }
 
@@ -232,7 +233,7 @@ export const usePostStore = defineStore(
       return res
     }
 
-    // タグ一覧取得
+    // 全タグ一覧取得
     async function getTags() {
       const res = await axios.post(`/api/posts/tags`)
       tags.value = res.data
