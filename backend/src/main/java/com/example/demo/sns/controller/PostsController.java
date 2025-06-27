@@ -116,8 +116,9 @@ public class PostsController {
 	@PostMapping("/{id}")
 	public Posts post(@PathVariable Long id,
 			@RequestParam("image") MultipartFile photo,
-			@RequestParam("content") String content,
-			@RequestParam("tags") List<String> tagsReq) throws IOException {
+			@RequestParam("content") String content
+//			@RequestParam("tags") List<String> tagsReq
+	) throws IOException {
 
 		// ファイルの保存
 		String uploadDir = "./uploads/";
@@ -131,15 +132,15 @@ public class PostsController {
 		Files.copy(photo.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
 		// タグを取得または作成
-		List<Tags> tags = tagsReq
-				.stream()
-				.map(tagName -> tagsrepository.findByName(tagName)
-						.orElseGet(() -> {
-							Tags tag = new Tags();
-							tag.setName(tagName);
-							return tagsrepository.save(tag);
-						}))
-				.collect(Collectors.toList());
+//		List<Tags> tags = tagsReq
+//				.stream()
+//				.map(tagName -> tagsrepository.findByName(tagName)
+//						.orElseGet(() -> {
+//							Tags tag = new Tags();
+//							tag.setName(tagName);
+//							return tagsrepository.save(tag);
+//						}))
+//				.collect(Collectors.toList());
 
 		// ここからデータべースにファイル名を保存
 		Posts post = new Posts();
@@ -147,7 +148,7 @@ public class PostsController {
 		post.setUser(user);
 		post.setUrlPhoto(fileName);
 		post.setContent(content);
-		post.setTags(tags);
+//		post.setTags(tags);
 		postsrepository.save(post);
 		return post;
 	}

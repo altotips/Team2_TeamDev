@@ -477,7 +477,7 @@ const closeModal = () => {
   padding-top: 20px;
 }
 
-.posts-grid,
+/* .posts-grid, */
 .image-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
