@@ -626,11 +626,6 @@ const closeModal = () => {
     gap: 10px;
   }
 
-  /* モバイルではオーバーレイは通常表示しない、またはシンプルな表示にするなど検討 */
-  .post-overlay {
-    /* display: none; */
-  }
-
   .follow-button {
     width: 100%;
     /* モバイルでは幅いっぱいに表示 */
