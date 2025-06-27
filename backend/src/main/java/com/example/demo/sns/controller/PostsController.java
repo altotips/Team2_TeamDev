@@ -110,15 +110,15 @@ public class PostsController {
 				.sorted(Comparator.comparing(Posts::getId)) // 昇順
 				.collect(Collectors.toList());
 		return sortedPosts;
+//		return posts;
 	}
 
 	// 投稿を登録
 	@PostMapping("/{id}")
 	public Posts post(@PathVariable Long id,
 			@RequestParam("image") MultipartFile photo,
-			@RequestParam("content") String content
-//			@RequestParam("tags") List<String> tagsReq
-	) throws IOException {
+			@RequestParam("content") String content,
+			@RequestParam("tags") List<String> tagsReq) throws IOException {
 
 		// ファイルの保存
 		String uploadDir = "./uploads/";
@@ -131,128 +131,132 @@ public class PostsController {
 		Path filePath = Paths.get(uploadDir, fileName);
 		Files.copy(photo.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
-		// タグを取得または作成
-//		List<Tags> tags = tagsReq
-//				.stream()
-//				.map(tagName -> tagsrepository.findByName(tagName)
-//						.orElseGet(() -> {
-//							Tags tag = new Tags();
-//							tag.setName(tagName);
-//							return tagsrepository.save(tag);
-//						}))
-//				.collect(Collectors.toList());
-
 		// ここからデータべースにファイル名を保存
 		Posts post = new Posts();
 		Users user = usersrepository.findById(id).orElse(null);
 		post.setUser(user);
 		post.setUrlPhoto(fileName);
 		post.setContent(content);
-//		post.setTags(tags);
+//		postsrepository.save(post);
+
+//		System.out.println(tagsReq);
+//		List<Posts> posts = new ArrayList<>();
+//		posts.add(post);
+		// タグを取得または作成
+		List<Tags> tags = tagsReq
+				.stream()
+				.map(tagName -> tagsrepository.findByName(tagName)
+						.orElseGet(() -> {
+							Tags tag = new Tags(tagName);
+							return tagsrepository.save(tag);
+						}))
+				.collect(Collectors.toList());
+//		System.out.println(tags);
+
+		post.setTags(tags);
 		postsrepository.save(post);
 		return post;
 	}
 
 	/**
-     * 投稿に「いいね」を追加する。
-     * ユーザーがすでにいいねしている場合は、投稿は更新されずに現在の状態が返される。
-     * @param postId いいねする投稿のID
-     * @param userId いいねするユーザーのID
-     * @return 更新された投稿オブジェクト、またはエラーレスポンス (投稿/ユーザーが見つからない場合)
-     */
-    @PatchMapping("/{postId}/good/{userId}")
-    @Transactional
-    public Posts good(@PathVariable Long postId, @PathVariable Long userId) {
-        // 1. 投稿を取得
-        Posts post = postsrepository.findById(postId).orElse(null);
-        if (post == null) {
-            // 投稿が見つからない場合は404 Not Foundを返す
-            return null;
-        }
+	 * 投稿に「いいね」を追加する。
+	 * ユーザーがすでにいいねしている場合は、投稿は更新されずに現在の状態が返される。
+	 * @param postId いいねする投稿のID
+	 * @param userId いいねするユーザーのID
+	 * @return 更新された投稿オブジェクト、またはエラーレスポンス (投稿/ユーザーが見つからない場合)
+	 */
+	@PatchMapping("/{postId}/good/{userId}")
+	@Transactional
+	public Posts good(@PathVariable Long postId, @PathVariable Long userId) {
+		// 1. 投稿を取得
+		Posts post = postsrepository.findById(postId).orElse(null);
+		if (post == null) {
+			// 投稿が見つからない場合は404 Not Foundを返す
+			return null;
+		}
 
-        // 2. いいねするユーザーを取得
-        Users likingUser = usersrepository.findById(userId).orElse(null);
-        if (likingUser == null) {
-            // ユーザーが見つからない場合は404 Not Foundを返す
-            return null;
-        }
+		// 2. いいねするユーザーを取得
+		Users likingUser = usersrepository.findById(userId).orElse(null);
+		if (likingUser == null) {
+			// ユーザーが見つからない場合は404 Not Foundを返す
+			return null;
+		}
 
-        // 3. ユーザーがすでにいいねしているかチェック
-        List<Users> currentLikedUsers = post.getGoodUsers();
-        boolean alreadyLiked = false;
-        for (Users user : currentLikedUsers) {
-            if (user != null && user.getId().equals(userId)) {
-                alreadyLiked = true;
-                break;
-            }
-        }
+		// 3. ユーザーがすでにいいねしているかチェック
+		List<Users> currentLikedUsers = post.getGoodUsers();
+		boolean alreadyLiked = false;
+		for (Users user : currentLikedUsers) {
+			if (user != null && user.getId().equals(userId)) {
+				alreadyLiked = true;
+				break;
+			}
+		}
 
-        // 4. いいねしていなければ更新、すでにしていれば何もしない
-        if (!alreadyLiked) {
-            // いいね数をインクリメント
-            post.setGood(post.getGood() + 1);
-            // goodUsers リストにユーザーを追加
-            currentLikedUsers.add(likingUser);
-            // データベースに保存 (更新)
-            postsrepository.save(post);
-        }
-        // else の場合、postは更新されないが、現在の状態を返す
+		// 4. いいねしていなければ更新、すでにしていれば何もしない
+		if (!alreadyLiked) {
+			// いいね数をインクリメント
+			post.setGood(post.getGood() + 1);
+			// goodUsers リストにユーザーを追加
+			currentLikedUsers.add(likingUser);
+			// データベースに保存 (更新)
+			postsrepository.save(post);
+		}
+		// else の場合、postは更新されないが、現在の状態を返す
 
-        // 成功した場合は、更新された（または変更がなかった）投稿を返す (200 OK)
-        return post;
-    }
+		// 成功した場合は、更新された（または変更がなかった）投稿を返す (200 OK)
+		return post;
+	}
 
-    /**
-     * 投稿の「いいね」を取り消す。
-     * ユーザーがまだいいねしていない場合は、投稿は更新されずに現在の状態が返される。
-     * @param postId いいねを取り消す投稿のID
-     * @param userId いいねを取り消すユーザーのID
-     * @return 更新された投稿オブジェクト、またはエラーレスポンス (投稿/ユーザーが見つからない場合)
-     */
-    @PatchMapping("/{postId}/ungood/{userId}")
-    @Transactional
-    public Posts unGood(@PathVariable Long postId, @PathVariable Long userId) {
-        // 1. 投稿を取得
-        Posts post = postsrepository.findById(postId).orElse(null);
-        if (post == null) {
-            return null;
-        }
+	/**
+	 * 投稿の「いいね」を取り消す。
+	 * ユーザーがまだいいねしていない場合は、投稿は更新されずに現在の状態が返される。
+	 * @param postId いいねを取り消す投稿のID
+	 * @param userId いいねを取り消すユーザーのID
+	 * @return 更新された投稿オブジェクト、またはエラーレスポンス (投稿/ユーザーが見つからない場合)
+	 */
+	@PatchMapping("/{postId}/ungood/{userId}")
+	@Transactional
+	public Posts unGood(@PathVariable Long postId, @PathVariable Long userId) {
+		// 1. 投稿を取得
+		Posts post = postsrepository.findById(postId).orElse(null);
+		if (post == null) {
+			return null;
+		}
 
-        // 2. いいねを取り消すユーザーを取得
-        Users unlikingUser = usersrepository.findById(userId).orElse(null);
-        if (unlikingUser == null) {
-            return null;
-        }
+		// 2. いいねを取り消すユーザーを取得
+		Users unlikingUser = usersrepository.findById(userId).orElse(null);
+		if (unlikingUser == null) {
+			return null;
+		}
 
-        // 3. ユーザーがまだいいねしているかチェック
-        List<Users> currentLikedUsers = post.getGoodUsers();
-        boolean currentlyLiked = false;
-        Users userToRemove = null;
-        for (Users user : currentLikedUsers) {
-            if (user != null && user.getId().equals(userId)) {
-                currentlyLiked = true;
-                userToRemove = user;
-                break;
-            }
-        }
+		// 3. ユーザーがまだいいねしているかチェック
+		List<Users> currentLikedUsers = post.getGoodUsers();
+		boolean currentlyLiked = false;
+		Users userToRemove = null;
+		for (Users user : currentLikedUsers) {
+			if (user != null && user.getId().equals(userId)) {
+				currentlyLiked = true;
+				userToRemove = user;
+				break;
+			}
+		}
 
-        // 4. いいねしていれば更新、そうでなければ何もしない
-        if (currentlyLiked) {
-            // いいね数をデクリメント (最小値は0)
-            post.setGood(Math.max(0L, post.getGood() - 1));
-            // goodUsers リストからユーザーを削除
-            if (userToRemove != null) { // 念のためnullチェック
-                currentLikedUsers.remove(userToRemove);
-            }
-            // データベースに保存 (更新)
-            postsrepository.save(post);
-        }
-        // else の場合、postは更新されないが、現在の状態を返す
+		// 4. いいねしていれば更新、そうでなければ何もしない
+		if (currentlyLiked) {
+			// いいね数をデクリメント (最小値は0)
+			post.setGood(Math.max(0L, post.getGood() - 1));
+			// goodUsers リストからユーザーを削除
+			if (userToRemove != null) { // 念のためnullチェック
+				currentLikedUsers.remove(userToRemove);
+			}
+			// データベースに保存 (更新)
+			postsrepository.save(post);
+		}
+		// else の場合、postは更新されないが、現在の状態を返す
 
-        // 成功した場合は、更新された（または変更がなかった）投稿を返す (200 OK)
-        return post;
-    }
-
+		// 成功した場合は、更新された（または変更がなかった）投稿を返す (200 OK)
+		return post;
+	}
 
 	// ユーザ検索
 	@GetMapping("/search/users")
@@ -322,7 +326,5 @@ public class PostsController {
 		// 5. 成功レスポンスを返す (HTTPステータス 201 Created)
 		return newComment;
 	}
-
-	
 
 }

@@ -81,12 +81,7 @@
 
         intervalId = setInterval(async () => {
             await postStore.fetchAllPosts()
-        }, 1000)
-
-        if (userStore.id) {
-            await userStore.fetchAllUsers()
-            await postStore.fetchAllPosts()
-        }
+        }, 5000)
     })
 
     // メンションテキストを解析
