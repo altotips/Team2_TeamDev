@@ -3,10 +3,13 @@
     import { usePostStore } from '@/stores/postStore'
     import { useRouter } from 'vue-router'
     // import { preview } from 'vite'
+    import { useToast } from '@/composables/useToast.js'
     import { toHiragana } from 'wanakana';
 
     const postStore = usePostStore()
     const router = useRouter()
+    const { showToastMessage } = useToast()
+
 
     const selectedFile = ref(null)
     const previewFile = ref(null)
@@ -75,6 +78,12 @@
             : [];
     });
 
+    // キャプションが変わるたびに、最後の #〇〇 を拾ってくる
+    watch(description, (val) => {
+        const match = val.match(/#([^\s# ]*)$/);
+        searchTag.value = match ? match[1] : '';
+    });
+
     // 候補タグをクリックしたときの処理
     function insertTag(tag) {
 
@@ -85,10 +94,7 @@
         if (!tags.value.includes(tag)) {
             tags.value.push(tag);
         }
-
-       
     }
-
 
     //inputで選んだ画像ファイルを取得
     function onFileChange(event) {
@@ -107,7 +113,6 @@
         }
 
         try {
-
             const input = description.value;
             tags.value = input
                 .match(/#[^\s# ]+/g) // #付き文字列を全部抜き出す

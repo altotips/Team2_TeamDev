@@ -4,17 +4,14 @@
 
             <div class="post-header">
                 <img class="user-icon" :src="`http://localhost:8080/uploads/${post.user.urlIcon}`" alt="User Icon" />
-
                 <router-link :to="{ name: 'UserProfile', params: { userId: post.user.id } }" class="user-name">
                     {{ post.user.userName }}
                 </router-link>
             </div>
 
-
             <img :src="`http://localhost:8080/uploads/${post.urlPhoto}`" class="post-image" alt="image" />
 
             <div class="post-actions">
-
                 <button @click="toggleLike(post)" class="icon-button"
                     :class="{ liked: post.liked, animate: post.animateHeart }">
                     <span :style="{ color: post.liked ? 'red' : '#aaa' }">
@@ -22,18 +19,29 @@
                     </span>
                 </button>
                 <p>{{ post.good }} </p>
-                <button @click="toggleComment(post.id)" class="icon-button">
-                    💬
-                </button>
-
+                <button @click="toggleComment(post.id)" class="icon-button">💬</button>
                 <p v-if="Array.isArray(post.comments)">
                     {{ post.comments.length }}
                 </p>
-
             </div>
 
-            <p class="post-content">{{ post.content }}</p>
+            <!-- メンション＆テキスト表示 -->
+            <p class="post-content">
+                <template v-for="(word, index) in parseContent(post.content)" :key="index">
+                    <router-link v-if="word.isMention && word.user"
+                        :to="{ name: 'UserProfile', params: { userId: word.user.id } }" class="mention-link">{{
+                        word.text }}</router-link>
+                    <span v-else>{{ word.text }}</span>
+                </template>
+            </p>
 
+            <!-- ハッシュタグ表示 -->
+            <div class="post-tags" v-if="Array.isArray(post.tagu)">
+                <router-link v-for="tag in post.tagu" :key="tag" :to="{ name: 'Search', params: { tag } }"
+                    class="hashtag">#{{ tag }}</router-link>
+            </div>
+
+            <!-- コメントセクション -->
             <div v-if="showComment[post.id]" class="comment-section">
                 <div v-for="comment in post.comments" :key="comment.id" class="comment">
                     <strong>{{ comment.user.userName }}:</strong> {{ comment.content }}
@@ -43,142 +51,125 @@
                     <button type="submit">送信</button>
                 </form>
             </div>
+
         </div>
-        <div v-if="postStore.isLoading" class="loading-message">
-            読み込み中...
-        </div>
-        <div v-else-if="postStore.error" class="error-message">
-            エラーが発生しました: {{ postStore.error.message }}
-        </div>
-        <div v-else-if="posts.length === 0 && !postStore.isLoading" class="no-posts-message">
-            まだ投稿がありません。
-        </div>
+
+        <div v-if="postStore.isLoading" class="loading-message">読み込み中...</div>
+        <div v-else-if="postStore.error" class="error-message">エラー: {{ postStore.error.message }}</div>
+        <div v-else-if="posts.length === 0" class="no-posts-message">投稿がありません。</div>
     </div>
 </template>
 
 <script setup>
-    import { ref, reactive, computed, onMounted } from 'vue'
+    import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
     import { usePostStore } from '@/stores/postStore'
     import { useUserStore } from '@/stores/userStore'
-    import axios from 'axios'
+    import { useRouter } from 'vue-router'
+    // import { showToastMessage } from '@/utils/toast' // トースト関数（なければ alert に置き換えてOK）
 
-
-    // ストア読み込み
     const postStore = usePostStore()
     const userStore = useUserStore()
+    const router = useRouter()
+    let intervalId
 
-    // 投稿リストは allPosts を使用。必要であれば postStore.followersPosts に差し替え可能
     const posts = computed(() => postStore.allPosts)
-
     const showComment = reactive({})
     const newComments = reactive({})
 
-    // データ取得
     onMounted(async () => {
-        if (userStore.id) {
+        await postStore.fetchAllPosts()
+
+        intervalId = setInterval(async () => {
             await postStore.fetchAllPosts()
-        }
+        }, 5000)
     })
 
-    // いいね処理（API呼び出し付き）
+    // メンションテキストを解析
+    function parseContent(text) {
+        if (!text) return []
+        const parts = text.split(/(@[a-zA-Z0-9_-]+)/g)
+
+        return parts.map(part => {
+            if (part.startsWith('@')) {
+                const username = part.slice(1)
+                const user = userStore.allUsers.find(u => u.userName === username)
+                return { text: part, isMention: true, user: user || null }
+            }
+            return { text: part, isMention: false }
+        })
+    }
+
+    // いいね処理
     const toggleLike = async (post) => {
         if (!userStore.id) {
-            alert('ログインしていません。いいねできません。');
-            return;
+            showToastMessage('ログインしていません。')
+            return
         }
         try {
-            post.animateHeart = true;
+            post.animateHeart = true
             if (post.liked) {
-                post.good = Math.max(0, post.good - 1) // 最小0を保証
-                console.log("マイナスしたよ")
-                console.log(post.good)
+                post.good = Math.max(0, post.good - 1)
                 await postStore.unGood(post.id)
             } else {
                 post.good += 1
-                console.log("ぷらすしたよ")
-                console.log(post.good)
                 await postStore.good(post.id)
             }
-            //   if (post.liked) {
-            //   post.good += 1
-            //   await postStore.good(post.id)
-            // } else {
-            //    post.good = Math.max(0, post.good - 1) // 最小0を保証
-            //   await postStore.unGood(post.id)
-            // }
+            post.liked = !post.liked
         } catch (error) {
-            console.error("いいね処理中にエラー:", error);
-            alert("いいね処理中にエラーが発生しました。");
-            post.liked = !post.liked; // エラー時はUIを元に戻す
+            console.error('いいねエラー:', error)
+            showToastMessage('いいねに失敗しました')
+            post.liked = !post.liked
+        } finally {
+            setTimeout(() => (post.animateHeart = false), 500)
         }
-
-        post.liked = !post.liked // UIを先に更新
-
-        // try {
-        //   if (post.liked) {
-        //     await postStore.good(postId)
-        //   } else {
-        //     await postStore.unGood(postId)
-        //   }
-        // } catch (error) {
-        //   console.error("いいね処理中にエラー:", error);
-        //   alert("いいね処理中にエラーが発生しました。");
-        //   post.liked = !post.liked; // エラー時はUIを元に戻す
-        // }
-        setTimeout(() => {
-            post.animateHeart = false
-        }, 500)
     }
 
-    // コメント欄トグル
+    // コメント表示切り替え
     const toggleComment = (postId) => {
         showComment[postId] = !showComment[postId]
     }
 
-    // コメント送信
+    // コメント投稿
     const submitComment = async (postId) => {
         if (!userStore.id) {
-            alert('ログインしていません。コメントできません。');
-            return;
+            showToastMessage('ログインしてください')
+            return
         }
 
-        const text = (newComments[postId] || '').trim();
+        const text = (newComments[postId] || '').trim()
         if (!text) {
-            alert('コメントを入力してください');
-            return;
+            showToastMessage('コメントを入力してください')
+            return
         }
 
         try {
-            // コメント送信
-            await postStore.addComment(postId, { content: text });
+            await postStore.addComment(postId, { content: text })
 
-            // 表示中の投稿に手動で追加（リアルタイム表示）
-            const post = posts.value.find(p => p.id === postId);
+            const post = posts.value.find(p => p.id === postId)
             if (post) {
-                if (!Array.isArray(post.comments)) {
-                    post.comments = [];
-                }
+                if (!Array.isArray(post.comments)) post.comments = []
                 post.comments.push({
                     content: text,
                     user: {
                         id: userStore.id,
                         userName: userStore.userName,
-                        urlIcon: userStore.urlIcon || '',
-                    },
-                });
+                        urlIcon: userStore.urlIcon || ''
+                    }
+                })
             }
 
-            // フォームをクリア
-            newComments[postId] = '';
+            newComments[postId] = ''
+            showToastMessage('コメントを送信しました！')
         } catch (error) {
-            console.error("コメント送信中にエラー:", error);
-            alert("コメント送信中にエラーが発生しました。");
+            console.error('コメント送信エラー:', error)
+            showToastMessage('コメント送信に失敗しました')
         }
-    };
-
+    }
 </script>
 
 <style scoped>
+    /* ★ 必要なCSSだけ再掲 */
+
     .liked {
         animation: pop 0.5s ease;
     }
@@ -201,17 +192,9 @@
         border: 1px solid #ddd;
         border-radius: 8px;
         max-width: 500px;
-        margin: 20px auto;
+        margin: 10px auto;
         background: white;
         padding: 12px;
-    }
-
-
-
-    .post-header {
-        display: flex;
-        align-items: center;
-        margin-bottom: 8px;
     }
 
     .user-icon {
@@ -252,11 +235,6 @@
         border-radius: 4px;
     }
 
-    .comment {
-        margin-bottom: 6px;
-        font-size: 14px;
-    }
-
     .comment-form {
         display: flex;
         gap: 8px;
@@ -272,30 +250,23 @@
         padding: 4px 10px;
     }
 
-    .timeline {
-        padding-bottom: 60px;
-
+    .hashtag {
+        color: #3b82f6;
+        font-weight: bold;
+        text-decoration: none;
     }
 
-    .no-posts-message {
-        display: flex;
-        justify-content: center;
-        /* 横中央 */
-        align-items: center;
-        /* 縦中央 */
-        height: 80vh;
-        /* 画面高さの60%に */
-        margin: 0 auto;
-        font-size: 1.5rem;
-        color: #777;
-        /* background: #f0f0f0; */
-        border-radius: 12px;
-        padding: 20px 40px;
-        /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); */
-        max-width: 400px;
-        text-align: center;
-        font-weight: 600;
-        user-select: none;
-        /* うっかりテキスト選択防止 */
+    .hashtag:hover {
+        text-decoration: underline;
+    }
+
+    .mention-link {
+        color: #10b981;
+        font-weight: bold;
+        text-decoration: none;
+    }
+
+    .mention-link:hover {
+        text-decoration: underline;
     }
 </style>

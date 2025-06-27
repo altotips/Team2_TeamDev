@@ -43,6 +43,15 @@
         </template>
       </p>
 
+
+      <!-- タグ表示（クリック可能なハッシュタグ） -->
+      <div class="post-tags" v-if="Array.isArray(post.tagu)">
+        <router-link v-for="tag in post.tagu" :key="tag" :to="{ name: 'Search', params: { tag } }" class="hashtag">
+          #{{ tag }}
+        </router-link>
+      </div>
+
+
       <div v-if="showComment[post.id]" class="comment-section">
         <div v-for="comment in post.comments" :key="comment.id" class="comment">
           <strong>{{ comment.user.userName }}:</strong> {{ comment.content }}
@@ -82,6 +91,14 @@
   const showComment = reactive({})
   const newComments = reactive({})
 
+
+  // データ取得
+  onMounted(async () => {
+    if (userStore.id) {
+      await postStore.fetchFollowersPosts()
+    }
+  })
+
   async function fetchAllUsers() {
     try {
       await userStore.fetchAllUsers()
@@ -89,6 +106,7 @@
       console.error("ユーザー取得エラー:", error)
     }
   }
+
 
   onMounted(async () => {
     if (userStore.id) {
@@ -337,26 +355,44 @@ function parseContent(text) {
   }
 
   .no-posts-message {
-        display: flex;
-        justify-content: center;
-        /* 横中央 */
-        align-items: center;
-        /* 縦中央 */
-        height: 80vh;
-        /* 画面高さの60%に */
-        margin: 0 auto;
-        font-size: 1.5rem;
-        color: #777;
-        /* background: #f0f0f0; */
-        border-radius: 12px;
-        padding: 20px 40px;
-        /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); */
-        max-width: 400px;
-        text-align: center;
-        font-weight: 600;
-        user-select: none;
-        /* うっかりテキスト選択防止 */
-    }
+    display: flex;
+    justify-content: center;
+    /* 横中央 */
+    align-items: center;
+    /* 縦中央 */
+    height: 80vh;
+    /* 画面高さの60%に */
+    margin: 0 auto;
+    font-size: 1.5rem;
+    color: #777;
+    /* background: #f0f0f0; */
+    border-radius: 12px;
+    padding: 20px 40px;
+    /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); */
+    max-width: 400px;
+    text-align: center;
+    font-weight: 600;
+    user-select: none;
+    /* うっかりテキスト選択防止 */
+  }
+
+  .post-tags {
+    margin-top: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .hashtag {
+    color: #3b82f6;
+    text-decoration: none;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  .hashtag:hover {
+    text-decoration: underline;
+  }
 
   /* /* .timeline {
     padding-bottom: 60px;

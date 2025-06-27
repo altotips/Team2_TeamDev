@@ -14,6 +14,7 @@ export const usePostStore = defineStore(
     const followersPosts = ref([])
     const myPosts = ref([])
     const userPosts = ref([])
+    const tags = ref([])
 
     // すべての投稿を取得し、allPostsに保存
     async function fetchAllPosts() {
@@ -117,8 +118,9 @@ export const usePostStore = defineStore(
           // alert('写真を選択してね。')
           return false
         }
-        // console.log(postData.content)
+
         // console.log(postData.image)
+        // console.log(postData.content)
 
         const res = await axios.post(`/posts/${userStore.id}`, postData, {
           headers: {
@@ -127,14 +129,15 @@ export const usePostStore = defineStore(
         })
 
         if (res) {
-          showToastMessage('投稿成功！')
+          // showToastMessage('投稿成功！')
           return true
         } else {
-          showToastMessage('投稿失敗')
+          // showToastMessage('投稿失敗')
           return false
         }
       } catch (err) {
         console.error('投稿に失敗:', err)
+        return false
       }
     }
 
@@ -147,7 +150,7 @@ export const usePostStore = defineStore(
           return false
         }
 
-        const res = await axios.patch(`/posts/${postId}/good`)
+        const res = await axios.patch(`/posts/${postId}/good/${userStore.id}`)
         console.log('いいねしたよ')
 
         return res
@@ -170,7 +173,7 @@ export const usePostStore = defineStore(
           return false
         }
 
-        const res = await axios.put(`/posts/${postId}/unGood`)
+        const res = await axios.put(`/posts/${postId}/unGood/${userStore.id}`)
         console.log('いいね解除')
         return res
         // if (res) {
@@ -184,26 +187,13 @@ export const usePostStore = defineStore(
     }
 
     //コメント追加
-    async function addComment(postId, {content:text}
-    ) {
+    async function addComment(postId, {content:text}) {
       console.log("メソッド")
       await axios.post(`/posts/${postId}/comments/${userStore.id}`, {content:text})
       console.log("メソッド２")
       // "/{postId}/comments/{userId}"
       // ここで fetchAllPosts() は呼ばない
     }
-
-    // //ユーザ検索
-    // async function searchUsers(searchStr) {
-    //   const res = await axios.post(`/posts/search/users?searchStr=${searchStr}`)
-    //   return res
-    // }
-
-    // //投稿検索
-    // async function searchPosts(searchStr) {
-    //   const res = await axios.post(`/posts/search/posts?searchStr=${searchStr}`)
-    //   return res
-    // }
 
     // ユーザ検索
     async function searchUsers(searchStr) {
@@ -243,6 +233,13 @@ export const usePostStore = defineStore(
       return res
     }
 
+    // 全タグ一覧取得
+    async function getTags() {
+      const res = await axios.post(`/api/posts/tags`)
+      tags.value = res.data
+      return res
+    }
+
     return {
       allPosts,
       followersPosts,
@@ -260,6 +257,7 @@ export const usePostStore = defineStore(
       searchUsers,
       searchPosts,
       searchTags,
+      getTags,
     }
   },
   // {
