@@ -43,6 +43,12 @@ const router = createRouter({
       component: () => import('../views/TimeLine.vue')
       // component: () => import('../views/myProfile.vue'),
     },
+     {
+      path: '/AllTimeLine',
+      name: 'AllTimeLine',
+      component: () => import('../views/AllTimeLine.vue')
+      // component: () => import('../views/myProfile.vue'),
+    },
     {
       path: '/followlist',
       name: 'followlist',
