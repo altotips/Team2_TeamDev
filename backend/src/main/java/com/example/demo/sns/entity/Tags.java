@@ -18,7 +18,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Entity
 @Data
-public class Tag {
+public class Tags {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
@@ -28,4 +28,9 @@ public class Tag {
 
 	@ManyToMany(mappedBy = "tags")
 	private List<Posts> posts = new ArrayList<>();
+
+	public Tags(String name, List<Posts> posts) {
+		this.name = name;
+		this.posts = posts;
+	}
 }

@@ -28,6 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.example.demo.sns.entity.Comment;
 import com.example.demo.sns.entity.Follows;
 import com.example.demo.sns.entity.Posts;
+import com.example.demo.sns.entity.Tags;
 import com.example.demo.sns.entity.Users;
 import com.example.demo.sns.repository.CommentRepository;
 import com.example.demo.sns.repository.FollowsRepository;
@@ -102,6 +103,7 @@ public class PostsController {
 			List<Posts> userPosts = postsrepository.findByUser(user);
 			posts.addAll(userPosts);
 		}
+
 		posts.addAll(postsrepository.findByUser(me));
 		List<Posts> sortedPosts = posts.stream()
 				.sorted(Comparator.comparing(Posts::getId)) // 昇順
@@ -113,9 +115,8 @@ public class PostsController {
 	@PostMapping("/{id}")
 	public Posts post(@PathVariable Long id,
 			@RequestParam("image") MultipartFile photo,
-			@RequestParam("content") String content
-//			@RequestParam("tags") List<String> tagsReq
-	) throws IOException {
+			@RequestParam("content") String content,
+			@RequestParam("tags") List<String> tagsReq) throws IOException {
 
 		// ファイルの保存
 		String uploadDir = "./uploads/";
@@ -126,15 +127,18 @@ public class PostsController {
 
 		String fileName = System.currentTimeMillis() + "_" + photo.getOriginalFilename();
 		Path filePath = Paths.get(uploadDir, fileName);
-		//		System.out.println(filePath);
-
 		Files.copy(photo.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
 		// タグを取得または作成
-//		List<Tag> tags = tagsReq.stream()
-//				.map(tagName -> tagRepository.findByName(tagName)
-//						.orElseGet(() -> tagRepository.save(new Tag(null, tagName, new ArrayList<>()))))
-//				.collect(Collectors.toList());
+		List<Tags> tags = tagsReq
+				.stream()
+				.map(tagName -> tagsrepository.findByName(tagName)
+						.orElseGet(() -> {
+							Tags tag = new Tags();
+							tag.setName(tagName);
+							return tagsrepository.save(tag);
+						}))
+				.collect(Collectors.toList());
 
 		// ここからデータべースにファイル名を保存
 		Posts post = new Posts();
@@ -142,7 +146,7 @@ public class PostsController {
 		post.setUser(user);
 		post.setUrlPhoto(fileName);
 		post.setContent(content);
-//		post.setTags(tags);
+		post.setTags(tags);
 		postsrepository.save(post);
 		return post;
 	}
@@ -177,6 +181,32 @@ public class PostsController {
 	public List<Posts> saerchPosts(@RequestParam String searchStr) {
 		List<Posts> posts = postsrepository.findByContentContaining(searchStr);
 		return posts;
+	}
+
+	// 全タグ一覧
+	@GetMapping("/search/tags")
+	public List<Posts> saerchTags(@RequestParam String searchStr) {
+		List<Posts> posts = postsrepository.findByTagsNameContaining(searchStr);
+		return posts;
+	}
+
+	// タグ一覧取得
+	@GetMapping("/tags")
+	public List<String> getTags() {
+		List<Tags> tags = tagsrepository.findAll();
+		List<String> tagsStr = tags.stream()
+				.map(Tags::getName)
+				.collect(Collectors.toList());
+		return tagsStr;
+	}
+
+	// タグ追加(テスト用)
+	@PostMapping("/tags")
+	public Tags postTags(@RequestParam String str) {
+		Tags tag = new Tags();
+		tag.setName(str);
+		tagsrepository.save(tag);
+		return tag;
 	}
 
 	// コメント投稿

@@ -132,7 +132,8 @@ const fetchUsersList = async () => {
 
 const unfollow = async (userIdToUnfollow) => {
   if (!userStore.id) {
-    alert('ログインしていません。フォロー解除できません。');
+    showToastMessage('ログインしていません。フォロー解除できません。');
+    // alert('ログインしていません。フォロー解除できません。');
     return;
   }
   if (!confirm(`${usersInList.value.find(u => u.id === userIdToUnfollow)?.userName || userIdToUnfollow + '番のユーザー'} のフォローを解除しますか？`)) {
@@ -142,7 +143,7 @@ const unfollow = async (userIdToUnfollow) => {
   try {
     const success = await userStore.unfollow(userIdToUnfollow);
     if (success) {
-      alert(`${usersInList.value.find(u => u.id === userIdToUnfollow)?.userName || 'ユーザー'} のフォローを解除しました。`);
+      showToastMessage(`${usersInList.value.find(u => u.id === userIdToUnfollow)?.userName || 'ユーザー'} のフォローを解除しました。`);
       // フォロー解除後、表示しているリストが自分のフォローリストであれば再フェッチして更新
       if (userStore.id === currentListOwnerId.value) {
         await fetchUsersList();
@@ -150,11 +151,11 @@ const unfollow = async (userIdToUnfollow) => {
       // ログインユーザーの followers プロパティも更新しておく (useUserStoreのfollowers関数がフォロー/フォロワー数を更新する想定)
       await userStore.followers(); 
     } else {
-      alert('フォロー解除に失敗しました。');
+      showToastMessage('フォロー解除に失敗しました。');
     }
   } catch (err) {
     console.error('フォロー解除中にエラー:', err);
-    alert('フォロー解除中にエラーが発生しました。');
+    showToastMessage('フォロー解除中にエラーが発生しました。');
   }
 };
 
