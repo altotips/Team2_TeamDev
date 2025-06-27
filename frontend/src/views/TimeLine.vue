@@ -305,6 +305,9 @@ function parseContent(text) {
 
   .user-name {
     font-weight: bold;
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
   }
 
   .post-image {

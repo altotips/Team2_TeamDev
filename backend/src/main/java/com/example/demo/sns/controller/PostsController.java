@@ -143,16 +143,18 @@ public class PostsController {
 //		List<Posts> posts = new ArrayList<>();
 //		posts.add(post);
 		// タグを取得または作成
-		List<Tags> tags = tagsReq
-				.stream()
-				.map(tagName -> tagsrepository.findByName(tagName)
-						.orElseGet(() -> {
-							Tags tag = new Tags(tagName);
-							return tagsrepository.save(tag);
-						}))
-				.collect(Collectors.toList());
+		List<Tags> tags = new ArrayList<>();
+		if (tagsReq != null && !tagsReq.isEmpty()) {
+			tags = tagsReq
+					.stream()
+					.map(tagName -> tagsrepository.findByName(tagName)
+							.orElseGet(() -> {
+								Tags tag = new Tags(tagName);
+								return tagsrepository.save(tag);
+							}))
+					.collect(Collectors.toList());
 //		System.out.println(tags);
-
+		}
 		post.setTags(tags);
 		postsrepository.save(post);
 		return post;
