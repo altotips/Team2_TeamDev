@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import axios from '@/utils/axios'
 import { useToast } from '@/composables/useToast.js'
@@ -20,6 +20,9 @@ export const useUserStore = defineStore(
 
     // 新規追加：全ユーザー一覧
     const allUsers = ref([])
+
+    // ログイン判定 (idがあればログイン中とみなす)
+    const isLoggedIn = computed(() => !!id.value)
 
     async function fetchAllUsers() {
       try {
@@ -381,6 +384,7 @@ export const useUserStore = defineStore(
       selfIntroduction,
       follows,
       authId,
+      isLoggedIn,
       login,
       logout,
       register,
