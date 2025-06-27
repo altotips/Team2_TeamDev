@@ -117,8 +117,9 @@ export const usePostStore = defineStore(
           // alert('写真を選択してね。')
           return false
         }
-        // console.log(postData.content)
+
         // console.log(postData.image)
+        // console.log(postData.content)
 
         const res = await axios.post(`/posts/${userStore.id}`, postData, {
           headers: {
@@ -127,10 +128,10 @@ export const usePostStore = defineStore(
         })
 
         if (res) {
-          showToastMessage('投稿成功！')
+          // showToastMessage('投稿成功！')
           return true
         } else {
-          showToastMessage('投稿失敗')
+          // showToastMessage('投稿失敗')
           return false
         }
       } catch (err) {

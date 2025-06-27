@@ -3,7 +3,10 @@
     import { usePostStore } from '@/stores/postStore'
     import { useRouter } from 'vue-router'
     // import { preview } from 'vite'
+    import { useToast } from '@/composables/useToast.js'
     import { toHiragana } from 'wanakana';
+
+    const { showToastMessage } = useToast()
 
     const postStore = usePostStore()
     const router = useRouter()
@@ -35,7 +38,6 @@
             : [];
     });
 
-
     // キャプションが変わるたびに、最後の #〇〇 を拾ってくる
     watch(description, (val) => {
         const match = val.match(/#([^\s# ]*)$/);
@@ -57,7 +59,6 @@
         currentTagText.value = '';
     }
 
-
     //inputで選んだ画像ファイルを取得
     function onFileChange(event) {
         selectedFile.value = event.target.files[0]
@@ -75,7 +76,6 @@
         }
 
         try {
-
             const input = description.value;
             tags.value = input
                 .match(/#[^\s# ]+/g) // #付き文字列を全部抜き出す
