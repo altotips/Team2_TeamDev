@@ -7,7 +7,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -105,19 +104,19 @@ public class PostsController {
 		}
 
 		posts.addAll(postsrepository.findByUser(me));
-		List<Posts> sortedPosts = posts.stream()
-				.sorted(Comparator.comparing(Posts::getId)) // 昇順
-				.collect(Collectors.toList());
-		return sortedPosts;
+//		List<Posts> sortedPosts = posts.stream()
+//				.sorted(Comparator.comparing(Posts::getId)) // 昇順
+//				.collect(Collectors.toList());
+//		return sortedPosts;
+		return posts;
 	}
 
 	// 投稿を登録
 	@PostMapping("/{id}")
 	public Posts post(@PathVariable Long id,
 			@RequestParam("image") MultipartFile photo,
-			@RequestParam("content") String content
-//			@RequestParam("tags") List<String> tagsReq
-	) throws IOException {
+			@RequestParam("content") String content,
+			@RequestParam("tags") List<String> tagsReq) throws IOException {
 
 		// ファイルの保存
 		String uploadDir = "./uploads/";
@@ -131,15 +130,15 @@ public class PostsController {
 		Files.copy(photo.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
 		// タグを取得または作成
-//		List<Tags> tags = tagsReq
-//				.stream()
-//				.map(tagName -> tagsrepository.findByName(tagName)
-//						.orElseGet(() -> {
-//							Tags tag = new Tags();
-//							tag.setName(tagName);
-//							return tagsrepository.save(tag);
-//						}))
-//				.collect(Collectors.toList());
+		List<Tags> tags = tagsReq
+				.stream()
+				.map(tagName -> tagsrepository.findByName(tagName)
+						.orElseGet(() -> {
+							Tags tag = new Tags();
+							tag.setName(tagName);
+							return tagsrepository.save(tag);
+						}))
+				.collect(Collectors.toList());
 
 		// ここからデータべースにファイル名を保存
 		Posts post = new Posts();
@@ -147,7 +146,7 @@ public class PostsController {
 		post.setUser(user);
 		post.setUrlPhoto(fileName);
 		post.setContent(content);
-//		post.setTags(tags);
+		post.setTags(tags);
 		postsrepository.save(post);
 		return post;
 	}
