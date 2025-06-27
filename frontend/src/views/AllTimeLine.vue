@@ -1,7 +1,6 @@
 <template>
     <div class="timeline">
         <div v-for="post in posts" :key="post.id" class="post-card">
-
             <div class="post-header">
                 <img class="user-icon" :src="`http://localhost:8080/uploads/${post.user.urlIcon}`" alt="User Icon" />
                 <router-link :to="{ name: 'UserProfile', params: { userId: post.user.id } }" class="user-name">
@@ -25,21 +24,50 @@
                 </p>
             </div>
 
-            <!-- メンション＆テキスト表示 -->
+            <!-- メンション＆テキスト表示
             <p class="post-content">
                 <template v-for="(word, index) in parseContent(post.content)" :key="index">
                     <router-link v-if="word.isMention && word.user"
-                        :to="{ name: 'UserProfile', params: { userId: word.user.id } }" class="mention-link">{{
-                        word.text }}</router-link>
+                        :to="{ name: 'UserProfile', params: { userId: word.user.id } }" class="mention-link">
+                        {{ word.text }}
+                    </router-link>
                     <span v-else>{{ word.text }}</span>
                 </template>
             </p>
 
-            <!-- ハッシュタグ表示 -->
-            <div class="post-tags" v-if="Array.isArray(post.tagu)">
-                <router-link v-for="tag in post.tagu" :key="tag" :to="{ name: 'Search', params: { tag } }"
-                    class="hashtag">#{{ tag }}</router-link>
-            </div>
+            ハッシュタグ表示（まとめて）
+            <p class="post-content">
+                <template v-for="(word, index) in parseContent(post.content)" :key="index">
+                    <router-link v-if="word.isTag && word.tag"
+                        :to="{ name: 'Search', params: { userId: word.user.id } }" class="mention-link">
+                        {{ word.text }}
+                    </router-link>
+                    <span v-else>{{ word.text }}</span>
+                </template>
+            </p> -->
+
+            <p class="post-content">
+                <template v-for="(word, index) in parseContent(post.content)" :key="index">
+                    <router-link v-if="word.isMention && word.user"
+                        :to="{ name: 'UserProfile', params: { userId: word.user.id } }" class="mention-link">
+                        {{ word.text }}
+                    </router-link>
+                    <router-link v-else-if="word.isHashtag" :to="{ name: 'Search', query: { q: word.tag } }" class="hashtag">
+                        {{ word.text }}
+                    </router-link>
+                    <span v-else>{{ word.text }}</span>
+                </template>
+            </p>
+
+
+
+            <!-- <div class="hashtags">
+                <router-link v-for="tag in post.tags" :key="tag" :to="{ name: 'Search', params: { tag } }"
+                    class="hashtag">
+                    #{{ tag }}
+                </router-link>
+            </div> -->
+
 
             <!-- コメントセクション -->
             <div v-if="showComment[post.id]" class="comment-section">
@@ -61,11 +89,31 @@
 </template>
 
 <script setup>
-    import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
+    import { ref, reactive, computed, onUnmounted } from 'vue'
     import { usePostStore } from '@/stores/postStore'
     import { useUserStore } from '@/stores/userStore'
     import { useRouter } from 'vue-router'
     // import { showToastMessage } from '@/utils/toast' // トースト関数（なければ alert に置き換えてOK）
+    import { onMounted, watch } from 'vue'
+    import { useRoute } from 'vue-router'
+
+    const route = useRoute()
+    const searchQuery = ref('')
+
+    onMounted(() => {
+        if (route.params.tag) {
+            searchQuery.value = route.params.tag
+            handleSearch()  // 既存の検索処理を呼び出す
+        }
+    })
+
+    watch(() => route.params.tag, (newTag) => {
+        if (newTag) {
+            searchQuery.value = newTag
+            handleSearch()
+        }
+    })
+
 
     const postStore = usePostStore()
     const userStore = useUserStore()
@@ -82,12 +130,24 @@
         intervalId = setInterval(async () => {
             await postStore.fetchAllPosts()
         }, 5000)
+
+        if (userStore.id) {
+            await userStore.fetchAllUsers()
+            await postStore.fetchAllPosts()
+        }
     })
+
+    onUnmounted(() => {
+        clearInterval(intervalId)
+    })
+
 
     // メンションテキストを解析
     function parseContent(text) {
         if (!text) return []
-        const parts = text.split(/(@[a-zA-Z0-9_-]+)/g)
+
+        // 半角スペース or @ または # の直前で分割し、空文字を除去
+        const parts = text.split(/(\s|(?=[@#]))+/).filter(Boolean)
 
         return parts.map(part => {
             if (part.startsWith('@')) {
@@ -95,9 +155,15 @@
                 const user = userStore.allUsers.find(u => u.userName === username)
                 return { text: part, isMention: true, user: user || null }
             }
-            return { text: part, isMention: false }
+            if (part.startsWith('#')) {
+                const tag = part.slice(1)
+                return { text: part, isHashtag: true, tag }
+            }
+            return { text: part, isMention: false, isHashtag: false }
         })
     }
+
+
 
     // いいね処理
     const toggleLike = async (post) => {

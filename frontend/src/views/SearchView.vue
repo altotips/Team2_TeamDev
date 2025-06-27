@@ -62,11 +62,13 @@
 
 <script setup>
   import { ref, watch } from 'vue'
-  import { useRouter } from 'vue-router'
+  import { useRoute, useRouter } from 'vue-router'
   import { usePostStore } from '@/stores/postStore'
+  import { onMounted } from 'vue'
   import ModalUserPostsView from '@/views/ModalUserPostsView.vue'
 
   const postStore = usePostStore()
+  const route = useRoute()
   const router = useRouter()
 
   const searchQuery = ref('')
@@ -83,6 +85,16 @@
   const selectedPost = ref(null)
 
   let debounceTimer = null
+
+
+
+  onMounted(() => {
+    const queryFromRoute = route.query.q
+    if (queryFromRoute) {
+      searchQuery.value = queryFromRoute
+      handleSearch()
+    }
+  })
 
   const getImageUrl = (path, type) => {
     if (!path) {
