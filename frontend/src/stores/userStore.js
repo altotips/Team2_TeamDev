@@ -3,21 +3,32 @@ import { defineStore } from 'pinia'
 import axios from '@/utils/axios'
 import { useToast } from '@/composables/useToast.js'
 
-// ユーザ情報やログインなどをまとめる
 export const useUserStore = defineStore(
   'user',
   () => {
-    // トースト表示のため使用
     const { showToastMessage } = useToast()
 
-    const id = ref(null) // ユーザのID(主キー)
-    const urlIcon = ref(null) // ユーザアイコンのurl
-    const fullName = ref(null) // フルネーム
-    const userName = ref(null) // ユーザ名
-    const email = ref(null) // メールアドレス
-    const selfIntroduction = ref(null) // 自己紹介文
-    const follows = ref(null) // フォローユーザ一覧
-    const authId = ref(null) // 管理権限
+    // 既存のstate
+    const id = ref(null)
+    const urlIcon = ref(null)
+    const fullName = ref(null)
+    const userName = ref(null)
+    const email = ref(null)
+    const selfIntroduction = ref(null)
+    const follows = ref(null)
+    const authId = ref(null)
+
+    // 新規追加：全ユーザー一覧
+    const allUsers = ref([])
+
+    async function fetchAllUsers() {
+      try {
+        const res = await axios.get('/users')
+        allUsers.value = res.data
+      } catch (error) {
+        console.error("ユーザー取得エラー:", error)
+      }
+    }
 
     // ログイン処理
     async function login(userData) {
@@ -132,7 +143,7 @@ export const useUserStore = defineStore(
         const res = await axios.put(`users/${id.value}/follow/${followId}`)
         //   console.log('res: ' + res.data)
         if (!res.data) {
-          // showToastMessage('ログインに失敗しました')
+          showToastMessage('フォローに失敗しました')
           // throw new Error('ログイン失敗')
           return false
         }
@@ -154,6 +165,7 @@ export const useUserStore = defineStore(
 
         // showToastMessage('ログインしました')
         // alert('ログインしました')
+        showToastMessage('フォローしました')
         return true
       } catch (error) {
         console.error('ログイン失敗', error)
@@ -174,6 +186,7 @@ export const useUserStore = defineStore(
         const res = await axios.delete(`users/${id.value}/unfollow/${unfollowId}`)
         //   console.log('res: ' + res.data)
         if (!res.data) {
+          showToastMessage('フォロー解除に失敗しました')
           // showToastMessage('ログインに失敗しました')
           // throw new Error('ログイン失敗')
           return false
@@ -196,6 +209,7 @@ export const useUserStore = defineStore(
 
         // showToastMessage('ログインしました')
         // alert('ログインしました')
+        showToastMessage('フォロー解除しました')
         return true
       } catch (error) {
         console.error('ログイン失敗', error)
@@ -305,8 +319,10 @@ export const useUserStore = defineStore(
           },
         })
         //   console.log('res: ' + res.data)
-        if (res.status !== 200 && res.status !== 204) return false
-
+        if (res.status !== 200 && res.status !== 204){
+        showToastMessage('プロフィール変更に失敗しました')
+          return false
+        }
 
         // id.value = res.data.id
         urlIcon.value = res.data.urlIcon
@@ -324,6 +340,7 @@ export const useUserStore = defineStore(
 
         // showToastMessage('ログインしました')
         // alert('ログインしました')
+        showToastMessage('プロフィール変更しました')
         return true
       } catch (error) {
         console.error('プロフィール変更失敗', error)
@@ -379,6 +396,9 @@ export const useUserStore = defineStore(
       followers,
       userFollowers,
       changeProfile,
+      // 追加
+      allUsers,
+      fetchAllUsers,
     }
   },
   {
@@ -387,7 +407,7 @@ export const useUserStore = defineStore(
     // セッションストレージは同じブラウザのタブ内なら
     // ログインが維持される。
     persist: {
-      storage: sessionStorage, // セッション中だけ保存
+      storage: sessionStorage,
       paths: [
         'id',
         'urlIcon',
@@ -397,7 +417,7 @@ export const useUserStore = defineStore(
         'selfIntroduction',
         'follows',
         'authId',
-      ], // 保存するキーの指定
+      ],
     },
   },
 )
