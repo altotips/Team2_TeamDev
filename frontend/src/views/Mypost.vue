@@ -1,23 +1,68 @@
 <script setup>
-    import { ref } from 'vue'
+    import { ref, computed, watch } from 'vue'
     import { usePostStore } from '@/stores/postStore'
     import { useRouter } from 'vue-router'
     // import { preview } from 'vite'
+    import { toHiragana } from 'wanakana';
 
     const postStore = usePostStore()
     const router = useRouter()
 
     const selectedFile = ref(null)
     const previewFile = ref(null)
+
+    // 入力キャプションとタグのデータ
     const description = ref('')
+    const tags = ref([])
+
+    // 今！入力中の #〇〇 の部分をに反応する（検出して使う）変数
+    const searchTag = ref('');
+
+    // タグの候補リスト
+    const candidateTags = ref(['いぬ', '犬', 'イッヌ', '筋トレ', 'ひよこ']);
+    // toHiragana('イヌ') 
+    // toHiragana('犬')    
+    // toHiragana('いぬ')  
+
+    // キャプション内の最後の「#」以降の単語を拾って、ひらがなで一致する候補を出す
+    const suggestions = computed(() => {
+        const keyword = toHiragana(searchTag.value); //ひらがな変換
+
+        return keyword
+            ? candidateTags.value.filter(tag =>
+                toHiragana(tag).startsWith(keyword) // タグもひらがな変換して比較
+            )
+            : [];
+    });
+
+
+    // キャプションが変わるたびに、最後の #〇〇 を拾ってくる
+    watch(description, (val) => {
+        const match = val.match(/#([^\s# ]*)$/);
+        searchTag.value = match ? match[1] : '';
+    });
+
+    // 候補タグをクリックしたときの処理
+    function insertTag(tag) {
+
+        // description 内の最後の #〇〇 を #tag に置き換える
+        description.value = description.value.replace(/#([^\s# ]*)$/, `#${tag} `);
+
+        // すでに含まれていなければ tags に追加
+        if (!tags.value.includes(tag)) {
+            tags.value.push(tag);
+        }
+
+        // 候補クリア
+        currentTagText.value = '';
+    }
+
 
     //inputで選んだ画像ファイルを取得
     function onFileChange(event) {
         selectedFile.value = event.target.files[0]
         previewFile.value = URL.createObjectURL(selectedFile.value)
     }
-
-
 
     // 画像とキャプションのデータを投稿
     const submitForm = async () => {
@@ -30,11 +75,21 @@
         }
 
         try {
+
+            const input = description.value;
+            tags.value = input
+                .match(/#[^\s# ]+/g) // #付き文字列を全部抜き出す
+                ?.map(tag => tag.slice(1)) || []; //#なしの文字列に変換(#のない状態でデータを送ってほしいから)
+
+            console.log(tags.value); // ["楽しい", "カフェ", "日常の記録"]
+
             const res = await postStore.post({
                 image: selectedFile.value,
                 content: description.value,
+                tags: tags.value
             })
             console.log('レスポンス:', res)
+
             if (res) {
                 showToastMessage('投稿完了！タイムラインに移動します🌟')
                 // alert('投稿完了！タイムラインに移動します🌟')
@@ -54,6 +109,7 @@
         router.push('/TimeLine')
     }
 
+
 </script>
 
 <template>
@@ -72,6 +128,13 @@
         <div class="right-column">
             <!-- <input type="text" v-model="description" placeholder="キャプションを入力" class="caption-box" /> -->
             <textarea v-model="description" placeholder="キャプションを入力" class="caption-box"></textarea>
+
+            <!-- タグ候補があれば表示 -->
+            <ul v-if="suggestions.length" class="tag-suggestions">
+                <li v-for="tag in suggestions" :key="tag" @click="insertTag(tag)">
+                    #{{ tag }}
+                </li>
+            </ul>
         </div>
 
         <!-- ボタンエリア -->
