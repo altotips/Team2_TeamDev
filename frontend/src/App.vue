@@ -1,14 +1,16 @@
 <script setup>
-  import { RouterLink, RouterView } from 'vue-router'
-  import { useRoute } from 'vue-router'
+  import { RouterLink, RouterView, useRoute } from 'vue-router'
   import Header from './views/Header.vue'
   import Footer from './views/Footer.vue'
   import ToastMessage from '@/views/ToastMessage.vue'
   import { useToast } from '@/composables/useToast.js'
+  import { useUserStore } from '@/stores/userStore.js' // 追加 ✨
 
+  const userStore = useUserStore() // 追加 ✨
   const route = useRoute()
   const { toastMessage, showToast, showToastMessage } = useToast()
 </script>
+
 
 <template>
   <div class="container">
