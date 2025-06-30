@@ -67,13 +67,15 @@
 
         <div v-else class="image-grid">
           <div v-for="post in userPosts" :key="post.id" class="image-item" @click="openModal(post)">
-            <img :src="post.urlPhoto && !post.urlPhoto.startsWith('http') ? `http://localhost:8080/uploads/${post.urlPhoto}` : (post.urlPhoto || '/images/default_post_image.png')" :alt="post.content" class="post-image">
+            <img
+              :src="post.urlPhoto && !post.urlPhoto.startsWith('http') ? `http://localhost:8080/uploads/${post.urlPhoto}` : (post.urlPhoto || '/images/default_post_image.png')"
+              :alt="post.content" class="post-image">
             <div class="post-overlay">
               <div class="overlay-stats">
                 <span class="stat-icon">❤️</span>
                 <span class="stat-number">{{ post.good }}</span>
                 <span class="stat-icon">💬</span>
-                <span class="stat-number">{{ post.comments.length }}</span>
+                <span class="stat-number">{{ post.comments ? post.comments.length : 0 }}</span>
               </div>
             </div>
           </div>
@@ -82,7 +84,8 @@
     </main>
   </div>
 
-  <ModalUserPostsView :show="showModal" :postData="selectedPostObj" @close="closeModal" />
+  <ModalUserPostsView :show="showModal" :postData="selectedPostObj" @close="closeModal"
+    @update:post="handlePostUpdate" />
 </template>
 
 <script setup>
@@ -99,34 +102,30 @@ const router = useRouter()
 const userStore = useUserStore()
 const postStore = usePostStore()
 
-const targetUserId = ref(null); // 表示中のユーザーのID
+const targetUserId = ref(null);
 
 const userName = ref('');
 const userIconUrl = ref('');
 const fullName = ref('');
 const selfIntroduction = ref('');
 const postsCount = ref(0);
-const isMyProfile = ref(false); // 自分のプロフィールかどうかを判定
-const isFollowing = ref(false); // ログインユーザーがこのプロフィールをフォローしているか
+const isMyProfile = ref(false);
+const isFollowing = ref(false);
 
 const userPosts = ref([]);
 
 const isLoading = ref(true);
 const error = ref(null);
 
-const displayedFollowingCount = ref(0); // 表示中のユーザーのフォロー中人数
+const displayedFollowingCount = ref(0);
 
 const showModal = ref(false);
 const selectedPostObj = ref(null);
 
-// ログインユーザーが対象ユーザーをフォローしているかの判定ロジック
-// userStore.follows はログインユーザーがフォローしているリスト
 const loggedInUserIsFollowing = computed(() => {
   if (!userStore.id || !targetUserId.value || !userStore.follows) {
     return false;
   }
-  // userStore.follows の各要素 f が持つ toUser.id と targetUserId.value を比較
-  // ※ f.toUser が存在することを前提としています。APIレスポンスの構造をご確認ください。
   return userStore.follows.some(f => f.toUser && f.toUser.id === targetUserId.value);
 });
 
@@ -134,51 +133,45 @@ const followButtonText = computed(() => {
   return isFollowing.value ? 'フォロー中' : 'フォロー';
 });
 
-// ログアウト処理
 const handleLogout = async () => {
   if (confirm('ログアウトしますか？')) {
     console.log('ログアウト処理を実行します');
     const success = await userStore.logout();
     if (success) {
-      router.push('/login'); // ログアウト後にログイン画面に遷移
+      router.push('/');
     } else {
       alert('ログアウトに失敗しました');
     }
   }
 };
 
-// プロフィール編集画面へ遷移
 const goToEditProfile = () => {
-  router.push('/ProfileEdit'); // プロフィール編集画面へ遷移
+  router.push('/ProfileEdit');
 };
 
 async function fetchUserProfileData(userIdToFetch) {
   isLoading.value = true;
   error.value = null;
-  userPosts.value = [];
 
   try {
-    const response = await userStore.getUser(userIdToFetch); // 対象ユーザーの基本情報を取得
+    const response = await userStore.getUser(userIdToFetch);
 
     if (response && response.data) {
       const data = response.data;
 
       userName.value = data.userName || '';
-      userIconUrl.value = data.urlIcon || '/images/default_profile_icon.png'; // デフォルトアイコンパスも考慮
+      userIconUrl.value = data.urlIcon || '/images/default_profile_icon.png';
       fullName.value = data.fullName || '';
       selfIntroduction.value = data.selfIntroduction || '';
 
-      // ★ 自分のプロフィールかどうかを判定
       isMyProfile.value = (userStore.id === userIdToFetch);
 
-      // ★ フォロー中の人数を取得 (userStore.userFollowers を使用)
-      // userStore.jsにこのメソッドがあることを前提としています
       const targetUserFollowingList = await userStore.userFollowers(userIdToFetch);
       displayedFollowingCount.value = targetUserFollowingList ? targetUserFollowingList.filter(f => f.fromUser && f.fromUser.id === userIdToFetch).length : 0;
 
-      // ユーザーの投稿を取得
       await postStore.fetchUserPosts(userIdToFetch);
-      userPosts.value = postStore.userPosts;
+
+      updateUserPostsDisplay(postStore.userPosts);
       postsCount.value = userPosts.value.length;
 
     } else {
@@ -192,21 +185,23 @@ async function fetchUserProfileData(userIdToFetch) {
   }
 }
 
-const initiateFetch = async (userId) => {
-  if (userId) {
-    targetUserId.value = userId; // targetUserId を設定
-    await fetchUserProfileData(targetUserId.value);
-  } else if (userStore.id) { // route.params.userId がない場合はログイン中のユーザーのプロフィールを表示
-    targetUserId.value = userStore.id;
-    await fetchUserProfileData(targetUserId.value);
-  } else {
-    error.value = "有効なユーザーIDが指定されていないか、ログインしていません。";
-    isLoading.value = false;
-    router.push('/login'); // ログインしていない場合はログインページへリダイレクト
-  }
+const updateUserPostsDisplay = (sourcePosts) => {
+  userPosts.value = sourcePosts.map(post => {
+    const newPost = { ...post };
+    const isLikedByUser = userStore.likes && Array.isArray(userStore.likes)
+      ? userStore.likes.some(like => {
+          if (like.post && like.post.id) {
+            return like.post.id === newPost.id;
+          }
+          return like.id === newPost.id;
+        })
+      : false;
+    newPost.liked = isLikedByUser;
+    newPost.animateHeart = false;
+    return newPost;
+  });
 };
 
-// ルートパラメータ (userId) とログインID (userStore.id) の変更を監視
 watch(
   () => [route.params.userId, userStore.id],
   async ([newRouteUserId, newUserStoreId]) => {
@@ -216,28 +211,27 @@ watch(
     if (!isNaN(routeIdNum) && routeIdNum > 0) {
       idToFetch = routeIdNum;
     } else if (newUserStoreId && newUserStoreId > 0) {
-      // route.params.userId がない場合や、不正な値の場合は、ログイン中のユーザーのプロフィールを表示
       idToFetch = newUserStoreId;
     }
 
-    // 取得対象のユーザーIDが変更された場合、または同じIDでもログイン状態が変わった場合に再フェッチ
+    if (userStore.id) {
+      await userStore.fetchLikes();
+      await userStore.followers();
+    }
+
     if (idToFetch && (idToFetch !== targetUserId.value || (userStore.id !== null && isMyProfile.value !== (newUserStoreId === idToFetch)))) {
       console.log("Watch triggered by ID change or login status. Fetching user profile for:", idToFetch);
-      await initiateFetch(idToFetch);
+      targetUserId.value = idToFetch;
+      await fetchUserProfileData(targetUserId.value);
     } else if (!idToFetch && !targetUserId.value && !error.value) {
       error.value = "有効なユーザーIDが指定されていないか、ログインしていません。";
       isLoading.value = false;
-      router.push('/login'); // ログインしていない場合はログインページへリダイレクト
-    }
-    // ログインユーザーのフォローリストを更新（フォローボタンの状態反映のため）
-    if (userStore.id) {
-      await userStore.followers(); // ログインユーザーがフォローしているリストを更新
+      router.push('/');
     }
   },
-  { immediate: true } // コンポーネントがマウントされた直後にも実行
+  { immediate: true }
 );
 
-// ログインユーザーが対象ユーザーをフォローしているかのcomputedプロパティの変更を監視
 watch(
   loggedInUserIsFollowing,
   (newValue) => {
@@ -246,10 +240,15 @@ watch(
   { immediate: true }
 );
 
+watch(() => postStore.userPosts, (newPosts) => {
+  updateUserPostsDisplay(newPosts);
+  postsCount.value = newPosts.length;
+}, { deep: true });
+
 const toggleFollow = async () => {
   if (!userStore.id) {
     alert('ログインしていません。フォローできません。');
-    router.push('/login'); // ログインページへリダイレクト
+    router.push('/');
     return;
   }
   if (!targetUserId.value) return;
@@ -270,9 +269,8 @@ const toggleFollow = async () => {
         alert('フォローに失敗しました。');
       }
     }
-    // フォロー/フォロー解除後、ユーザーのプロフィールデータとログインユーザーのフォローリストを再フェッチして表示を更新
-    await fetchUserProfileData(targetUserId.value); // 表示中のユーザーのデータ更新
-    await userStore.followers(); // ログインユーザーがフォローしているリストを更新
+    await fetchUserProfileData(targetUserId.value);
+    await userStore.followers();
   } catch (err) {
     console.error('フォロー処理中にエラー:', err);
     alert('フォロー処理中にエラーが発生しました。');
@@ -287,6 +285,30 @@ const openModal = (post) => {
 const closeModal = () => {
   showModal.value = false;
   selectedPostObj.value = null;
+};
+
+/**
+ * モーダルから投稿データの更新を受け取り、userPosts配列とPiniaストアを更新するハンドラ
+ * @param {Object} updatedPost - モーダルから送られてきた更新された投稿オブジェクト
+ */
+const handlePostUpdate = (updatedPost) => {
+  // 1. まず、UserProfile.vue自身の userPosts.value を更新
+  const index = userPosts.value.findIndex(p => p.id === updatedPost.id);
+  if (index !== -1) {
+    // リアクティブ性を保ちつつ、該当する投稿オブジェクトのプロパティを更新
+    // Object.assign を使用することで、参照を保ったままプロパティを更新できる
+    Object.assign(userPosts.value[index], updatedPost);
+    console.log(`モーダルから投稿ID ${updatedPost.id} の更新を受け取り、userPosts を更新しました。新しいいいね数: ${userPosts.value[index].good}`);
+  }
+
+  // 2. 次に、Pinia ストアの postStore.userPosts も更新する
+  // 'updateUserPostInStore' ではなく、'updatePostInStore' を使用します
+  postStore.updatePostInStore(updatedPost.id, { // <-- この行が修正点です！
+    good: updatedPost.good,
+    comments: updatedPost.comments,
+    liked: updatedPost.liked
+  });
+  console.log(`モーダルから投稿ID ${updatedPost.id} の更新を受け取り、ストアの userPosts を更新しました。`);
 };
 </script>
 
