@@ -12,10 +12,12 @@
         <div class="icon-container">
           <img
             :src="
-              userStore.urlIcon ? `http://localhost:8080/uploads/${userStore.urlIcon}` : defaultIcon
-            "
-            alt="User Icon"
-            class="profile-icon"
+          userIconUrl && userIconUrl !== '/images/default_profile_icon.png'
+          ? `http://localhost:8080/uploads/${userIconUrl}`
+          : defaultIcon
+      "
+      alt="User Icon"
+      class="profile-icon"
           />
         </div>
 
