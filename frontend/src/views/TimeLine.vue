@@ -101,7 +101,7 @@ onMounted(async () => {
 
     intervalId = setInterval(async () => {
       await postStore.fetchFollowersPosts()
-    }, 5000)
+    }, 1000)
   }
 })
 
@@ -159,8 +159,8 @@ function parseContent(text) {
 // いいねの切り替え関数
 const toggleLike = async (postItem) => {
   if (!userStore.id) {
-    // showToastMessage('ログインしていません。いいねできません。'); // 必要に応じて
-    alert('ログインしていません。いいねできません。');
+    showToastMessage('ログインしていません。いいねできません。'); // 必要に応じて
+    // alert('ログインしていません。いいねできません。');
     return;
   }
 
@@ -198,8 +198,8 @@ const toggleLike = async (postItem) => {
 
   } catch (error) {
     console.error("いいね処理中にエラー (TimeLine):", error);
-    // showToastMessage("いいね処理中にエラーが発生しました。"); // 必要に応じて
-    alert("いいね処理中にエラーが発生しました。");
+    showToastMessage("いいね処理中にエラーが発生しました。"); // 必要に応じて
+    // alert("いいね処理中にエラーが発生しました。");
     // エラー時はUIを元に戻す
     postItem.liked = previousLiked;
     postItem.good = previousGood;
@@ -219,15 +219,15 @@ const toggleComment = (postId) => {
 // コメント送信関数
 const submitComment = async (postId) => {
   if (!userStore.id) {
-    // showToastMessage('ログインしていません。コメントできません。'); // 必要に応じて
-    alert('ログインしていません。コメントできません。');
+    showToastMessage('ログインしていません。コメントできません。'); // 必要に応じて
+    // alert('ログインしていません。コメントできません。');
     return;
   }
 
   const text = (newComments[postId] || '').trim();
   if (!text) {
-    // showToastMessage('コメントを入力してください'); // 必要に応じて
-    alert('コメントを入力してください');
+    showToastMessage('コメントを入力してください'); // 必要に応じて
+    // alert('コメントを入力してください');
     return;
   }
 
@@ -249,16 +249,16 @@ const submitComment = async (postId) => {
     }
 
     newComments[postId] = ''; // コメントフォームクリア
-    // showToastMessage('コメントを送信しました！'); // 必要に応じて
-    alert('コメントを送信しました！');
+    showToastMessage('コメントを送信しました！'); // 必要に応じて
+    // alert('コメントを送信しました！');
 
     // コメント送信後、フォロー中のユーザーの投稿を再フェッチしてコメントを確実に反映
     // postStore.fetchFollowersPosts(); // これを有効にするとリスト全体がリロードされる
 
   } catch (error) {
     console.error("コメント送信中にエラー:", error);
-    // showToastMessage("コメント送信中にエラーが発生しました。"); // 必要に応じて
-    alert("コメント送信中にエラーが発生しました。");
+    showToastMessage("コメント送信中にエラーが発生しました。"); // 必要に応じて
+    // alert("コメント送信中にエラーが発生しました。");
   }
 };
 

@@ -144,11 +144,10 @@ const newComments = reactive({})
 onMounted(async () => {
   await postStore.fetchAllPosts()
 
-        intervalId = setInterval(async () => {
-            await postStore.fetchAllPosts()
-        }, 5000)
-    })
-
+  intervalId = setInterval(async () => {
+    await postStore.fetchAllPosts()
+  }, 1000)
+})
 
 // メンションテキストを解析
 function parseContent(text) {
@@ -340,5 +339,11 @@ const submitComment = async (postId) => {
 
 .mention-link:hover {
   text-decoration: underline;
+}
+
+.post-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
 }
 </style>
