@@ -69,220 +69,220 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
-import { usePostStore } from '@/stores/postStore';
-import { useUserStore } from '@/stores/userStore';
-import { useRouter } from 'vue-router';
-// import { useToast } from '@/composables/useToast.js'; // showToastMessage を使う場合はコメントアウトを外す
+  import { ref, reactive, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
+  import { usePostStore } from '@/stores/postStore';
+  import { useUserStore } from '@/stores/userStore';
+  import { useRouter } from 'vue-router';
+  // import { useToast } from '@/composables/useToast.js'; // showToastMessage を使う場合はコメントアウトを外す
 
-// ストア読み込み
-const postStore = usePostStore();
-const userStore = useUserStore();
-const router = useRouter();
-let intervalId;
+  // ストア読み込み
+  const postStore = usePostStore();
+  const userStore = useUserStore();
+  const router = useRouter();
+  let intervalId;
 
-// ★ posts を ref で初期化
-const posts = ref([]);
+  // ★ posts を ref で初期化
+  const posts = ref([]);
 
-const showComment = reactive({});
-const newComments = reactive({});
+  const showComment = reactive({});
+  const newComments = reactive({});
 
-// showToastMessage を使う場合は、ここで初期化
-// const { showToastMessage } = useToast();
+  // showToastMessage を使う場合は、ここで初期化
+  // const { showToastMessage } = useToast();
 
-// 投稿データの初期ロードと更新ロジック
-const loadPosts = async () => {
-  if (userStore.id) {
-    await userStore.fetchLikes(); // ログインユーザーのいいね情報を取得
-    await postStore.fetchFollowersPosts(); // フォローしているユーザーの投稿を取得
+  // 投稿データの初期ロードと更新ロジック
+  const loadPosts = async () => {
+    if (userStore.id) {
+      await userStore.fetchLikes(); // ログインユーザーのいいね情報を取得
+      await postStore.fetchFollowersPosts(); // フォローしているユーザーの投稿を取得
 
-    // postStore.followersPosts の内容を posts.value に代入し、いいね状態を設定
-    posts.value = postStore.followersPosts.map(post => {
+      // postStore.followersPosts の内容を posts.value に代入し、いいね状態を設定
+      posts.value = postStore.followersPosts.map(post => {
+        const newPost = { ...post };
+
+        const isLikedByUser = userStore.likes.some(like => {
+          return (like.post && like.post.id === newPost.id) || (like.id === newPost.id);
+        });
+
+        newPost.liked = isLikedByUser;
+        newPost.animateHeart = false;
+        return newPost;
+      });
+    }
+  };
+
+  onMounted(async () => {
+    await loadPosts(); // 初回ロード
+    await userStore.fetchAllUsers(); // メンション機能のために全てのユーザー情報を取得
+    console.log('Fetched all users:', userStore.allUsers);
+    await nextTick();
+  });
+
+  // ★ userStore.likes の変更を監視し、posts.value の liked 状態を更新
+  watch(() => userStore.likes, (newLikes) => {
+    posts.value.forEach(post => {
+      const isLiked = newLikes.some(like => {
+        return (like.post && like.post.id === post.id) || (like.id === post.id);
+      });
+      if (post.liked !== isLiked) {
+        post.liked = isLiked;
+      }
+    });
+  }, { deep: true });
+
+  // ★ postStore.followersPosts の変更を監視し、posts.value を更新
+  // これにより、ストア側で投稿リストが更新された場合もUIに反映される
+  watch(() => postStore.followersPosts, (newFollowersPosts) => {
+    posts.value = newFollowersPosts.map(post => {
       const newPost = { ...post };
-
       const isLikedByUser = userStore.likes.some(like => {
         return (like.post && like.post.id === newPost.id) || (like.id === newPost.id);
       });
-
       newPost.liked = isLikedByUser;
       newPost.animateHeart = false;
       return newPost;
     });
-  }
-};
+  }, { deep: true });
 
-onMounted(async () => {
-  await loadPosts(); // 初回ロード
-  await userStore.fetchAllUsers(); // メンション機能のために全てのユーザー情報を取得
-  console.log('Fetched all users:', userStore.allUsers);
-  await nextTick();
-});
 
-// ★ userStore.likes の変更を監視し、posts.value の liked 状態を更新
-watch(() => userStore.likes, (newLikes) => {
-  posts.value.forEach(post => {
-    const isLiked = newLikes.some(like => {
-      return (like.post && like.post.id === post.id) || (like.id === post.id);
+  // メンションとハッシュタグを解析する関数
+  function parseContent(text) {
+    if (!text) return [];
+
+    const parts = text.split(/(\s|(?=[@#]))+/).filter(Boolean); // 半角スペース or @ または # の直前で分割
+
+    return parts.map(part => {
+      if (part.startsWith('@')) {
+        const username = part.slice(1);
+        const user = userStore.allUsers.find(u => u.userName === username);
+        return { text: part, isMention: true, user: user || null };
+      }
+      if (part.startsWith('#')) {
+        const tag = part.slice(1);
+        return { text: part, isHashtag: true, tag };
+      }
+      return { text: part, isMention: false, isHashtag: false };
     });
-    if (post.liked !== isLiked) {
-      post.liked = isLiked;
+  }
+
+  // いいねの切り替え関数
+  const toggleLike = async (postItem) => {
+    if (!userStore.id) {
+      // showToastMessage('ログインしていません。いいねできません。'); // 必要に応じて
+      alert('ログインしていません。いいねできません。');
+      return;
     }
-  });
-}, { deep: true });
 
-// ★ postStore.followersPosts の変更を監視し、posts.value を更新
-// これにより、ストア側で投稿リストが更新された場合もUIに反映される
-watch(() => postStore.followersPosts, (newFollowersPosts) => {
-  posts.value = newFollowersPosts.map(post => {
-    const newPost = { ...post };
-    const isLikedByUser = userStore.likes.some(like => {
-      return (like.post && like.post.id === newPost.id) || (like.id === newPost.id);
-    });
-    newPost.liked = isLikedByUser;
-    newPost.animateHeart = false;
-    return newPost;
-  });
-}, { deep: true });
+    // オプティミスティックUIの更新 (即座にUIを更新)
+    const previousLiked = postItem.liked;
+    const previousGood = postItem.good;
 
-
-// メンションとハッシュタグを解析する関数
-function parseContent(text) {
-  if (!text) return [];
-
-  const parts = text.split(/(\s|(?=[@#]))+/).filter(Boolean); // 半角スペース or @ または # の直前で分割
-
-  return parts.map(part => {
-    if (part.startsWith('@')) {
-      const username = part.slice(1);
-      const user = userStore.allUsers.find(u => u.userName === username);
-      return { text: part, isMention: true, user: user || null };
+    postItem.liked = !postItem.liked;
+    if (postItem.liked) {
+      postItem.good += 1;
+    } else {
+      postItem.good = Math.max(0, postItem.good - 1);
     }
-    if (part.startsWith('#')) {
-      const tag = part.slice(1);
-      return { text: part, isHashtag: true, tag };
-    }
-    return { text: part, isMention: false, isHashtag: false };
-  });
-}
+    postItem.animateHeart = true;
 
-// いいねの切り替え関数
-const toggleLike = async (postItem) => {
-  if (!userStore.id) {
-    // showToastMessage('ログインしていません。いいねできません。'); // 必要に応じて
-    alert('ログインしていません。いいねできません。');
-    return;
-  }
+    try {
+      const updatedPostApi = await userStore.toggleLikeApi(postItem.id);
 
-  // オプティミスティックUIの更新 (即座にUIを更新)
-  const previousLiked = postItem.liked;
-  const previousGood = postItem.good;
-
-  postItem.liked = !postItem.liked;
-  if (postItem.liked) {
-    postItem.good += 1;
-  } else {
-    postItem.good = Math.max(0, postItem.good - 1);
-  }
-  postItem.animateHeart = true;
-
-  try {
-    const updatedPostApi = await userStore.toggleLikeApi(postItem.id);
-
-    // APIからの応答でいいねの状態と数を正確に更新
-    postItem.good = updatedPostApi.good;
-    // userStore.likes が更新されているので、再度それを参照して liked 状態を同期
-    const isLikedAfterApi = userStore.likes.some(like => {
-      return (like.post && like.post.id === postItem.id) || (like.id === postItem.id);
-    });
-    postItem.liked = isLikedAfterApi;
-
-    console.log('いいね処理成功 (TimeLine):', postItem.id, 'Liked:', postItem.liked, 'Good count:', postItem.good);
-
-    // Piniaストアの投稿リストも更新
-    postStore.updatePostInStore(postItem.id, {
-      good: postItem.good,
-      liked: postItem.liked,
-      // comments は変更されないので、ここでは含めない
-    });
-
-  } catch (error) {
-    console.error("いいね処理中にエラー (TimeLine):", error);
-    // showToastMessage("いいね処理中にエラーが発生しました。"); // 必要に応じて
-    alert("いいね処理中にエラーが発生しました。");
-    // エラー時はUIを元に戻す
-    postItem.liked = previousLiked;
-    postItem.good = previousGood;
-  } finally {
-    postItem.animateHeart = false;
-  }
-};
-
-// コメント表示の切り替え関数
-const toggleComment = (postId) => {
-  if (typeof showComment[postId] === 'undefined') {
-    showComment[postId] = false;
-  }
-  showComment[postId] = !showComment[postId];
-};
-
-// コメント送信関数
-const submitComment = async (postId) => {
-  if (!userStore.id) {
-    // showToastMessage('ログインしていません。コメントできません。'); // 必要に応じて
-    alert('ログインしていません。コメントできません。');
-    return;
-  }
-
-  const text = (newComments[postId] || '').trim();
-  if (!text) {
-    // showToastMessage('コメントを入力してください'); // 必要に応じて
-    alert('コメントを入力してください');
-    return;
-  }
-
-  try {
-    const response = await postStore.addComment(postId, { content: text });
-
-    // 送信成功 → 表示中の投稿に手動で追加
-    // posts.value から該当する投稿を見つける
-    const targetPost = posts.value.find(p => p.id === postId);
-    if (targetPost && Array.isArray(targetPost.comments)) {
-      // APIからのレスポンスを直接追加
-      targetPost.comments.push(response.data); 
-      console.log('コメント追加成功:', response.data);
-
-      // Piniaストアの投稿も更新する（コメント数などが変わるため）
-      postStore.updatePostInStore(postId, {
-        comments: targetPost.comments // 更新されたコメント配列を渡す
+      // APIからの応答でいいねの状態と数を正確に更新
+      postItem.good = updatedPostApi.good;
+      // userStore.likes が更新されているので、再度それを参照して liked 状態を同期
+      const isLikedAfterApi = userStore.likes.some(like => {
+        return (like.post && like.post.id === postItem.id) || (like.id === postItem.id);
       });
+      postItem.liked = isLikedAfterApi;
+
+      console.log('いいね処理成功 (TimeLine):', postItem.id, 'Liked:', postItem.liked, 'Good count:', postItem.good);
+
+      // Piniaストアの投稿リストも更新
+      postStore.updatePostInStore(postItem.id, {
+        good: postItem.good,
+        liked: postItem.liked,
+        // comments は変更されないので、ここでは含めない
+      });
+
+    } catch (error) {
+      console.error("いいね処理中にエラー (TimeLine):", error);
+      // showToastMessage("いいね処理中にエラーが発生しました。"); // 必要に応じて
+      alert("いいね処理中にエラーが発生しました。");
+      // エラー時はUIを元に戻す
+      postItem.liked = previousLiked;
+      postItem.good = previousGood;
+    } finally {
+      postItem.animateHeart = false;
+    }
+  };
+
+  // コメント表示の切り替え関数
+  const toggleComment = (postId) => {
+    if (typeof showComment[postId] === 'undefined') {
+      showComment[postId] = false;
+    }
+    showComment[postId] = !showComment[postId];
+  };
+
+  // コメント送信関数
+  const submitComment = async (postId) => {
+    if (!userStore.id) {
+      // showToastMessage('ログインしていません。コメントできません。'); // 必要に応じて
+      alert('ログインしていません。コメントできません。');
+      return;
     }
 
-    newComments[postId] = ''; // コメントフォームクリア
-    // showToastMessage('コメントを送信しました！'); // 必要に応じて
-    alert('コメントを送信しました！');
+    const text = (newComments[postId] || '').trim();
+    if (!text) {
+      // showToastMessage('コメントを入力してください'); // 必要に応じて
+      alert('コメントを入力してください');
+      return;
+    }
 
-    // コメント送信後、フォロー中のユーザーの投稿を再フェッチしてコメントを確実に反映
-    // postStore.fetchFollowersPosts(); // これを有効にするとリスト全体がリロードされる
+    try {
+      const response = await postStore.addComment(postId, { content: text });
 
-  } catch (error) {
-    console.error("コメント送信中にエラー:", error);
-    // showToastMessage("コメント送信中にエラーが発生しました。"); // 必要に応じて
-    alert("コメント送信中にエラーが発生しました。");
-  }
-};
+      // 送信成功 → 表示中の投稿に手動で追加
+      // posts.value から該当する投稿を見つける
+      const targetPost = posts.value.find(p => p.id === postId);
+      if (targetPost && Array.isArray(targetPost.comments)) {
+        // APIからのレスポンスを直接追加
+        targetPost.comments.push(response.data);
+        console.log('コメント追加成功:', response.data);
 
-// スクロール監視のロジック (無限スクロールなどのため、もしあれば)
-// onMounted(() => {
-//   window.addEventListener('scroll', handleScroll);
-// });
+        // Piniaストアの投稿も更新する（コメント数などが変わるため）
+        postStore.updatePostInStore(postId, {
+          comments: targetPost.comments // 更新されたコメント配列を渡す
+        });
+      }
 
-// onUnmounted(() => {
-//   window.removeEventListener('scroll', handleScroll);
-// });
+      newComments[postId] = ''; // コメントフォームクリア
+      // showToastMessage('コメントを送信しました！'); // 必要に応じて
+      alert('コメントを送信しました！');
 
-// const handleScroll = () => {
-//   // スクロールイベント処理
-// };
+      // コメント送信後、フォロー中のユーザーの投稿を再フェッチしてコメントを確実に反映
+      // postStore.fetchFollowersPosts(); // これを有効にするとリスト全体がリロードされる
+
+    } catch (error) {
+      console.error("コメント送信中にエラー:", error);
+      // showToastMessage("コメント送信中にエラーが発生しました。"); // 必要に応じて
+      alert("コメント送信中にエラーが発生しました。");
+    }
+  };
+
+  // スクロール監視のロジック (無限スクロールなどのため、もしあれば)
+  // onMounted(() => {
+  //   window.addEventListener('scroll', handleScroll);
+  // });
+
+  // onUnmounted(() => {
+  //   window.removeEventListener('scroll', handleScroll);
+  // });
+
+  // const handleScroll = () => {
+  //   // スクロールイベント処理
+  // };
 
 </script>
 
@@ -330,6 +330,13 @@ const submitComment = async (postId) => {
 
   .user-name {
     font-weight: bold;
+    text-decoration: none;
+    /* 👈 下線を消す！ */
+    color: inherit;
+    /* 👈 親と同じ色にする（青リンクを打ち消す） */
+    cursor: pointer;
+    /* 👈 手のマークはちゃんと出る！ */
+    font-size: 15px;
   }
 
   .post-image {

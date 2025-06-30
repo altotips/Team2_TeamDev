@@ -52,7 +52,8 @@
                         :to="{ name: 'UserProfile', params: { userId: word.user.id } }" class="mention-link">
                         {{ word.text }}
                     </router-link>
-                    <router-link v-else-if="word.isHashtag" :to="{ name: 'Search', query: { q: word.tag } }" class="hashtag">
+                    <router-link v-else-if="word.isHashtag" :to="{ name: 'Search', query: { q: word.tag } }"
+                        class="hashtag">
                         {{ word.text }}
                     </router-link>
                     <span v-else>{{ word.text }}</span>
@@ -272,6 +273,13 @@
 
     .user-name {
         font-weight: bold;
+        text-decoration: none;
+        /* 👈 下線を消す！ */
+        color: inherit;
+        /* 👈 親と同じ色にする（青リンクを打ち消す） */
+        cursor: pointer;
+        /* 👈 手のマークはちゃんと出る！ */
+        font-size: 15px;
     }
 
     .post-image {
