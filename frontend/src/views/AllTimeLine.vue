@@ -275,9 +275,16 @@ const submitComment = async (postId) => {
   margin-right: 8px;
 }
 
-.user-name {
-  font-weight: bold;
-}
+    .user-name {
+        font-weight: bold;
+        text-decoration: none;
+        /* 👈 下線を消す！ */
+        color: inherit;
+        /* 👈 親と同じ色にする（青リンクを打ち消す） */
+        cursor: pointer;
+        /* 👈 手のマークはちゃんと出る！ */
+        font-size: 15px;
+    }
 
 .post-image {
   width: 100%;
