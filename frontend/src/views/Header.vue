@@ -48,6 +48,7 @@
         showMenu.value = false
         router.push({ name: 'AllTimeLine' })
       }
+
       const handleClickOutside = (e) => {
         const menu = document.querySelector('.dropdown')
         const title = document.querySelector('.title')
@@ -58,8 +59,8 @@
         ) {
           showMenu.value = false
         }
-
       }
+
       onMounted(() => {
         document.addEventListener('click', handleClickOutside)
       })
