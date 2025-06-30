@@ -2,7 +2,9 @@
   <div class="profile-page">
     <header class="profile-header">
       <div class="header-top">
-        <button class="back-button" @click="$router.go(-1)">＜</button>
+        <button class="back-button" @click="$router.go(-1)">
+          ＜
+        </button>
         <h1 class="username">{{ userName }}</h1>
       </div>
 
@@ -10,9 +12,7 @@
         <div class="icon-container">
           <img
             :src="
-              userIconUrl && !userIconUrl.startsWith('http')
-                ? `http://localhost:8080/uploads/${userIconUrl}`
-                : userIconUrl || '/images/default_profile_icon.png'
+              userStore.urlIcon ? `http://localhost:8080/uploads/${userStore.urlIcon}` : defaultIcon
             "
             alt="User Icon"
             class="profile-icon"
@@ -40,10 +40,7 @@
             </div>
             <div class="stat-item">
               <span class="stat-value">{{ displayedFollowingCount }}</span>
-              <router-link
-                :to="`/followlist?userId=${targetUserId}&type=following`"
-                class="stat-label-link"
-              >
+              <router-link :to="`/followlist?userId=${targetUserId}&type=following`" class="stat-label-link">
                 <span class="stat-label">フォロー中</span>
               </router-link>
             </div>
@@ -56,7 +53,9 @@
 
     <main class="profile-content">
       <div class="posts-grid">
-        <div v-if="isLoading" class="loading-message">投稿を読み込み中...</div>
+        <div v-if="isLoading" class="loading-message">
+          投稿を読み込み中...
+        </div>
 
         <div v-else-if="error" class="error-message">
           投稿の読み込み中にエラーが発生しました。: {{ error }}
@@ -69,15 +68,8 @@
         <div v-else class="image-grid">
           <div v-for="post in userPosts" :key="post.id" class="image-item" @click="openModal(post)">
             <img
-              :src="
-                post.urlPhoto && !post.urlPhoto.startsWith('http')
-                  ? `http://localhost:8080/uploads/${post.urlPhoto}`
-                  : post.urlPhoto || '/images/default_post_image.png'
-              "
-              :alt="post.content"
-              class="post-image"
-            />
-
+              :src="post.urlPhoto && !post.urlPhoto.startsWith('http') ? `http://localhost:8080/uploads/${post.urlPhoto}` : (post.urlPhoto || '/images/default_post_image.png')"
+              :alt="post.content" class="post-image">
             <div class="post-overlay">
               <div class="overlay-stats">
                 <span class="stat-icon">❤️</span>
@@ -97,19 +89,18 @@
 </template>
 
 <script setup>
-import { ref, watch, computed } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { useUserStore } from '@/stores/userStore.js';
-import { usePostStore } from '@/stores/postStore.js';
-import ModalUserPostsView from '@/views/ModalUserPostsView.vue';
-import { useToast } from '@/composables/useToast.js'
-
+import { ref, watch, computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useUserStore } from '@/stores/userStore'
+import { usePostStore } from '@/stores/postStore'
+import defaultIcon from '@/assets/images/default_icon.png'
+// モーダルコンポーネントをインポート
+import ModalUserPostsView from '@/views/ModalUserPostsView.vue'
 
 const route = useRoute();
-const router = useRouter();
-const userStore = useUserStore();
-const postStore = usePostStore();
-const { showToastMessage } = useToast()
+const router = useRouter()
+const userStore = useUserStore()
+const postStore = usePostStore()
 
 const targetUserId = ref(null);
 
@@ -121,14 +112,12 @@ const postsCount = ref(0);
 const isMyProfile = ref(false);
 const isFollowing = ref(false);
 
-const userPosts = ref([])
+const userPosts = ref([]);
 
-const isLoading = ref(true)
-const error = ref(null)
+const isLoading = ref(true);
+const error = ref(null);
 
-
-const displayedFollowingCount = ref(0) // 表示中のユーザーのフォロー中人数
-
+const displayedFollowingCount = ref(0);
 
 const showModal = ref(false);
 const selectedPostObj = ref(null);
@@ -151,7 +140,6 @@ const handleLogout = async () => {
     if (success) {
       router.push('/');
     } else {
-      // showToastMessage('ログアウトに失敗しました'); // Assuming showToastMessage is available
       alert('ログアウトに失敗しました');
     }
   }
@@ -161,24 +149,9 @@ const goToEditProfile = () => {
   router.push('/ProfileEdit');
 };
 
-const initiateFetch = async (userId) => {
-  if (userId) {
-    targetUserId.value = userId; // targetUserId を設定
-    await fetchUserProfileData(targetUserId.value);
-  } else if (userStore.id) { // route.params.userId がない場合はログイン中のユーザーのプロフィールを表示
-    targetUserId.value = userStore.id;
-    await fetchUserProfileData(targetUserId.value);
-  } else {
-    error.value = "有効なユーザーIDが指定されていないか、ログインしていません。";
-    isLoading.value = false;
-    router.push('/login'); // ログインしていない場合はログインページへリダイレクト
-  }
-};
-
 async function fetchUserProfileData(userIdToFetch) {
   isLoading.value = true;
   error.value = null;
-  userPosts.value = [];
 
   try {
     const response = await userStore.getUser(userIdToFetch);
@@ -194,21 +167,11 @@ async function fetchUserProfileData(userIdToFetch) {
       isMyProfile.value = (userStore.id === userIdToFetch);
 
       const targetUserFollowingList = await userStore.userFollowers(userIdToFetch);
-
-      displayedFollowingCount.value = targetUserFollowingList ? targetUserFollowingList.length : 0;
-
-      // ユーザーの投稿を取得
+      displayedFollowingCount.value = targetUserFollowingList ? targetUserFollowingList.filter(f => f.fromUser && f.fromUser.id === userIdToFetch).length : 0;
 
       await postStore.fetchUserPosts(userIdToFetch);
-      // ここで、投稿のliked状態をuserStore.likesに基づいて設定します
-      userPosts.value = postStore.userPosts.map(post => ({
-        ...post,
-        // userStore.likesがundefinedでないことを確認し、配列であればsomeメソッドを使用
-        liked: userStore.likes && Array.isArray(userStore.likes)
-          ? userStore.likes.some(like => like.postId === post.id)
-          : false,
-        animateHeart: false, // アニメーションの状態を追加
-      }));
+
+      updateUserPostsDisplay(postStore.userPosts);
       postsCount.value = userPosts.value.length;
 
     } else {
@@ -222,36 +185,48 @@ async function fetchUserProfileData(userIdToFetch) {
   }
 }
 
+const updateUserPostsDisplay = (sourcePosts) => {
+  userPosts.value = sourcePosts.map(post => {
+    const newPost = { ...post };
+    const isLikedByUser = userStore.likes && Array.isArray(userStore.likes)
+      ? userStore.likes.some(like => {
+          if (like.post && like.post.id) {
+            return like.post.id === newPost.id;
+          }
+          return like.id === newPost.id;
+        })
+      : false;
+    newPost.liked = isLikedByUser;
+    newPost.animateHeart = false;
+    return newPost;
+  });
+};
 
-// ルートパラメータ (userId) とログインID (userStore.id) の変更を監視
-    watch(
-    () => [route.params.userId, userStore.id],
-    async ([newRouteUserId, newUserStoreId]) => {
-      let idToFetch = null;
-      const routeIdNum = parseInt(newRouteUserId);
+watch(
+  () => [route.params.userId, userStore.id],
+  async ([newRouteUserId, newUserStoreId]) => {
+    let idToFetch = null;
+    const routeIdNum = parseInt(newRouteUserId);
 
-      if (!isNaN(routeIdNum) && routeIdNum > 0) {
-        idToFetch = routeIdNum;
-      } else if (newUserStoreId && newUserStoreId > 0) {
-        // route.params.userId がない場合や、不正な値の場合は、ログイン中のユーザーのプロフィールを表示
-        idToFetch = newUserStoreId;
-      }
-    // 取得対象のユーザーIDが変更された場合、または同じIDでもログイン状態が変わった場合に再フェッチ
+    if (!isNaN(routeIdNum) && routeIdNum > 0) {
+      idToFetch = routeIdNum;
+    } else if (newUserStoreId && newUserStoreId > 0) {
+      idToFetch = newUserStoreId;
+    }
+
+    if (userStore.id) {
+      await userStore.fetchLikes();
+      await userStore.followers();
+    }
 
     if (idToFetch && (idToFetch !== targetUserId.value || (userStore.id !== null && isMyProfile.value !== (newUserStoreId === idToFetch)))) {
       console.log("Watch triggered by ID change or login status. Fetching user profile for:", idToFetch);
-      // ログインユーザーのいいね情報を先に取得するようにします
-      if (userStore.id) {
-          await userStore.fetchLikes();
-      }
-      await initiateFetch(idToFetch);
+      targetUserId.value = idToFetch;
+      await fetchUserProfileData(targetUserId.value);
     } else if (!idToFetch && !targetUserId.value && !error.value) {
       error.value = "有効なユーザーIDが指定されていないか、ログインしていません。";
       isLoading.value = false;
       router.push('/');
-    }
-    if (userStore.id) {
-      await userStore.followers();
     }
   },
   { immediate: true }
@@ -265,9 +240,15 @@ watch(
   { immediate: true }
 );
 
+watch(() => postStore.userPosts, (newPosts) => {
+  updateUserPostsDisplay(newPosts);
+  postsCount.value = newPosts.length;
+}, { deep: true });
+
 const toggleFollow = async () => {
   if (!userStore.id) {
-    showToastMessage('ログインしていません。フォローできません。');
+    alert('ログインしていません。フォローできません。');
+    router.push('/');
     return;
   }
   if (!targetUserId.value) return;
@@ -276,24 +257,23 @@ const toggleFollow = async () => {
     if (isFollowing.value) {
       const success = await userStore.unfollow(targetUserId.value);
       if (success) {
-        showToastMessage('フォローを解除しました。');
+        alert('フォローを解除しました。');
       } else {
-        showToastMessage('フォロー解除に失敗しました。');
+        alert('フォロー解除に失敗しました。');
       }
     } else {
       const success = await userStore.follow(targetUserId.value);
       if (success) {
-        showToastMessage('フォローしました。');
+        alert('フォローしました。');
       } else {
-        showToastMessage('フォローに失敗しました。');
+        alert('フォローに失敗しました。');
       }
     }
-    // フォロー/フォロー解除後、ユーザーのプロフィールデータとログインユーザーのフォローリストを再フェッチして表示を更新
     await fetchUserProfileData(targetUserId.value);
     await userStore.followers();
   } catch (err) {
     console.error('フォロー処理中にエラー:', err);
-    showToastMessage('フォロー処理中にエラーが発生しました。');
+    alert('フォロー処理中にエラーが発生しました。');
   }
 };
 
@@ -308,17 +288,27 @@ const closeModal = () => {
 };
 
 /**
- * モーダルから投稿データの更新を受け取り、userPosts配列を更新するハンドラ
+ * モーダルから投稿データの更新を受け取り、userPosts配列とPiniaストアを更新するハンドラ
  * @param {Object} updatedPost - モーダルから送られてきた更新された投稿オブジェクト
  */
 const handlePostUpdate = (updatedPost) => {
+  // 1. まず、UserProfile.vue自身の userPosts.value を更新
   const index = userPosts.value.findIndex(p => p.id === updatedPost.id);
   if (index !== -1) {
     // リアクティブ性を保ちつつ、該当する投稿オブジェクトのプロパティを更新
     // Object.assign を使用することで、参照を保ったままプロパティを更新できる
     Object.assign(userPosts.value[index], updatedPost);
-    console.log(`投稿ID ${updatedPost.id} が更新されました。新しいいいね数: ${userPosts.value[index].good}`);
+    console.log(`モーダルから投稿ID ${updatedPost.id} の更新を受け取り、userPosts を更新しました。新しいいいね数: ${userPosts.value[index].good}`);
   }
+
+  // 2. 次に、Pinia ストアの postStore.userPosts も更新する
+  // 'updateUserPostInStore' ではなく、'updatePostInStore' を使用します
+  postStore.updatePostInStore(updatedPost.id, { // <-- この行が修正点です！
+    good: updatedPost.good,
+    comments: updatedPost.comments,
+    liked: updatedPost.liked
+  });
+  console.log(`モーダルから投稿ID ${updatedPost.id} の更新を受け取り、ストアの userPosts を更新しました。`);
 };
 </script>
 
@@ -366,7 +356,7 @@ const handlePostUpdate = (updatedPost) => {
   display: flex;
   align-items: flex-start;
   margin-bottom: 20px;
-  gap: 80px;
+  gap: 80px; /* デスクトップでのアイコンと情報の間のギャップ */
 }
 
 .icon-container {
@@ -397,27 +387,24 @@ const handlePostUpdate = (updatedPost) => {
 
 .name-and-button {
   display: flex;
-  /* full-nameとボタンの配置を制御 */
-  align-items: center; /* ★ 修正: 中央揃えに変更して高さを調整しやすくします */
+  align-items: center; /* 中央揃え */
   margin-bottom: 20px;
-  /* 統計情報との間隔 */
   gap: 20px;
-  /* full-nameとボタンの間の基本間隔 */
-  flex-wrap: wrap; /* ボタンが複数行になる可能性を考慮 */
+  flex-wrap: nowrap; /* ★ 修正: デフォルトでは折り返さない */
 }
 
 .full-name {
   font-weight: bold;
   font-size: 16px;
   margin: 0;
-  flex-shrink: 0; /* 縮小させない */
+  flex-shrink: 0;
 }
 
 .my-profile-actions {
   display: flex;
   gap: 10px;
-  margin-top: 0; /* ★ 修正: 親要素で align-items を使うため、個別の margin-top はリセット */
-  flex-wrap: wrap; /* ボタンが複数行になる可能性を考慮 */
+  flex-wrap: nowrap; /* ★ 修正: デフォルトでは折り返さない */
+  margin-left: auto; /* ★ 追加: 右寄せにする */
 }
 
 .follow-button {
@@ -431,7 +418,7 @@ const handlePostUpdate = (updatedPost) => {
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
-  margin-top: 0; /* ★ 修正: 親要素で align-items を使うため、個別の margin-top はリセット */
+  margin-left: auto; /* ★ 追加: 右寄せにする */
 }
 
 .follow-button.is-following {
@@ -451,9 +438,7 @@ const handlePostUpdate = (updatedPost) => {
   font-weight: bold;
   cursor: pointer;
   white-space: nowrap;
-  /* ボタンのテキストが改行されないように */
   flex-shrink: 0;
-  /* flexアイテムが縮小されないように */
 }
 
 .edit-profile-button:hover,
@@ -522,7 +507,6 @@ const handlePostUpdate = (updatedPost) => {
   overflow: hidden;
   background-color: #eee;
   cursor: pointer;
-  /* クリック可能であることを示す */
 }
 
 .image-item .post-image {
@@ -533,10 +517,8 @@ const handlePostUpdate = (updatedPost) => {
   height: 100%;
   object-fit: cover;
   transition: transform 0.3s ease;
-  /* ホバー時のアニメーション */
 }
 
-/* --- オーバーレイ表示のための追加CSS --- */
 .post-overlay {
   position: absolute;
   top: 0;
@@ -544,28 +526,21 @@ const handlePostUpdate = (updatedPost) => {
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.6);
-  /* 半透明の黒で画像を暗くする */
   display: flex;
   justify-content: center;
   align-items: center;
   opacity: 0;
-  /* 初期状態では非表示 */
   transition: opacity 0.3s ease;
-  /* フェードイン/アウトのアニメーション */
   pointer-events: none;
-  /* オーバーレイがクリックを妨げないようにする */
 }
 
 .image-item:hover .post-overlay {
   opacity: 1;
-  /* ホバー時に表示 */
   pointer-events: auto;
-  /* ホバー時にクリック可能にする */
 }
 
 .image-item:hover .post-image {
   transform: scale(1.05);
-  /* ホバー時に画像を少し拡大（任意） */
 }
 
 .overlay-stats {
@@ -574,7 +549,6 @@ const handlePostUpdate = (updatedPost) => {
   font-size: 18px;
   font-weight: bold;
   gap: 20px;
-  /* アイテム間のスペース */
 }
 
 .overlay-stats .stat-icon {
@@ -583,14 +557,10 @@ const handlePostUpdate = (updatedPost) => {
 
 .overlay-stats .stat-number {
   margin-right: 15px;
-  /* 数字と次のアイコンの間のスペース */
 }
 
-/* --- 追加CSSここまで --- */
-
 .no-posts-message,
-.loading-message,
-.error-message {
+.loading-message {
   grid-column: 1 / -1;
   text-align: center;
   padding: 50px;
@@ -602,8 +572,9 @@ const handlePostUpdate = (updatedPost) => {
 @media (max-width: 768px) {
   .profile-details-row {
     flex-direction: column;
-    align-items: center;
+    align-items: center; /* 中央寄せ */
     gap: 20px;
+    text-align: center; /* アイコン以下のテキストも中央寄せにする */
   }
 
   .icon-container {
@@ -612,63 +583,62 @@ const handlePostUpdate = (updatedPost) => {
   }
 
   .right-of-icon-info {
-    align-items: center;
+    align-items: center; /* 子要素も中央寄せ */
     min-height: auto;
+    width: 100%; /* 親要素の幅いっぱいに広げる */
   }
 
   .name-and-button {
-    flex-direction: column;
-    /* 縦並びにする */
-    align-items: flex-start;
-    /* 左寄せに戻す */
+    flex-direction: column; /* 縦並びにする */
+    align-items: center; /* ★ 修正: 中央寄せに変更 */
     gap: 10px;
     margin-bottom: 15px;
+    width: 100%; /* 幅いっぱいに広げる */
+  }
+
+  .full-name {
+    width: 100%; /* 幅いっぱいに広げる */
+    text-align: center; /* 中央寄せ */
+  }
+
+  .my-profile-actions,
+  .follow-button {
+    width: 100%; /* ★ 修正: 幅いっぱいに表示 */
+    margin-left: 0; /* ★ 修正: 右寄せを解除 */
+    justify-content: center; /* ★ 追加: ボタンを中央寄せ */
   }
 
   .user-stats {
     justify-content: space-around;
     width: 100%;
-    gap: 40px;
+    gap: 0; /* ギャップをなくして均等配置を強調 */
+    padding: 0 10px; /* 左右に少しパディングを追加 */
+  }
+
+  .stat-item {
+    flex-direction: column; /* 縦並びにする */
+    align-items: center; /* 中央寄せ */
+    gap: 2px; /* 項目間のギャップを調整 */
+  }
+
+  .stat-value {
+    font-size: 16px; /* モバイルでのフォントサイズを調整 */
+  }
+
+  .stat-label {
+    font-size: 12px; /* モバイルでのフォントサイズを調整 */
+  }
+
+  .stat-label-link {
+    font-size: 12px; /* モバイルでのフォントサイズを調整 */
   }
 
   .image-grid {
-    gap: 10px;
+    gap: 5px; /* モバイルでのギャップを狭める */
   }
 
-  .follow-button {
-    width: 100%;
-    /* モバイルでは幅いっぱいに表示 */
-    margin-top: 10px;
-  }
-
-  .my-profile-actions {
-    width: 100%;
-    /* モバイルで幅いっぱいに表示 */
-    margin-top: 10px; /* モバイルでの縦方向の間隔を調整 */
-  }
-
-  .edit-profile-button,
-  .logout-button {
-    width: 48%;
-    /* モバイルで横に並べる場合の例 */
-  }
-
-  .follow-button {
-    width: 100%;
-    /* モバイルでは幅いっぱいに表示 */
-    margin-top: 10px;
-  }
-
-  .my-profile-actions {
-    width: 100%;
-    /* モバイルで幅いっぱいに表示 */
-    margin-top: 10px; /* モバイルでの縦方向の間隔を調整 */
-  }
-
-  .edit-profile-button,
-  .logout-button {
-    width: 48%;
-    /* モバイルで横に並べる場合の例 */
+  .self-introduction {
+    text-align: center; /* モバイルでは自己紹介も中央寄せ */
   }
 }
 </style>

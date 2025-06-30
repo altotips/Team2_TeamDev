@@ -38,8 +38,20 @@
 
             </div>
 
-            <p class="post-content">{{ post.content }}</p>
-
+            <p class="post-content">
+              <template v-for="(word, index) in parseContent(post.content)" :key="index">
+                <router-link v-if="word.isMention && word.user"
+                  :to="{ name: 'UserProfile', params: { userId: word.user.id } }" class="mention-link"
+                  @click="closeModal">
+                  {{ word.text }}
+                </router-link>
+                <router-link v-else-if="word.isHashtag" :to="{ name: 'Search', query: { q: word.tag } }"
+                  class="hashtag" @click="closeModal">
+                  {{ word.text }}
+                </router-link>
+                <span v-else>{{ word.text }}</span>
+              </template>
+            </p>
             <div v-if="post && post.id && showComment[post.id]" class="comment-section">
               <div v-for="comment in post.comments" :key="comment.id" class="comment">
                 <strong>{{ comment.user?.userName }}:</strong> {{ comment.content }}
@@ -60,6 +72,7 @@
 import { ref, watch, reactive } from 'vue';
 import { usePostStore } from '@/stores/postStore.js';
 import { useUserStore } from '@/stores/userStore.js';
+import { useRouter } from 'vue-router'; // useRouterをインポート
 // useToast がコメントアウトされているが、showToastMessage が使われているので、必要であればコメントアウトを外す
 // import { useToast } from '@/composables/useToast.js'; 
 
@@ -78,6 +91,7 @@ const emit = defineEmits(['close', 'update:post']);
 
 const postStore = usePostStore();
 const userStore = useUserStore();
+const router = useRouter(); // useRouterを初期化
 // const { showToastMessage } = useToast(); // showToastMessage を使う場合はこれが必要
 
 const isOpen = ref(props.show);
@@ -89,12 +103,14 @@ const newComments = reactive({});
 watch(() => [props.show, props.postData], async ([newShowVal, newPostDataVal]) => {
   isOpen.value = newShowVal;
   if (newShowVal && newPostDataVal) {
+    // 投稿データをディープコピーして、モーダル内で独立して状態を管理
     const clonedPost = JSON.parse(JSON.stringify(newPostDataVal));
 
     if (userStore.id) {
-      await userStore.fetchLikes();
+      await userStore.fetchLikes(); // ログインユーザーのいいね情報を取得
+      await userStore.fetchAllUsers(); // メンション解決のために全てのユーザー情報を取得
     }
-    
+
     if (userStore.likes && Array.isArray(userStore.likes)) {
       clonedPost.liked = userStore.likes.some(like => {
         if (like.post && like.post.id) {
@@ -127,6 +143,29 @@ const closeModal = () => {
   document.body.style.overflow = '';
 };
 
+// --- メンションとハッシュタグを解析する関数を追加 ---
+function parseContent(text) {
+  if (!text) return [];
+
+  const parts = text.split(/(\s|(?=[@#]))+/).filter(Boolean); // 半角スペース or @ または # の直前で分割
+
+  return parts.map(part => {
+    if (part.startsWith('@')) {
+      const username = part.slice(1);
+      // userStore.allUsers を使用してユーザーを検索
+      const user = userStore.allUsers.find(u => u.userName === username);
+      return { text: part, isMention: true, user: user || null };
+    }
+    if (part.startsWith('#')) {
+      const tag = part.slice(1);
+      return { text: part, isHashtag: true, tag };
+    }
+    return { text: part, isMention: false, isHashtag: false };
+  });
+}
+// --- 修正ここまで ---
+
+
 const toggleLike = async () => {
   if (!userStore.id || !post.value || !post.value.id) { // post.value.id のチェックを追加
     // showToastMessage('ログインしていません、または投稿データがありません。いいねできません。'); // useToast が必要
@@ -150,7 +189,7 @@ const toggleLike = async () => {
 
   try {
     const updatedPostApi = await userStore.toggleLikeApi(currentPost.id);
-    
+
     currentPost.liked = userStore.likes.some(like => {
       if (like.post && like.post.id) {
         return like.post.id === currentPost.id;
@@ -238,206 +277,222 @@ const submitComment = async () => { // ★ ここから引数 (postId) を削除
 
 
 <style scoped>
-  /* ModalUserPostsView用のスタイル */
-  .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-  }
+/* ModalUserPostsView用のスタイル */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
 
+.modal-content {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  position: relative;
+  max-width: 600px;
+  /* タイムラインの投稿カードに近い幅 */
+  width: 90%;
+  max-height: 90%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.close-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #333;
+  z-index: 10;
+}
+
+.loading-message,
+.error-message {
+  padding: 50px;
+  text-align: center;
+  color: #888;
+}
+
+/* --- Timeline.vueのpost-card関連スタイルをここに適用 --- */
+.modal-post-display {
+  /* post-cardのスタイルに合わせる */
+  width: 100%;
+  /* モーダルコンテンツ内で幅いっぱいに表示 */
+  /* paddingやmarginは個別の要素で調整 */
+}
+
+.post-header {
+  display: flex;
+  align-items: center;
+  padding: 10px 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.user-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 10px;
+}
+
+.user-name {
+  font-weight: bold;
+  color: #262626;
+  text-decoration: none;
+}
+
+.post-image {
+  width: 100%;
+  height: auto;
+  display: block;
+  /* モーダル内の画像なのでクリックイベントは不要 */
+}
+
+.post-actions {
+  display: flex;
+  padding: 10px 15px;
+  border-top: 1px solid #eee;
+  border-bottom: 1px solid #eee;
+}
+
+.icon-button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0 8px;
+  color: #8e8e8e;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.icon-button span {
+  font-size: 20px;
+}
+
+.post-content {
+  padding: 10px 15px;
+  font-size: 15px;
+  color: #333;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  /* 改行を保持 */
+}
+
+/* ★追加: ハッシュタグとメンションのスタイル */
+.hashtag,
+.mention-link {
+  color: #3b82f6; /* 青色 */
+  text-decoration: none;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.hashtag:hover,
+.mention-link:hover {
+  text-decoration: underline;
+}
+/* ★追加ここまで */
+
+
+.comment-section {
+  padding: 10px 15px;
+  border-top: 1px solid #eee;
+}
+
+.comment {
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+
+.comment strong {
+  margin-right: 5px;
+}
+
+.comment-form {
+  display: flex;
+  margin-top: 10px;
+}
+
+.comment-form input {
+  flex-grow: 1;
+  border: 1px solid #dbdbdb;
+  border-radius: 4px;
+  padding: 8px;
+  margin-right: 10px;
+}
+
+.comment-form button {
+  background-color: #0095f6;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 15px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+/* モーダル表示・非表示のアニメーション */
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+}
+
+.modal-fade-enter-active .modal-content,
+.modal-fade-leave-active .modal-content {
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+}
+
+.modal-fade-enter-from .modal-content,
+.modal-fade-leave-to .modal-content {
+  transform: translateY(-50px) scale(0.9);
+  opacity: 0;
+}
+
+/* モーダルのサイズをレスポンシブに調整 */
+@media (max-width: 767px) {
   .modal-content {
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    position: relative;
-    max-width: 600px;
-    /* タイムラインの投稿カードに近い幅 */
-    width: 90%;
-    max-height: 90%;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .close-button {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: none;
-    border: none;
-    font-size: 24px;
-    cursor: pointer;
-    color: #333;
-    z-index: 10;
-  }
-
-  .loading-message,
-  .error-message {
-    padding: 50px;
-    text-align: center;
-    color: #888;
-  }
-
-  /* --- Timeline.vueのpost-card関連スタイルをここに適用 --- */
-  .modal-post-display {
-    /* post-cardのスタイルに合わせる */
-    width: 100%;
-    /* モーダルコンテンツ内で幅いっぱいに表示 */
-    /* paddingやmarginは個別の要素で調整 */
+    max-width: 95%;
+    width: 95%;
   }
 
   .post-header {
-    display: flex;
-    align-items: center;
-    padding: 10px 15px;
-    border-bottom: 1px solid #eee;
+    margin-bottom: 10px;
   }
 
   .user-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    object-fit: cover;
-    margin-right: 10px;
+    width: 30px;
+    height: 30px;
   }
 
   .user-name {
-    font-weight: bold;
-    color: #262626;
-    text-decoration: none;
+    font-size: 14px;
   }
 
   .post-image {
-    width: 100%;
-    height: auto;
-    display: block;
-    /* モーダル内の画像なのでクリックイベントは不要 */
-  }
-
-  .post-actions {
-    display: flex;
-    padding: 10px 15px;
-    border-top: 1px solid #eee;
-    border-bottom: 1px solid #eee;
-  }
-
-  .icon-button {
-    background: none;
-    border: none;
-    font-size: 24px;
-    cursor: pointer;
-    padding: 0 8px;
-    color: #8e8e8e;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-  }
-
-  .icon-button span {
-    font-size: 20px;
+    margin-bottom: 10px;
   }
 
   .post-content {
-    padding: 10px 15px;
-    font-size: 15px;
-    color: #333;
-    line-height: 1.5;
-    white-space: pre-wrap;
-    /* 改行を保持 */
-  }
-
-  .comment-section {
-    padding: 10px 15px;
-    border-top: 1px solid #eee;
-  }
-
-  .comment {
     font-size: 14px;
-    margin-bottom: 5px;
   }
-
-  .comment strong {
-    margin-right: 5px;
-  }
-
-  .comment-form {
-    display: flex;
-    margin-top: 10px;
-  }
-
-  .comment-form input {
-    flex-grow: 1;
-    border: 1px solid #dbdbdb;
-    border-radius: 4px;
-    padding: 8px;
-    margin-right: 10px;
-  }
-
-  .comment-form button {
-    background-color: #0095f6;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    padding: 8px 15px;
-    cursor: pointer;
-    font-weight: bold;
-  }
-
-  /* モーダル表示・非表示のアニメーション */
-  .modal-fade-enter-active,
-  .modal-fade-leave-active {
-    transition: opacity 0.3s ease;
-  }
-
-  .modal-fade-enter-from,
-  .modal-fade-leave-to {
-    opacity: 0;
-  }
-
-  .modal-fade-enter-active .modal-content,
-  .modal-fade-leave-active .modal-content {
-    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-  }
-
-  .modal-fade-enter-from .modal-content,
-  .modal-fade-leave-to .modal-content {
-    transform: translateY(-50px) scale(0.9);
-    opacity: 0;
-  }
-
-  /* モーダルのサイズをレスポンシブに調整 */
-  @media (max-width: 767px) {
-    .modal-content {
-      max-width: 95%;
-      width: 95%;
-    }
-
-    .post-header {
-      margin-bottom: 10px;
-    }
-
-    .user-icon {
-      width: 30px;
-      height: 30px;
-    }
-
-    .user-name {
-      font-size: 14px;
-    }
-
-    .post-image {
-      margin-bottom: 10px;
-    }
-
-    .post-content {
-      font-size: 14px;
-    }
-  }
+}
 </style>
