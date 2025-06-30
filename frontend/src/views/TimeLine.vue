@@ -2,28 +2,21 @@
   <div class="timeline">
     <div v-for="post in posts" :key="post.id" class="post-card">
       <div class="post-header">
-        <img
-          class="user-icon"
-          :src="`http://localhost:8080/uploads/${post.user.urlIcon}`"
-          alt="User Icon"
-        />
+        <img class="user-icon"
+          :src="post.user?.urlIcon ? `http://localhost:8080/uploads/${post.user.urlIcon}` : '/images/default_profile_icon.png'"
+          alt="User Icon" />
 
-        <router-link
-          :to="{ name: 'UserProfile', params: { userId: post.user.id } }"
-          class="user-name"
-        >
-          {{ post.user.userName }}
+        <router-link :to="{ name: 'UserProfile', params: { userId: post.user?.id } }" class="user-name">
+          {{ post.user?.userName }}
         </router-link>
       </div>
 
-      <img :src="`http://localhost:8080/uploads/${post.urlPhoto}`" class="post-image" alt="image" />
+      <img :src="post.urlPhoto ? `http://localhost:8080/uploads/${post.urlPhoto}` : '/images/default_post_image.png'"
+        class="post-image" alt="image" />
 
       <div class="post-actions">
-        <button
-          @click="toggleLike(post)"
-          class="icon-button"
-          :class="{ liked: post.liked, animate: post.animateHeart }"
-        >
+        <button @click="toggleLike(post)" class="icon-button"
+          :class="{ liked: post.liked, animate: post.animateHeart }">
           <span :style="{ color: post.liked ? 'red' : '#aaa' }">
             {{ post.liked ? '❤️' : '♡' }}
           </span>
@@ -38,11 +31,11 @@
 
       <p class="post-content">
         <template v-for="(word, index) in parseContent(post.content)" :key="index">
-          <router-link
-            v-if="word.isMention && word.user"
-            :to="{ name: 'UserProfile', params: { userId: word.user.id } }"
-            class="mention-link"
-          >
+          <router-link v-if="word.isMention && word.user"
+            :to="{ name: 'UserProfile', params: { userId: word.user.id } }" class="mention-link">
+            {{ word.text }}
+          </router-link>
+          <router-link v-else-if="word.isHashtag" :to="{ name: 'Search', query: { q: word.tag } }" class="hashtag">
             {{ word.text }}
           </router-link>
           <span v-else>{{ word.text }}</span>
@@ -63,7 +56,7 @@
 
       <div v-if="showComment[post.id]" class="comment-section">
         <div v-for="comment in post.comments" :key="comment.id" class="comment">
-          <strong>{{ comment.user.userName }}:</strong> {{ comment.content }}
+          <strong>{{ comment.user?.userName }}:</strong> {{ comment.content }}
         </div>
         <form @submit.prevent="submitComment(post.id)" class="comment-form">
           <input v-model="newComments[post.id]" type="text" placeholder="コメント..." />
@@ -147,131 +140,143 @@ function linkifyMentions(text) {
 function parseContent(text) {
   if (!text) return []
 
-  // この正規表現は、メンションを検出し、その部分をキャプチャして配列に含める
-  // @の後に英数字、アンダースコア、またはハイフンが1文字以上続くパターン
-  const parts = text.split(/(@[a-zA-Z0-9_-]+)/g)
+  const parts = text.split(/(\s|(?=[@#]))+/).filter(Boolean); // 半角スペース or @ または # の直前で分割
 
-  const parsedContent = parts.map((part) => {
+  return parts.map(part => {
     if (part.startsWith('@')) {
-      const username = part.slice(1)
-      const user = userStore.allUsers.find((u) => u.userName === username)
-
-      return {
-        text: part,
-        isMention: true,
-        user: user || null,
-      }
+      const username = part.slice(1);
+      const user = userStore.allUsers.find(u => u.userName === username);
+      return { text: part, isMention: true, user: user || null };
     }
-    return { text: part, isMention: false }
-  })
-
-  // デバッグ用に、修正後の結果をコンソールに出力
-  console.log('Parsed content (final check):', parsedContent)
-
-  return parsedContent
+    if (part.startsWith('#')) {
+      const tag = part.slice(1);
+      return { text: part, isHashtag: true, tag };
+    }
+    return { text: part, isMention: false, isHashtag: false };
+  });
 }
 
-// いいね処理（API呼び出し付き）
-const toggleLike = async (post) => {
+// いいねの切り替え関数
+const toggleLike = async (postItem) => {
   if (!userStore.id) {
-    showToastMessage('ログインしていません。いいねできません。')
-    // alert('ログインしていません。いいねできません。');
-    return
+    // showToastMessage('ログインしていません。いいねできません。'); // 必要に応じて
+    alert('ログインしていません。いいねできません。');
+    return;
   }
+
+  // オプティミスティックUIの更新 (即座にUIを更新)
+  const previousLiked = postItem.liked;
+  const previousGood = postItem.good;
+
+  postItem.liked = !postItem.liked;
+  if (postItem.liked) {
+    postItem.good += 1;
+  } else {
+    postItem.good = Math.max(0, postItem.good - 1);
+  }
+  postItem.animateHeart = true;
+
   try {
-    post.animateHeart = true
-    if (post.liked) {
-      post.good = Math.max(0, post.good - 1) // 最小0を保証
-      console.log('マイナスしたよ')
-      console.log(post.good)
-      await postStore.unGood(post.id)
-    } else {
-      post.good += 1
-      console.log('ぷらすしたよ')
-      console.log(post.good)
-      await postStore.good(post.id)
-    }
-    //   if (post.liked) {
-    //   post.good += 1
-    //   await postStore.good(post.id)
-    // } else {
-    //    post.good = Math.max(0, post.good - 1) // 最小0を保証
-    //   await postStore.unGood(post.id)
-    // }
+    const updatedPostApi = await userStore.toggleLikeApi(postItem.id);
+
+    // APIからの応答でいいねの状態と数を正確に更新
+    postItem.good = updatedPostApi.good;
+    // userStore.likes が更新されているので、再度それを参照して liked 状態を同期
+    const isLikedAfterApi = userStore.likes.some(like => {
+      return (like.post && like.post.id === postItem.id) || (like.id === postItem.id);
+    });
+    postItem.liked = isLikedAfterApi;
+
+    console.log('いいね処理成功 (TimeLine):', postItem.id, 'Liked:', postItem.liked, 'Good count:', postItem.good);
+
+    // Piniaストアの投稿リストも更新
+    postStore.updatePostInStore(postItem.id, {
+      good: postItem.good,
+      liked: postItem.liked,
+      // comments は変更されないので、ここでは含めない
+    });
+
   } catch (error) {
-    console.error('いいね処理中にエラー:', error)
-    showToastMessage('いいね処理中にエラーが発生しました。')
-    // alert("いいね処理中にエラーが発生しました。");
-    post.liked = !post.liked // エラー時はUIを元に戻す
+    console.error("いいね処理中にエラー (TimeLine):", error);
+    // showToastMessage("いいね処理中にエラーが発生しました。"); // 必要に応じて
+    alert("いいね処理中にエラーが発生しました。");
+    // エラー時はUIを元に戻す
+    postItem.liked = previousLiked;
+    postItem.good = previousGood;
+  } finally {
+    postItem.animateHeart = false;
   }
+};
 
-  post.liked = !post.liked // UIを先に更新
-
-  // try {
-  //   if (post.liked) {
-  //     await postStore.good(postId)
-  //   } else {
-  //     await postStore.unGood(postId)
-  //   }
-  // } catch (error) {
-  //   console.error("いいね処理中にエラー:", error);
-  //   alert("いいね処理中にエラーが発生しました。");
-  //   post.liked = !post.liked; // エラー時はUIを元に戻す
-  // }
-  setTimeout(() => {
-    post.animateHeart = false
-  }, 500)
-}
-
-// コメント欄トグル
+// コメント表示の切り替え関数
 const toggleComment = (postId) => {
-  showComment[postId] = !showComment[postId]
-}
+  if (typeof showComment[postId] === 'undefined') {
+    showComment[postId] = false;
+  }
+  showComment[postId] = !showComment[postId];
+};
 
-// コメント送信
+// コメント送信関数
 const submitComment = async (postId) => {
   if (!userStore.id) {
-    showToastMessage('ログインしていません。コメントできません。')
-    // alert('ログインしていません。コメントできません。');
-    return
+    // showToastMessage('ログインしていません。コメントできません。'); // 必要に応じて
+    alert('ログインしていません。コメントできません。');
+    return;
   }
 
-  const text = (newComments[postId] || '').trim()
+  const text = (newComments[postId] || '').trim();
   if (!text) {
-    return showToastMessage('コメントを入力してください')
-    // return alert('コメントを入力してください')
+    // showToastMessage('コメントを入力してください'); // 必要に応じて
+    alert('コメントを入力してください');
+    return;
   }
 
   try {
-    // コメントを送信
-    await postStore.addComment(postId, {
-      content: text,
-    })
+    const response = await postStore.addComment(postId, { content: text });
 
     // 送信成功 → 表示中の投稿に手動で追加
-    const post = postStore.followersPosts.find((p) => p.id === postId)
-    if (post && Array.isArray(post.comments)) {
-      post.comments.push({
-        content: text,
-        user: {
-          id: userStore.id,
-          userName: userStore.userName, // ← ここ重要！
-          urlIcon: userStore.urlIcon || '', // ← 必要ならこれも！
-        },
-      })
+    // posts.value から該当する投稿を見つける
+    const targetPost = posts.value.find(p => p.id === postId);
+    if (targetPost && Array.isArray(targetPost.comments)) {
+      // APIからのレスポンスを直接追加
+      targetPost.comments.push(response.data); 
+      console.log('コメント追加成功:', response.data);
+
+      // Piniaストアの投稿も更新する（コメント数などが変わるため）
+      postStore.updatePostInStore(postId, {
+        comments: targetPost.comments // 更新されたコメント配列を渡す
+      });
     }
 
-    newComments[postId] = '' // コメントフォームクリア
-    showToastMessage('コメントを送信しました！')
-    // alert('コメントを送信しました！');
-    await postStore.fetchAllPosts() // コメント送信後、最新のコメントリストを反映するために再フェッチ
+    newComments[postId] = ''; // コメントフォームクリア
+    // showToastMessage('コメントを送信しました！'); // 必要に応じて
+    alert('コメントを送信しました！');
+
+    // コメント送信後、フォロー中のユーザーの投稿を再フェッチしてコメントを確実に反映
+    // postStore.fetchFollowersPosts(); // これを有効にするとリスト全体がリロードされる
+
   } catch (error) {
-    console.error('コメント送信中にエラー:', error)
-    showToastMessage('コメント送信中にエラーが発生しました。')
-    // alert("コメント送信中にエラーが発生しました。");
+    console.error("コメント送信中にエラー:", error);
+    // showToastMessage("コメント送信中にエラーが発生しました。"); // 必要に応じて
+    alert("コメント送信中にエラーが発生しました。");
   }
-}
+};
+
+// スクロール監視のロジック (無限スクロールなどのため、もしあれば)
+// onMounted(() => {
+//   window.addEventListener('scroll', handleScroll);
+// });
+
+// onUnmounted(() => {
+//   window.removeEventListener('scroll', handleScroll);
+// });
+
+// const handleScroll = () => {
+//   // スクロールイベント処理
+// };
+
 </script>
+
 
 <style scoped>
 .liked {

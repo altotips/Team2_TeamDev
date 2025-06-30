@@ -20,26 +20,15 @@
               :src="post.urlPhoto ? `http://localhost:8080/uploads/${post.urlPhoto}` : '/images/default_post_image.png'"
               :alt="post.content" />
 
-            <!-- <div class="post-actions">
-              <button @click="toggleLike(post)" class="icon-button">
-                <span :style="{ color: post.liked ? 'red' : '#aaa' }">
-                  {{ post.liked ? '❤️' : '♡' }}
-                </span>
-              </button>
-              <button @click="toggleComment(post.id)" class="icon-button">
-                💬 コメント
-              </button>
-            </div> -->
             <div class="post-actions">
-
-              <button @click="toggleLike(post)" class="icon-button"
+              <button @click="toggleLike()" class="icon-button"
                 :class="{ liked: post.liked, animate: post.animateHeart }">
                 <span :style="{ color: post.liked ? 'red' : '#aaa' }">
                   {{ post.liked ? '❤️' : '♡' }}
                 </span>
               </button>
               <p>{{ post.good }} </p>
-              <button @click="toggleComment(post.id)" class="icon-button">
+              <button @click="toggleComment()" class="icon-button">
                 💬
               </button>
 
@@ -51,11 +40,11 @@
 
             <p class="post-content">{{ post.content }}</p>
 
-            <div v-if="showComment[post.id]" class="comment-section">
+            <div v-if="post && post.id && showComment[post.id]" class="comment-section">
               <div v-for="comment in post.comments" :key="comment.id" class="comment">
-                <strong>{{ comment.user.userName }}:</strong> {{ comment.content }}
+                <strong>{{ comment.user?.userName }}:</strong> {{ comment.content }}
               </div>
-              <form @submit.prevent="submitComment(post.id)" class="comment-form">
+              <form @submit.prevent="submitComment()" class="comment-form">
                 <input v-model="newComments[post.id]" type="text" placeholder="コメント..." />
                 <button type="submit">送信</button>
               </form>
@@ -68,148 +57,185 @@
 </template>
 
 <script setup>
-  import { ref, watch, reactive } from 'vue'; // reactive をインポート
-  import { usePostStore } from '@/stores/postStore.js';
-  import { useUserStore } from '@/stores/userStore.js'; // useUserStore をインポート
+import { ref, watch, reactive } from 'vue';
+import { usePostStore } from '@/stores/postStore.js';
+import { useUserStore } from '@/stores/userStore.js';
+// useToast がコメントアウトされているが、showToastMessage が使われているので、必要であればコメントアウトを外す
+// import { useToast } from '@/composables/useToast.js'; 
 
-  const props = defineProps({
-    show: {
-      type: Boolean,
-      default: false
-    },
-    postData: {
-      type: Object, // 投稿オブジェクトを想定
-      default: null
+const props = defineProps({
+  show: {
+    type: Boolean,
+    default: false
+  },
+  postData: {
+    type: Object,
+    default: null
+  }
+});
+
+const emit = defineEmits(['close', 'update:post']);
+
+const postStore = usePostStore();
+const userStore = useUserStore();
+// const { showToastMessage } = useToast(); // showToastMessage を使う場合はこれが必要
+
+const isOpen = ref(props.show);
+const post = ref(null);
+
+const showComment = reactive({});
+const newComments = reactive({});
+
+watch(() => [props.show, props.postData], async ([newShowVal, newPostDataVal]) => {
+  isOpen.value = newShowVal;
+  if (newShowVal && newPostDataVal) {
+    const clonedPost = JSON.parse(JSON.stringify(newPostDataVal));
+
+    if (userStore.id) {
+      await userStore.fetchLikes();
     }
-  });
+    
+    if (userStore.likes && Array.isArray(userStore.likes)) {
+      clonedPost.liked = userStore.likes.some(like => {
+        if (like.post && like.post.id) {
+          return like.post.id === clonedPost.id;
+        }
+        return like.id === clonedPost.id;
+      });
+    } else {
+      clonedPost.liked = false;
+    }
+    clonedPost.animateHeart = false;
 
-  const emit = defineEmits(['close']);
+    post.value = clonedPost;
 
-  // ストアを読み込む
-  const postStore = usePostStore();
-  const userStore = useUserStore();
-
-  const isOpen = ref(props.show);
-  const post = ref(props.postData); // 受け取ったpostDataをrefに設定
-  const isLoading = ref(false); // このコンポーネントでは直接APIを叩かないので基本false
-
-  // コメント表示状態と新しいコメント入力用のreactiveオブジェクト
-  const showComment = reactive({});
-  const newComments = reactive({});
-
-
-  // props.show と props.postData の変更を監視
-  watch(() => [props.show, props.postData], ([newShowVal, newPostDataVal]) => {
-    isOpen.value = newShowVal;
-    if (newShowVal && newPostDataVal) {
-      // 渡された投稿データをディープコピーして扱う (Piniaストアのオブジェクトへの直接変更を避けるため)
-      // ただし、リアクティブ性を保つためrefでラップし、必要に応じてリアクティブに変換
-      post.value = JSON.parse(JSON.stringify(newPostDataVal));
-      // いいね状態の同期 (UserProfileView側で変更があった場合)
-      // または、モーダル内でいいね状態が変更された場合に、親のuserPostsに反映させるロジックも必要になる可能性あり
-
-      // コメントセクションの初期状態をリセット
+    if (post.value && post.value.id) { // post.value が null でないことを確認
       showComment[post.value.id] = false;
       newComments[post.value.id] = '';
-
-      document.body.style.overflow = 'hidden';
-    } else {
-      post.value = null; // モーダルが閉じたらデータをクリア
-      document.body.style.overflow = '';
     }
-  }, { immediate: true });
 
-  const closeModal = () => {
-    isOpen.value = false;
-    emit('close');
+    document.body.style.overflow = 'hidden';
+  } else {
+    post.value = null;
     document.body.style.overflow = '';
-  };
+  }
+}, { immediate: true, deep: true });
 
+const closeModal = () => {
+  isOpen.value = false;
+  emit('close');
+  document.body.style.overflow = '';
+};
 
-  // いいね処理（API呼び出し付き）
-  const toggleLike = async (post) => {
-    if (!userStore.id) {
-      showToastMessage('ログインしていません。いいねできません。');
-      // alert('ログインしていません。いいねできません。');
-      return;
-    }
-    try {
-      if (post.liked) {
-        post.good = Math.max(0, post.good - 1) // 最小0を保証
-        console.log("マイナスしたよ")
-        console.log(post.good)
-        await postStore.unGood(post.id)
-      } else {
-        post.good += 1
-        console.log("ぷらすしたよ")
-        console.log(post.good)
-        await postStore.good(post.id)
+const toggleLike = async () => {
+  if (!userStore.id || !post.value || !post.value.id) { // post.value.id のチェックを追加
+    // showToastMessage('ログインしていません、または投稿データがありません。いいねできません。'); // useToast が必要
+    alert('ログインしていません、または投稿データがありません。いいねできません。');
+    return;
+  }
+
+  const currentPost = post.value;
+
+  const previousLiked = currentPost.liked;
+  const previousGood = currentPost.good;
+
+  currentPost.liked = !currentPost.liked;
+  if (currentPost.liked) {
+    currentPost.good += 1;
+  } else {
+    currentPost.good = Math.max(0, currentPost.good - 1);
+  }
+
+  currentPost.animateHeart = true;
+
+  try {
+    const updatedPostApi = await userStore.toggleLikeApi(currentPost.id);
+    
+    currentPost.liked = userStore.likes.some(like => {
+      if (like.post && like.post.id) {
+        return like.post.id === currentPost.id;
       }
-      //   if (post.liked) {
-      //   post.good += 1
-      //   await postStore.good(post.id)
-      // } else {
-      //    post.good = Math.max(0, post.good - 1) // 最小0を保証
-      //   await postStore.unGood(post.id)
-      // }
-    } catch (error) {
-      console.error("いいね処理中にエラー:", error);
-      showToastMessage("いいね処理中にエラーが発生しました。");
-      // alert("いいね処理中にエラーが発生しました。");
-      post.liked = !post.liked; // エラー時はUIを元に戻す
-    }
+      return like.id === currentPost.id;
+    });
+    currentPost.good = updatedPostApi.good; // APIから返された正確ないいね数を使用
 
-    post.liked = !post.liked // UIを先に更新
+    console.log('いいね処理成功:', currentPost.id, 'Liked:', currentPost.liked, 'Good count:', currentPost.good);
 
-    // try {
-    //   if (post.liked) {
-    //     await postStore.good(postId)
-    //   } else {
-    //     await postStore.unGood(postId)
-    //   }
-    // } catch (error) {
-    //   console.error("いいね処理中にエラー:", error);
-    //   alert("いいね処理中にエラーが発生しました。");
-    //   post.liked = !post.liked; // エラー時はUIを元に戻す
-    // }
+    emit('update:post', currentPost);
+
+  } catch (error) {
+    console.error("いいね処理中にエラー:", error);
+    // showToastMessage("いいね処理中にエラーが発生しました。"); // useToast が必要
+    alert("いいね処理中にエラーが発生しました。");
+    currentPost.liked = previousLiked;
+    currentPost.good = previousGood;
+  } finally {
+    currentPost.animateHeart = false;
+  }
+};
+
+const toggleComment = () => {
+  if (post.value && post.value.id) { // post.value と id のチェック
+    showComment[post.value.id] = !showComment[post.value.id];
+  }
+};
+
+// コメント送信関数
+const submitComment = async () => { // ★ ここから引数 (postId) を削除します
+  if (!userStore.id) {
+    // showToastMessage('ログインしていません。コメントできません。'); // useToast が必要
+    alert('ログインしていません。コメントできません。');
+    return;
   }
 
-  // コメント欄トグル
-  const toggleComment = (postId) => {
-    showComment[postId] = !showComment[postId]
+  // 投稿データが有効であることを確認
+  if (!post.value || !post.value.id) {
+    // showToastMessage('投稿データが見つかりません。'); // useToast が必要
+    alert('投稿データが見つかりません。');
+    return;
   }
 
-  // コメント送信
-  const submitComment = async (postId) => {
-    if (!userStore.id) {
-      showToastMessage('ログインしていません。コメントできません。');
-      // alert('ログインしていません。コメントできません。');
-      return;
-    }
-
-    const text = (newComments[postId] || '').trim()
-    if (!text){
-      return showToastMessage('コメントを入力してください')
-      // return alert('コメントを入力してください')
-    }
-
-    try {
-      await postStore.addComment(postId, {
-        user: await userStore.getUser(userStore.id), // コメント送信時もgetUserを使用
-        content: text,
-      });
-
-      newComments[postId] = '' // コメントフォームクリア
-      showToastMessage('コメントを送信しました！');
-      // alert('コメントを送信しました！');
-      await postStore.fetchAllPosts(); // コメント送信後、最新のコメントリストを反映するために再フェッチ
-    } catch (error) {
-      console.error("コメント送信中にエラー:", error);
-      showToastMessage("コメント送信中にエラーが発生しました。");
-      // alert("コメント送信中にエラーが発生しました。");
-    }
+  // コメント内容を適切な postId から取得
+  const text = (newComments[post.value.id] || '').trim(); // ★ post.value.id を使用
+  if (!text) {
+    // showToastMessage('コメントを入力してください'); // useToast が必要
+    alert('コメントを入力してください');
+    return;
   }
+
+  try {
+    // postStore.addComment を呼び出す際に、post.value.id を渡す
+    const response = await postStore.addComment(post.value.id, { content: text }); // ★ post.value.id を使用
+
+    if (response && response.data) {
+      // コメントが追加されたら、現在のpostオブジェクトのcomments配列を更新
+      // post.value.comments が配列であることを確認
+      if (!Array.isArray(post.value.comments)) {
+        post.value.comments = []; // 配列でない場合は初期化
+      }
+      // 新しいコメントを配列の最後に追加（必要に応じて unshift で先頭に追加も可）
+      post.value.comments.push(response.data);
+
+      // コメント入力フィールドをクリア
+      newComments[post.value.id] = '';
+      // showToastMessage('コメントを送信しました！'); // useToast が必要
+
+      // ★ 親コンポーネントに更新された投稿データを通知
+      // post.value はすでに更新されているので、そのまま渡す
+      emit('update:post', post.value);
+
+    } else {
+      // showToastMessage('コメントの投稿に失敗しました。'); // useToast が必要
+      alert('コメントの投稿に失敗しました。');
+    }
+  } catch (error) {
+    console.error("コメント送信中にエラー:", error);
+    // showToastMessage("コメント送信中にエラーが発生しました。"); // useToast が必要
+    alert("コメント送信中にエラーが発生しました。");
+  }
+};
 </script>
+
 
 <style scoped>
   /* ModalUserPostsView用のスタイル */
