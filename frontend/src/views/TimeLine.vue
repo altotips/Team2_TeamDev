@@ -240,10 +240,10 @@ const toggleLike = async (postItem) => {
   }
 }
 
-  // コメント欄トグル
-  const toggleComment = (postId) => {
-    showComment[postId] = !showComment[postId]
-  }
+// コメント欄トグル
+const toggleComment = (postId) => {
+  showComment[postId] = !showComment[postId]
+}
 
 // コメント送信関数
 const submitComment = async (postId) => {
