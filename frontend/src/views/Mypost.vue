@@ -74,7 +74,7 @@
 
     // キャプション内の最後の「#」以降の単語を拾って、ひらがなで一致する候補を出す
     const suggestions = computed(() => {
-        const keyword = toHiragana(searchTag.value); //ひらがな変換
+        const keyword = toHiragana(searchTag.value); // ひらがな変換
 
         return keyword
             ? postStore.tags.filter(tag =>

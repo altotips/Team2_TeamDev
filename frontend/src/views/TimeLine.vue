@@ -98,7 +98,7 @@
   import { usePostStore } from '@/stores/postStore';
   import { useUserStore } from '@/stores/userStore';
   import { useRouter } from 'vue-router';
-  // import { useToast } from '@/composables/useToast.js'; // showToastMessage を使う場合はコメントアウトを外す
+  import { useToast } from '@/composables/useToast.js'; // showToastMessage を使う場合はコメントアウトを外す
 
   // ストア読み込み
   const postStore = usePostStore();
@@ -113,7 +113,7 @@
   const newComments = reactive({});
 
   // showToastMessage を使う場合は、ここで初期化
-  // const { showToastMessage } = useToast();
+  const { showToastMessage } = useToast();
 
   // 投稿データの初期ロードと更新ロジック
   const loadPosts = async () => {
@@ -287,16 +287,16 @@ const submitComment = async (postId) => {
       }
 
       newComments[postId] = ''; // コメントフォームクリア
-      // showToastMessage('コメントを送信しました！'); // 必要に応じて
-      alert('コメントを送信しました！');
+      showToastMessage('コメントを送信しました！'); // 必要に応じて
+      // alert('コメントを送信しました！');
 
       // コメント送信後、フォロー中のユーザーの投稿を再フェッチしてコメントを確実に反映
       // postStore.fetchFollowersPosts(); // これを有効にするとリスト全体がリロードされる
 
     } catch (error) {
       console.error("コメント送信中にエラー:", error);
-      // showToastMessage("コメント送信中にエラーが発生しました。"); // 必要に応じて
-      alert("コメント送信中にエラーが発生しました。");
+      showToastMessage("コメント送信中にエラーが発生しました。"); // 必要に応じて
+      // alert("コメント送信中にエラーが発生しました。");
     }
   };
 
