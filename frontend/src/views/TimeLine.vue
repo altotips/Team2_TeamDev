@@ -1,6 +1,7 @@
 <template>
   <div class="timeline">
     <div v-for="post in posts" :key="post.id" class="post-card">
+
       <div class="post-header">
         <img class="user-icon"
           :src="post.user?.urlIcon ? `http://localhost:8080/uploads/${post.user.urlIcon}` : '/images/default_profile_icon.png'"
@@ -21,8 +22,10 @@
             {{ post.liked ? '❤️' : '♡' }}
           </span>
         </button>
-        <p>{{ post.good }}</p>
-        <button @click="toggleComment(post.id)" class="icon-button">💬</button>
+        <p>{{ post.good }} </p>
+        <button @click="toggleComment(post.id)" class="icon-button">
+          💬
+        </button>
 
         <p v-if="Array.isArray(post.comments)">
           {{ post.comments.length }}
@@ -42,18 +45,6 @@
         </template>
       </p>
 
-      <!-- タグ表示（クリック可能なハッシュタグ） -->
-      <div class="post-tags" v-if="Array.isArray(post.tagu)">
-        <router-link
-          v-for="tag in post.tagu"
-          :key="tag"
-          :to="{ name: 'Search', params: { tag } }"
-          class="hashtag"
-        >
-          #{{ tag }}
-        </router-link>
-      </div>
-
       <div v-if="showComment[post.id]" class="comment-section">
         <div v-for="comment in post.comments" :key="comment.id" class="comment">
           <strong>{{ comment.user?.userName }}:</strong> {{ comment.content }}
@@ -64,7 +55,9 @@
         </form>
       </div>
     </div>
-    <div v-if="postStore.isLoading" class="loading-message">読み込み中...</div>
+    <div v-if="postStore.isLoading" class="loading-message">
+      読み込み中...
+    </div>
     <div v-else-if="postStore.error" class="error-message">
       エラーが発生しました: {{ postStore.error.message }}
     </div>
@@ -75,70 +68,85 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, nextTick } from 'vue'
-import { usePostStore } from '@/stores/postStore'
-import { useUserStore } from '@/stores/userStore'
-import { useRouter } from 'vue-router'
-import { useToast } from '@/composables/useToast.js'
+import { ref, reactive, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
+import { usePostStore } from '@/stores/postStore';
+import { useUserStore } from '@/stores/userStore';
+import { useRouter } from 'vue-router';
+// import { useToast } from '@/composables/useToast.js'; // showToastMessage を使う場合はコメントアウトを外す
 
 // ストア読み込み
-const postStore = usePostStore()
-const userStore = useUserStore()
-const { showToastMessage } = useToast()
-const router = useRouter()
-let intervalId
+const postStore = usePostStore();
+const userStore = useUserStore();
+const router = useRouter();
+let intervalId;
 
-// 投稿リストは allPosts を使用。必要であれば postStore.followersPosts に差し替え可能
-const posts = computed(() => postStore.followersPosts)
+// posts を ref で初期化
+const posts = ref([]);
 
-const showComment = reactive({})
-const newComments = reactive({})
+const showComment = reactive({});
+const newComments = reactive({});
 
-// データ取得
-onMounted(async () => {
+// showToastMessage を使う場合は、ここで初期化
+// const { showToastMessage } = useToast();
+
+// 投稿データの初期ロードと更新ロジック
+const loadPosts = async () => {
   if (userStore.id) {
-    await postStore.fetchFollowersPosts()
+    await userStore.fetchLikes(); // ログインユーザーのいいね情報を取得
+    await postStore.fetchFollowersPosts(); // フォローしているユーザーの投稿を取得
 
-    intervalId = setInterval(async () => {
-      await postStore.fetchFollowersPosts()
-    }, 1000)
-  }
-})
+    // postStore.followersPosts の内容を posts.value に代入し、いいね状態を設定
+    posts.value = postStore.followersPosts.map(post => {
+      const newPost = { ...post };
 
-async function fetchAllUsers() {
-  try {
-    await userStore.fetchAllUsers()
-  } catch (error) {
-    console.error('ユーザー取得エラー:', error)
+      const isLikedByUser = userStore.likes.some(like => {
+        return (like.post && like.post.id === newPost.id) || (like.id === newPost.id);
+      });
+
+      newPost.liked = isLikedByUser;
+      newPost.animateHeart = false;
+      return newPost;
+    });
   }
-}
+};
 
 onMounted(async () => {
-  if (userStore.id) {
-    await postStore.fetchFollowersPosts()
-    await fetchAllUsers() // ここで呼び出し
-    console.log('Fetched all users:', userStore.allUsers)
-    await nextTick()
-  }
-})
+  await loadPosts(); // 初回ロード
+  await userStore.fetchAllUsers(); // メンション機能のために全てのユーザー情報を取得
+  console.log('Fetched all users:', userStore.allUsers);
+  await nextTick();
+});
 
-function linkifyMentions(text) {
-  if (!text) return ''
-
-  return text.replace(/(@[a-zA-Z0-9_-]+)/g, (match, username) => {
-    const user = userStore.allUsers.find((u) => u.userName === username)
-
-    if (user) {
-      return `<a href="/user/${user.id}" class="mention-link">@${username}</a>`
-    } else {
-      return `<span class="mention-link">@${username}</span>`
+// userStore.likes の変更を監視し、posts.value の liked 状態を更新
+watch(() => userStore.likes, (newLikes) => {
+  posts.value.forEach(post => {
+    const isLiked = newLikes.some(like => {
+      return (like.post && like.post.id === post.id) || (like.id === post.id);
+    });
+    if (post.liked !== isLiked) {
+      post.liked = isLiked;
     }
-  })
-}
+  });
+}, { deep: true });
 
-// <script setup> の中の parseContent 関数
+// postStore.followersPosts の変更を監視し、posts.value を更新
+// これにより、ストア側で投稿リストが更新された場合もUIに反映される
+watch(() => postStore.followersPosts, (newFollowersPosts) => {
+  posts.value = newFollowersPosts.map(post => {
+    const newPost = { ...post };
+    const isLikedByUser = userStore.likes.some(like => {
+      return (like.post && like.post.id === newPost.id) || (like.id === newPost.id);
+    });
+    newPost.liked = isLikedByUser;
+    newPost.animateHeart = false;
+    return newPost;
+  });
+}, { deep: true });
+
+
+// メンションとハッシュタグを解析する関数
 function parseContent(text) {
-  if (!text) return []
+  if (!text) return [];
 
   const parts = text.split(/(\s|(?=[@#]))+/).filter(Boolean); // 半角スペース or @ または # の直前で分割
 
@@ -159,8 +167,8 @@ function parseContent(text) {
 // いいねの切り替え関数
 const toggleLike = async (postItem) => {
   if (!userStore.id) {
-    showToastMessage('ログインしていません。いいねできません。'); // 必要に応じて
-    // alert('ログインしていません。いいねできません。');
+    // showToastMessage('ログインしていません。いいねできません。'); // 必要に応じて
+    alert('ログインしていません。いいねできません。');
     return;
   }
 
@@ -198,8 +206,8 @@ const toggleLike = async (postItem) => {
 
   } catch (error) {
     console.error("いいね処理中にエラー (TimeLine):", error);
-    showToastMessage("いいね処理中にエラーが発生しました。"); // 必要に応じて
-    // alert("いいね処理中にエラーが発生しました。");
+    // showToastMessage("いいね処理中にエラーが発生しました。"); // 必要に応じて
+    alert("いいね処理中にエラーが発生しました。");
     // エラー時はUIを元に戻す
     postItem.liked = previousLiked;
     postItem.good = previousGood;
@@ -219,15 +227,15 @@ const toggleComment = (postId) => {
 // コメント送信関数
 const submitComment = async (postId) => {
   if (!userStore.id) {
-    showToastMessage('ログインしていません。コメントできません。'); // 必要に応じて
-    // alert('ログインしていません。コメントできません。');
+    // showToastMessage('ログインしていません。コメントできません。'); // 必要に応じて
+    alert('ログインしていません。コメントできません。');
     return;
   }
 
   const text = (newComments[postId] || '').trim();
   if (!text) {
-    showToastMessage('コメントを入力してください'); // 必要に応じて
-    // alert('コメントを入力してください');
+    // showToastMessage('コメントを入力してください'); // 必要に応じて
+    alert('コメントを入力してください');
     return;
   }
 
@@ -249,32 +257,18 @@ const submitComment = async (postId) => {
     }
 
     newComments[postId] = ''; // コメントフォームクリア
-    showToastMessage('コメントを送信しました！'); // 必要に応じて
-    // alert('コメントを送信しました！');
+    // showToastMessage('コメントを送信しました！'); // 必要に応じて
+    alert('コメントを送信しました！');
 
     // コメント送信後、フォロー中のユーザーの投稿を再フェッチしてコメントを確実に反映
     // postStore.fetchFollowersPosts(); // これを有効にするとリスト全体がリロードされる
 
   } catch (error) {
     console.error("コメント送信中にエラー:", error);
-    showToastMessage("コメント送信中にエラーが発生しました。"); // 必要に応じて
-    // alert("コメント送信中にエラーが発生しました。");
+    // showToastMessage("コメント送信中にエラーが発生しました。"); // 必要に応じて
+    alert("コメント送信中にエラーが発生しました。");
   }
 };
-
-// スクロール監視のロジック (無限スクロールなどのため、もしあれば)
-// onMounted(() => {
-//   window.addEventListener('scroll', handleScroll);
-// });
-
-// onUnmounted(() => {
-//   window.removeEventListener('scroll', handleScroll);
-// });
-
-// const handleScroll = () => {
-//   // スクロールイベント処理
-// };
-
 </script>
 
 
@@ -411,7 +405,7 @@ const submitComment = async (postId) => {
 }
 
 /* /* .timeline {
-    padding-bottom: 60px;
+  padding-bottom: 60px;
 
-  } */
+} */
 </style>
