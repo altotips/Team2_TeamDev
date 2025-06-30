@@ -258,7 +258,7 @@ export const usePostStore = defineStore(
 
     // 全タグ一覧取得
     async function fetchTags() {
-      const res = await axios.post(`/api/posts/tags`)
+      const res = await axios.get(`/posts/tags`)
       tags.value = res.data
       return res
     }

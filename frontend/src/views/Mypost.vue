@@ -1,12 +1,14 @@
 <script setup>
-    import { ref, computed, watch } from 'vue'
+    import { ref, computed, watch, onMounted } from 'vue'
     import { usePostStore } from '@/stores/postStore'
+    import { useUserStore } from '@/stores/userStore'
     import { useRouter } from 'vue-router'
     // import { preview } from 'vite'
     import { useToast } from '@/composables/useToast.js'
     import { toHiragana } from 'wanakana';
 
     const postStore = usePostStore()
+    const userStore = useUserStore()
     const router = useRouter()
     const { showToastMessage } = useToast()
 
@@ -23,11 +25,13 @@
     const tags = ref([])
 
     // 仮のユーザーリスト
-    const allUsers = ref([
-        { id: 1, userName: 'wani' },
-        { id: 2, userName: 'hiyoko' },
-        { id: 3, userName: 'okapi' },
-    ])
+    // const allUsers = ref([
+    //     { id: 1, userName: 'wani' },
+    //     { id: 2, userName: 'hiyoko' },
+    //     { id: 3, userName: 'okapi' },
+    // ])
+
+    const allUsers = computed(() => userStore.allUsers)
 
     // ＠メンション部分を抽出（末尾の @〇〇 だけを取得）
     watch(description, (val) => {
@@ -53,13 +57,14 @@
     // 今！入力中の #〇〇 の部分をに反応する（検出して使う）変数
     const searchTag = ref('');
     // タグの候補リスト
-    const candidateTags = ref([
-        'いぬ',
-        '犬',
-        'イッヌ',
-        '筋トレ',
-        'ひよこ'
-    ]);
+    // const candidateTags = ref([
+    //     'いぬ',
+    //     '犬',
+    //     'イッヌ',
+    //     '筋トレ',
+    //     'ひよこ'
+    // ]);
+
 
     // キャプションが変わるたびに、最後の #〇〇 を拾ってくる
     watch(description, (val) => {
@@ -72,7 +77,7 @@
         const keyword = toHiragana(searchTag.value); //ひらがな変換
 
         return keyword
-            ? candidateTags.value.filter(tag =>
+            ? postStore.tags.filter(tag =>
                 toHiragana(tag).startsWith(keyword) // タグもひらがな変換して比較
             )
             : [];
@@ -124,7 +129,7 @@
             //     showToastMessage('空のタグは消してね')
             //     return 
             // }
-            
+
             const res = await postStore.post({
                 image: selectedFile.value,
                 content: description.value,
@@ -150,6 +155,14 @@
     const cancel = () => {
         router.push('/TimeLine')
     }
+
+    //+を押したときに、allUsersとtagsが更新されている状態にする
+    onMounted(
+        async () => {
+            await userStore.fetchAllUsers()
+            await postStore.fetchTags()
+        }
+    )
 
 
 </script>
