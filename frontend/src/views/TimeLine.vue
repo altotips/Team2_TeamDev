@@ -150,10 +150,8 @@ onMounted(async () => {
 
 function linkifyMentions(text) {
   if (!text) return ''
-
   return text.replace(/(@[a-zA-Z0-9_-]+)/g, (match, username) => {
     const user = userStore.allUsers.find((u) => u.userName === username)
-
     if (user) {
       return `<a href="/user/${user.id}" class="mention-link">@${username}</a>`
     } else {
@@ -246,8 +244,6 @@ const toggleLike = async (postItem) => {
   const toggleComment = (postId) => {
     showComment[postId] = !showComment[postId]
   }
-  showComment[postId] = !showComment[postId];
-};
 
 // コメント送信関数
 const submitComment = async (postId) => {
@@ -356,9 +352,6 @@ const submitComment = async (postId) => {
   margin-right: 8px;
 }
 
-.user-name {
-  font-weight: bold;
-}
 .user-name {
   font-weight: bold;
   text-decoration: none;
