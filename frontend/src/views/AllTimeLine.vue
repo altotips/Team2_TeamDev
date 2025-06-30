@@ -62,13 +62,14 @@
 
 <script setup>
     import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
+    import { useRouter } from 'vue-router'
     import { usePostStore } from '@/stores/postStore'
     import { useUserStore } from '@/stores/userStore'
-    import { useRouter } from 'vue-router'
-    // import { showToastMessage } from '@/utils/toast' // トースト関数（なければ alert に置き換えてOK）
+    import { useToast } from '@/composables/useToast.js'
 
     const postStore = usePostStore()
     const userStore = useUserStore()
+    const { showToastMessage } = useToast()
     const router = useRouter()
     let intervalId
 
