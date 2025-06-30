@@ -118,12 +118,13 @@
                 .match(/#[^\s# ]+/g) // #付き文字列を全部抜き出す
                 ?.map(tag => tag.slice(1)) || []; //#なしの文字列に変換(#のない状態でデータを送ってほしいから)
 
-            console.log(description.value); // ["楽しい", "カフェ", "日常の記録"]
-            console.log(tags.value); // ["楽しい", "カフェ", "日常の記録"]
-            if(description.value.length > 0 && description.value.includes('#') && tags.value.length===0){
-                showToastMessage('空のタグは消してね')
-                return 
-            }
+            // console.log(description.value); // ["楽しい", "カフェ", "日常の記録"]
+            // console.log(tags.value); // ["楽しい", "カフェ", "日常の記録"]
+            // if(description.value.length > 0 && description.value.includes('#') && tags.value.length===0){
+            //     showToastMessage('空のタグは消してね')
+            //     return 
+            // }
+            
             const res = await postStore.post({
                 image: selectedFile.value,
                 content: description.value,
@@ -136,7 +137,7 @@
                 // alert('投稿完了！タイムラインに移動します🌟')
                 router.push('/TimeLine')
             } else {
-                showToastMessage('投稿失敗！😢')
+                // showToastMessage('投稿失敗！😢')
                 // alert('投稿失敗！😢')
             }
         } catch (error) {

@@ -121,14 +121,21 @@ export const usePostStore = defineStore(
 
         // console.log(postData.image)
         // console.log(postData.content)
+        const formData = new FormData()
+        formData.append('image', postData.image)
+        formData.append('content', postData.content)
+        formData.append('tags', postData.tags)
 
-        const res = await axios.post(`/posts/${userStore.id}`, postData, {
+        const res = await axios.post(`/posts/${userStore.id}`, formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
         })
         // console.log(res)
         // return res;
+
+
+        await fetchTags()
 
         if (res) {
           // showToastMessage('投稿成功！')
@@ -189,9 +196,9 @@ export const usePostStore = defineStore(
     }
 
     //コメント追加
-    async function addComment(postId, {content:text}) {
+    async function addComment(postId, { content: text }) {
       console.log("メソッド")
-      await axios.post(`/posts/${postId}/comments/${userStore.id}`, {content:text})
+      await axios.post(`/posts/${postId}/comments/${userStore.id}`, { content: text })
       console.log("メソッド２")
       // "/{postId}/comments/{userId}"
       // ここで fetchAllPosts() は呼ばない
@@ -236,7 +243,7 @@ export const usePostStore = defineStore(
     }
 
     // 全タグ一覧取得
-    async function getTags() {
+    async function fetchTags() {
       const res = await axios.post(`/api/posts/tags`)
       tags.value = res.data
       return res
@@ -247,6 +254,7 @@ export const usePostStore = defineStore(
       followersPosts,
       myPosts,
       userPosts,
+      tags,
       fetchAllPosts,
       fetchFollowersPosts,
       fetchMyPosts,
@@ -259,7 +267,7 @@ export const usePostStore = defineStore(
       searchUsers,
       searchPosts,
       searchTags,
-      getTags,
+      fetchTags,
     }
   },
   // {
