@@ -52,8 +52,6 @@
         mentionSearchTag.value = ''
     }
 
-
-
     // 今！入力中の #〇〇 の部分をに反応する（検出して使う）変数
     const searchTag = ref('');
     // タグの候補リスト
@@ -65,7 +63,6 @@
     //     'ひよこ'
     // ]);
 
-
     // キャプションが変わるたびに、最後の #〇〇 を拾ってくる
     watch(description, (val) => {
         const match = val.match(/#([^\s# ]*)$/);
@@ -74,7 +71,7 @@
 
     // キャプション内の最後の「#」以降の単語を拾って、ひらがなで一致する候補を出す
     const suggestions = computed(() => {
-        const keyword = toHiragana(searchTag.value); //ひらがな変換
+        const keyword = toHiragana(searchTag.value); // ひらがな変換
 
         return keyword
             ? postStore.tags.filter(tag =>

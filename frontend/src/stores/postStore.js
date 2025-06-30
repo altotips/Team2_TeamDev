@@ -5,7 +5,6 @@ import { useUserStore } from '@/stores/userStore'
 
 import { useToast } from '@/composables/useToast.js'
 
-
 // 投稿一覧の取得や投稿などをまとめる
 export const usePostStore = defineStore(
   'post',
@@ -18,7 +17,6 @@ export const usePostStore = defineStore(
     const myPosts = ref([])
     const userPosts = ref([])
     const tags = ref([])
-
 
     // すべての投稿を取得し、allPostsに保存
     async function fetchAllPosts() {
@@ -94,13 +92,13 @@ export const usePostStore = defineStore(
         myPosts.value = []
       }
       if (allPosts.value.length > 0) {
-        allPosts.value = [];
+        allPosts.value = []
       }
       if (followersPosts.value.length > 0) {
-        followersPosts.value = [];
+        followersPosts.value = []
       }
       if (userPosts.value.length > 0) {
-        userPosts.value = [];
+        userPosts.value = []
       }
     }
 
@@ -127,16 +125,14 @@ export const usePostStore = defineStore(
           },
         })
 
-
         // 新しい投稿が成功したら、関連する投稿リストを更新（例: 自分の投稿リストを再フェッチ）
         // 必要に応じて、他のリストも更新
-        await fetchMyPosts(userStore.id);
-        await fetchFollowersPosts();
-        await fetchAllPosts();
+        await fetchMyPosts(userStore.id)
+        await fetchFollowersPosts()
+        await fetchAllPosts()
         await fetchTags()
 
         return !!res
-
       } catch (err) {
         console.error('投稿に失敗:', err)
         return false
@@ -145,14 +141,13 @@ export const usePostStore = defineStore(
 
     //コメント追加
     async function addComment(postId, { content: text }) {
-      console.log("コメント追加メソッド呼び出し")
+      console.log('コメント追加メソッド呼び出し')
       try {
         if (!userStore.id) {
-          alert('ログインしていません。コメントできません。');
-          return;
+          alert('ログインしていません。コメントできません。')
+          return
         }
         if (!postId) {
-
           showToastMessage('どの投稿かわからないよ')
           // alert('どの投稿かわからないよ')
           return false
@@ -161,17 +156,15 @@ export const usePostStore = defineStore(
         const res = await axios.patch(`/posts/${postId}/good/${userStore.id}`)
         console.log('いいねしたよ')
 
-
         // ★ コメント追加後、関連する投稿リスト内のコメント数を更新
         // ここで返されたコメントデータを使ってストアを更新することもできるが、
         // 今回は`updatePostInStore`と`updateUserPostInStore`に任せる
-        return response; // 成功レスポンスを返す
+        return response // 成功レスポンスを返す
       } catch (error) {
         console.error('コメントの追加に失敗:', error)
-        throw error; // エラーを再スローして呼び出し元で処理させる
+        throw error // エラーを再スローして呼び出し元で処理させる
       }
     }
-
 
     /**
      * Piniaストア内の投稿を更新する汎用アクション
@@ -181,40 +174,39 @@ export const usePostStore = defineStore(
      */
     function updatePostInStore(postId, updates) {
       // allPosts を更新
-      const postInAllPosts = allPosts.value.find(p => p.id === postId);
+      const postInAllPosts = allPosts.value.find((p) => p.id === postId)
       if (postInAllPosts) {
-        Object.assign(postInAllPosts, updates);
-        console.log(`postStore: allPosts内の投稿ID ${postId} を更新しました。`, updates);
+        Object.assign(postInAllPosts, updates)
+        console.log(`postStore: allPosts内の投稿ID ${postId} を更新しました。`, updates)
       }
 
-
       // followersPosts を更新
-      const postInFollowersPosts = followersPosts.value.find(p => p.id === postId);
+      const postInFollowersPosts = followersPosts.value.find((p) => p.id === postId)
       if (postInFollowersPosts) {
-        Object.assign(postInFollowersPosts, updates);
-        console.log(`postStore: followersPosts内の投稿ID ${postId} を更新しました。`, updates);
+        Object.assign(postInFollowersPosts, updates)
+        console.log(`postStore: followersPosts内の投稿ID ${postId} を更新しました。`, updates)
       }
 
       // myPosts を更新 (自分の投稿ページ用)
-      const postInMyPosts = myPosts.value.find(p => p.id === postId);
+      const postInMyPosts = myPosts.value.find((p) => p.id === postId)
       if (postInMyPosts) {
-        Object.assign(postInMyPosts, updates);
-        console.log(`postStore: myPosts内の投稿ID ${postId} を更新しました。`, updates);
+        Object.assign(postInMyPosts, updates)
+        console.log(`postStore: myPosts内の投稿ID ${postId} を更新しました。`, updates)
       }
 
       // userPosts を更新 (他ユーザーのプロフィールページ用)
-      const postInUserPosts = userPosts.value.find(p => p.id === postId);
+      const postInUserPosts = userPosts.value.find((p) => p.id === postId)
       if (postInUserPosts) {
-        Object.assign(postInUserPosts, updates);
-        console.log(`postStore: userPosts内の投稿ID ${postId} を更新しました。`, updates);
+        Object.assign(postInUserPosts, updates)
+        console.log(`postStore: userPosts内の投稿ID ${postId} を更新しました。`, updates)
       }
     }
 
     //コメント追加
     async function addComment(postId, { content: text }) {
-      console.log("メソッド")
+      console.log('メソッド')
       const res = await axios.post(`/posts/${postId}/comments/${userStore.id}`, { content: text })
-      console.log("メソッド２")
+      console.log('メソッド２')
       // "/{postId}/comments/{userId}"
       // ここで fetchAllPosts() は呼ばない
       return res
@@ -225,13 +217,13 @@ export const usePostStore = defineStore(
       try {
         const res = await axios.get(`/posts/search/users`, {
           params: {
-            searchStr: searchStr
-          }
-        });
-        return res;
+            searchStr: searchStr,
+          },
+        })
+        return res
       } catch (error) {
-        console.error('ユーザー検索に失敗:', error);
-        throw error;
+        console.error('ユーザー検索に失敗:', error)
+        throw error
       }
     }
 
@@ -240,13 +232,13 @@ export const usePostStore = defineStore(
       try {
         const res = await axios.get(`/posts/search/posts`, {
           params: {
-            searchStr: searchStr
-          }
-        });
-        return res;
+            searchStr: searchStr,
+          },
+        })
+        return res
       } catch (error) {
-        console.error('投稿検索に失敗:', error);
-        throw error;
+        console.error('投稿検索に失敗:', error)
+        throw error
       }
     }
 
@@ -256,15 +248,12 @@ export const usePostStore = defineStore(
       return res
     }
 
-
     // 全タグ一覧取得
     async function fetchTags() {
       const res = await axios.get(`/posts/tags`)
       tags.value = res.data
       return res
     }
-
-
 
     return {
       allPosts,

@@ -21,8 +21,8 @@ public class WebConfig implements WebMvcConfigurer {
 	@Override
 	public void addCorsMappings(CorsRegistry registry) {
 		registry.addMapping("/**") // 全てのパスに対してCORSを設定
-				.allowedOrigins("http://localhost:5173") // フロントエンドのURLを指定
-//				.allowedOrigins("http://192.168.137.1:5173") // フロントエンドのURLを指定
+				// .allowedOrigins("http://localhost:5173") // フロントエンドのURLを指定
+				.allowedOrigins("http://192.168.137.1:5173") // フロントエンドのURLを指定
 				// 開発中は一時的にすべてのオリジンを許可することも可能: .allowedOrigins("*")
 				.allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS") // 許可するHTTPメソッド
 				.allowedHeaders("*") // 許可するヘッダー
