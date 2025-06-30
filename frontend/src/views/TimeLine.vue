@@ -3,21 +3,40 @@
     <div v-for="post in posts" :key="post.id" class="post-card">
 
       <div class="post-header">
-        <img class="user-icon"
-          :src="post.user?.urlIcon ? `http://localhost:8080/uploads/${post.user.urlIcon}` : '/images/default_profile_icon.png'"
-          alt="User Icon" />
+        <img
+          class="user-icon"
+          :src="
+            post.user?.urlIcon
+              ? `http://localhost:8080/uploads/${post.user.urlIcon}`
+              : '/images/default_profile_icon.png'
+          "
+          alt="User Icon"
+        />
 
-        <router-link :to="{ name: 'UserProfile', params: { userId: post.user?.id } }" class="user-name">
+        <router-link
+          :to="{ name: 'UserProfile', params: { userId: post.user?.id } }"
+          class="user-name"
+        >
           {{ post.user?.userName }}
         </router-link>
       </div>
 
-      <img :src="post.urlPhoto ? `http://localhost:8080/uploads/${post.urlPhoto}` : '/images/default_post_image.png'"
-        class="post-image" alt="image" />
+      <img
+        :src="
+          post.urlPhoto
+            ? `http://localhost:8080/uploads/${post.urlPhoto}`
+            : '/images/default_post_image.png'
+        "
+        class="post-image"
+        alt="image"
+      />
 
       <div class="post-actions">
-        <button @click="toggleLike(post)" class="icon-button"
-          :class="{ liked: post.liked, animate: post.animateHeart }">
+        <button
+          @click="toggleLike(post)"
+          class="icon-button"
+          :class="{ liked: post.liked, animate: post.animateHeart }"
+        >
           <span :style="{ color: post.liked ? 'red' : '#aaa' }">
             {{ post.liked ? '❤️' : '♡' }}
           </span>
@@ -34,17 +53,23 @@
 
       <p class="post-content">
         <template v-for="(word, index) in parseContent(post.content)" :key="index">
-          <router-link v-if="word.isMention && word.user"
-            :to="{ name: 'UserProfile', params: { userId: word.user.id } }" class="mention-link">
+          <router-link
+            v-if="word.isMention && word.user"
+            :to="{ name: 'UserProfile', params: { userId: word.user.id } }"
+            class="mention-link"
+          >
             {{ word.text }}
           </router-link>
-          <router-link v-else-if="word.isHashtag" :to="{ name: 'Search', query: { q: word.tag } }" class="hashtag">
+          <router-link
+            v-else-if="word.isHashtag"
+            :to="{ name: 'Search', query: { q: word.tag } }"
+            class="hashtag"
+          >
             {{ word.text }}
           </router-link>
           <span v-else>{{ word.text }}</span>
         </template>
       </p>
-
 
       <div v-if="showComment[post.id]" class="comment-section">
         <div v-for="comment in post.comments" :key="comment.id" class="comment">
@@ -168,88 +193,92 @@
   // いいねの切り替え関数
   const toggleLike = async (postItem) => {
     if (!userStore.id) {
-      // showToastMessage('ログインしていません。いいねできません。'); // 必要に応じて
-      alert('ログインしていません。いいねできません。');
-      return;
+      showToastMessage('ログインしていません。いいねできません。') // 必要に応じて
+      // alert('ログインしていません。いいねできません。');
+      return
     }
 
-    // オプティミスティックUIの更新 (即座にUIを更新)
-    const previousLiked = postItem.liked;
-    const previousGood = postItem.good;
+  // オプティミスティックUIの更新 (即座にUIを更新)
+  const previousLiked = postItem.liked
+  const previousGood = postItem.good
 
-    postItem.liked = !postItem.liked;
-    if (postItem.liked) {
-      postItem.good += 1;
-    } else {
-      postItem.good = Math.max(0, postItem.good - 1);
-    }
-    postItem.animateHeart = true;
+  postItem.liked = !postItem.liked
+  if (postItem.liked) {
+    postItem.good += 1
+  } else {
+    postItem.good = Math.max(0, postItem.good - 1)
+  }
+  postItem.animateHeart = true
 
-    try {
-      const updatedPostApi = await userStore.toggleLikeApi(postItem.id);
+  try {
+    const updatedPostApi = await userStore.toggleLikeApi(postItem.id)
 
-      // APIからの応答でいいねの状態と数を正確に更新
-      postItem.good = updatedPostApi.good;
-      // userStore.likes が更新されているので、再度それを参照して liked 状態を同期
-      const isLikedAfterApi = userStore.likes.some(like => {
-        return (like.post && like.post.id === postItem.id) || (like.id === postItem.id);
-      });
-      postItem.liked = isLikedAfterApi;
+    // APIからの応答でいいねの状態と数を正確に更新
+    postItem.good = updatedPostApi.good
+    // userStore.likes が更新されているので、再度それを参照して liked 状態を同期
+    const isLikedAfterApi = userStore.likes.some((like) => {
+      return (like.post && like.post.id === postItem.id) || like.id === postItem.id
+    })
+    postItem.liked = isLikedAfterApi
 
-      console.log('いいね処理成功 (TimeLine):', postItem.id, 'Liked:', postItem.liked, 'Good count:', postItem.good);
+    console.log(
+      'いいね処理成功 (TimeLine):',
+      postItem.id,
+      'Liked:',
+      postItem.liked,
+      'Good count:',
+      postItem.good,
+    )
 
-      // Piniaストアの投稿リストも更新
-      postStore.updatePostInStore(postItem.id, {
-        good: postItem.good,
-        liked: postItem.liked,
-        // comments は変更されないので、ここでは含めない
-      });
+    // Piniaストアの投稿リストも更新
+    postStore.updatePostInStore(postItem.id, {
+      good: postItem.good,
+      liked: postItem.liked,
+      // comments は変更されないので、ここでは含めない
+    })
+  } catch (error) {
+    console.error('いいね処理中にエラー (TimeLine):', error)
+    showToastMessage('いいね処理中にエラーが発生しました。') // 必要に応じて
+    // alert("いいね処理中にエラーが発生しました。");
 
-    } catch (error) {
-      console.error("いいね処理中にエラー (TimeLine):", error);
-      // showToastMessage("いいね処理中にエラーが発生しました。"); // 必要に応じて
-      alert("いいね処理中にエラーが発生しました。");
-      // エラー時はUIを元に戻す
-      postItem.liked = previousLiked;
-      postItem.good = previousGood;
-    } finally {
-      postItem.animateHeart = false;
-    }
-  };
+    // エラー時はUIを元に戻す
+    postItem.liked = previousLiked
+    postItem.good = previousGood
+  } finally {
+    postItem.animateHeart = false
+  }
+}
 
-  // コメント表示の切り替え関数
+  // コメント欄トグル
   const toggleComment = (postId) => {
-    if (typeof showComment[postId] === 'undefined') {
-      showComment[postId] = false;
-    }
-    showComment[postId] = !showComment[postId];
-  };
+    showComment[postId] = !showComment[postId]
+  }
 
-  // コメント送信関数
-  const submitComment = async (postId) => {
-    if (!userStore.id) {
-      // showToastMessage('ログインしていません。コメントできません。'); // 必要に応じて
-      alert('ログインしていません。コメントできません。');
-      return;
-    }
+// コメント送信関数
+const submitComment = async (postId) => {
+  if (!userStore.id) {
+    showToastMessage('ログインしていません。コメントできません。') // 必要に応じて
+    // alert('ログインしていません。コメントできません。');
+    return
+  }
 
-    const text = (newComments[postId] || '').trim();
-    if (!text) {
-      // showToastMessage('コメントを入力してください'); // 必要に応じて
-      alert('コメントを入力してください');
-      return;
-    }
+  const text = (newComments[postId] || '').trim()
+  if (!text) {
+    showToastMessage('コメントを入力してください') // 必要に応じて
+    // alert('コメントを入力してください');
+    return
+  }
 
-    try {
-      const response = await postStore.addComment(postId, { content: text });
+  try {
+    const response = await postStore.addComment(postId, { content: text })
 
-      // 送信成功 → 表示中の投稿に手動で追加
-      // posts.value から該当する投稿を見つける
-      const targetPost = posts.value.find(p => p.id === postId);
-      if (targetPost && Array.isArray(targetPost.comments)) {
-        // APIからのレスポンスを直接追加
-        targetPost.comments.push(response.data);
-        console.log('コメント追加成功:', response.data);
+    // 送信成功 → 表示中の投稿に手動で追加
+    // posts.value から該当する投稿を見つける
+    const targetPost = posts.value.find(p => p.id === postId);
+    if (targetPost && Array.isArray(targetPost.comments)) {
+      // APIからのレスポンスを直接追加
+      targetPost.comments.push(response.data); 
+      console.log('コメント追加成功:', response.data);
 
         // Piniaストアの投稿も更新する（コメント数などが変わるため）
         postStore.updatePostInStore(postId, {
@@ -286,47 +315,39 @@
 
 </script>
 
-
 <style scoped>
-  .liked {
-    animation: pop 0.5s ease;
+.liked {
+  animation: pop 0.5s ease;
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(1);
   }
 
-  @keyframes pop {
-    0% {
-      transform: scale(1);
-    }
-
-    50% {
-      transform: scale(1.8);
-    }
-
-    100% {
-      transform: scale(1);
-    }
+  50% {
+    transform: scale(1.8);
   }
 
-  .post-card {
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    max-width: 500px;
-    margin: 10px auto;
-    background: white;
-    padding: 12px;
+  100% {
+    transform: scale(1);
   }
+}
 
-  .post-header {
-    display: flex;
-    align-items: center;
-    margin-bottom: 8px;
-  }
+.post-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  max-width: 500px;
+  margin: 10px auto;
+  background: white;
+  padding: 12px;
+}
 
-  .user-icon {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    margin-right: 8px;
-  }
+.post-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
 
   .user-name {
     font-weight: bold;
@@ -339,95 +360,109 @@
     font-size: 15px;
   }
 
-  .post-image {
-    width: 100%;
-    border-radius: 4px;
-    margin-bottom: 8px;
-  }
+.user-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
 
-  .post-actions {
-    display: flex;
-    gap: 12px;
-    padding: 0 8px;
-    margin-bottom: 8px;
-  }
+.user-name {
+  font-weight: bold;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
 
-  .icon-button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 16px;
-  }
+.post-image {
+  width: 100%;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
 
-  .comment-section {
-    margin-top: 10px;
-    padding: 10px;
-    background: #f9f9f9;
-    border-radius: 4px;
-  }
+.post-actions {
+  display: flex;
+  gap: 12px;
+  padding: 0 8px;
+  margin-bottom: 8px;
+}
 
-  .comment {
-    margin-bottom: 6px;
-    font-size: 14px;
-  }
+.icon-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+}
 
-  .comment-form {
-    display: flex;
-    gap: 8px;
-    margin-top: 10px;
-  }
+.comment-section {
+  margin-top: 10px;
+  padding: 10px;
+  background: #f9f9f9;
+  border-radius: 4px;
+}
 
-  .comment-form input {
-    flex: 1;
-    padding: 4px 8px;
-  }
+.comment {
+  margin-bottom: 6px;
+  font-size: 14px;
+}
 
-  .comment-form button {
-    padding: 4px 10px;
-  }
+.comment-form {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
 
-  .no-posts-message {
-    display: flex;
-    justify-content: center;
-    /* 横中央 */
-    align-items: center;
-    /* 縦中央 */
-    height: 80vh;
-    /* 画面高さの60%に */
-    margin: 0 auto;
-    font-size: 1.5rem;
-    color: #777;
-    /* background: #f0f0f0; */
-    border-radius: 12px;
-    padding: 20px 40px;
-    /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); */
-    max-width: 400px;
-    text-align: center;
-    font-weight: 600;
-    user-select: none;
-    /* うっかりテキスト選択防止 */
-  }
+.comment-form input {
+  flex: 1;
+  padding: 4px 8px;
+}
 
-  .post-tags {
-    margin-top: 8px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
+.comment-form button {
+  padding: 4px 10px;
+}
 
-  .hashtag {
-    color: #3b82f6;
-    text-decoration: none;
-    font-weight: bold;
-    cursor: pointer;
-  }
+.no-posts-message {
+  display: flex;
+  justify-content: center;
+  /* 横中央 */
+  align-items: center;
+  /* 縦中央 */
+  height: 80vh;
+  /* 画面高さの60%に */
+  margin: 0 auto;
+  font-size: 1.5rem;
+  color: #777;
+  /* background: #f0f0f0; */
+  border-radius: 12px;
+  padding: 20px 40px;
+  /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); */
+  max-width: 400px;
+  text-align: center;
+  font-weight: 600;
+  user-select: none;
+  /* うっかりテキスト選択防止 */
+}
 
-  .hashtag:hover {
-    text-decoration: underline;
-  }
+.post-tags {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
 
-  /* /* .timeline {
-    padding-bottom: 60px;
+.hashtag {
+  color: #3b82f6;
+  text-decoration: none;
+  font-weight: bold;
+  cursor: pointer;
+}
 
-  } */
+.hashtag:hover {
+  text-decoration: underline;
+}
+
+/* /* .timeline {
+  padding-bottom: 60px;
+
+} */
 </style>
