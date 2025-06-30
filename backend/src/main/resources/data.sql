@@ -65,6 +65,14 @@ INSERT INTO follows (user_from_id, user_to_id) VALUES
 INSERT INTO follows (user_from_id, user_to_id) VALUES
 (10, 2);  -- さくら🌸 → たろう
 
+-- うっちー
+INSERT INTO follows (user_from_id, user_to_id) VALUES
+(5, 3),
+(5, 4),
+(5, 6),
+(5, 7),
+(5, 8);
+
 -- タグテーブル　INSERT --
 INSERT INTO tags (name) VALUES
 ('犬'),
