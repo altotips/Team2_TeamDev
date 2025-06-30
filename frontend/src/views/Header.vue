@@ -7,14 +7,10 @@
       <div v-if="showMenu" class="dropdown">
         <ul class="dropdown-menu">
           <li>
-            <router-link :to="{ name: 'TimeLine' }" @click="showMenu = false"
-              >フォロー中</router-link
-            >
+            <router-link :to="{ name: 'TimeLine' }" @click="showMenu = false" class="drop-timeline">フォロー中</router-link>
           </li>
           <li>
-            <router-link :to="{ name: 'AllTimeLine' }" @click="showMenu = false"
-              >おすすめ</router-link
-            >
+            <router-link :to="{ name: 'AllTimeLine' }" @click="showMenu = false" class="drop-timeline">おすすめ</router-link>
           </li>
         </ul>
       </div>
@@ -130,18 +126,20 @@ export default {
   /* これがポイント！ */
 }
 
-.dropdown {
-  position: absolute;
-  top: 100%;
-  /* ロゴの真下 */
-  left: 0;
-  background-color: #ffffff;
-  border-radius: 12px;
-  border: 1px solid #ddd;
-  width: 160px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
-}
+  .dropdown {
+    color: black  ;
+    position: absolute;
+    top: 100%;
+    /* ロゴの真下 */
+    left: 0;
+    background-color: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #ddd;
+    width: 160px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+   
+  }
 
 .dropdown-menu {
   list-style: none;
@@ -158,8 +156,19 @@ export default {
   color: #333;
 }
 
-.dropdown-menu li:hover {
-  background-color: #f0f0f0;
-  border-radius: 8px;
-}
+  .dropdown-menu li:hover {
+    background-color: #f0f0f0;
+    border-radius: 8px;
+  }
+
+  .drop-timeline{
+    /* 👈 下線を消す！ */
+    color: inherit;
+    /* 👈 親と同じ色にする（青リンクを打ち消す） */
+    cursor: pointer;
+        /* 👈 手のマークはちゃんと出る！ */
+    font-size: 15px;
+    border: none;
+    text-decoration: none;
+  }
 </style>

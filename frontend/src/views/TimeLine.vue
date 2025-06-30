@@ -98,7 +98,7 @@
   import { usePostStore } from '@/stores/postStore';
   import { useUserStore } from '@/stores/userStore';
   import { useRouter } from 'vue-router';
-  import { useToast } from '@/composables/useToast.js'; // showToastMessage を使う場合はコメントアウトを外す
+  import { useToast } from '@/composables/useToast.js';
 
   // ストア読み込み
   const postStore = usePostStore();
