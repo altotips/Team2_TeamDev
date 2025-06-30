@@ -110,7 +110,7 @@ public class PostsController {
 				.sorted(Comparator.comparing(Posts::getId)) // 昇順
 				.collect(Collectors.toList());
 		return sortedPosts;
-//		return posts;
+		//		return posts;
 	}
 
 	// 投稿を登録
@@ -120,6 +120,7 @@ public class PostsController {
 			@RequestParam("content") String content,
 			@RequestParam("tags") List<String> tagsReq) throws IOException {
 
+		System.out.println(2);
 		// ファイルの保存
 		String uploadDir = "./uploads/";
 		File dir = new File(uploadDir);
@@ -137,22 +138,32 @@ public class PostsController {
 		post.setUser(user);
 		post.setUrlPhoto(fileName);
 		post.setContent(content);
-//		postsrepository.save(post);
+		//		postsrepository.save(post);
 
-//		System.out.println(tagsReq);
-//		List<Posts> posts = new ArrayList<>();
-//		posts.add(post);
+		//		System.out.println(tagsReq);
+		//		List<Posts> posts = new ArrayList<>();
+		//		posts.add(post);
 		// タグを取得または作成
-		List<Tags> tags = tagsReq
-				.stream()
-				.map(tagName -> tagsrepository.findByName(tagName)
-						.orElseGet(() -> {
-							Tags tag = new Tags(tagName);
-							return tagsrepository.save(tag);
-						}))
-				.collect(Collectors.toList());
-//		System.out.println(tags);
+		System.out.println("tagsReq: " + tagsReq);
+		List<Tags> tags = new ArrayList<>();
+		//		post.setTags(new ArrayList<>());
+		if (tagsReq != null && !tagsReq.isEmpty()) {
+			System.out.println("a" + tagsReq != null);
+			System.out.println("b" + tagsReq.isEmpty());
+			System.out.println("c" + tagsReq);
+			tags = tagsReq
+					.stream()
+					.map(tagName -> tagsrepository.findByName(tagName)
+							.orElseGet(() -> {
+								Tags tag = new Tags(tagName);
+								return tagsrepository.save(tag);
+							}))
+					.collect(Collectors.toList());
+			//		System.out.println(tags);
 
+		} else {
+			System.out.println("null");
+		}
 		post.setTags(tags);
 		postsrepository.save(post);
 		return post;

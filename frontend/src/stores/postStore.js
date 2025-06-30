@@ -117,8 +117,11 @@ export const usePostStore = defineStore(
           // alert('写真を選択してね。')
           return false
         }
-
-        const res = await axios.post(`/posts/${userStore.id}`, postData, {
+        const formData = new FormData()
+        formData.append('image', postData.image)
+        formData.append('content', postData.content)
+        formData.append('tags', postData.tags)
+        const res = await axios.post(`/posts/${userStore.id}`, formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
@@ -127,9 +130,10 @@ export const usePostStore = defineStore(
 
         // 新しい投稿が成功したら、関連する投稿リストを更新（例: 自分の投稿リストを再フェッチ）
         // 必要に応じて、他のリストも更新
-        await fetchMyPosts(userStore.id); 
+        await fetchMyPosts(userStore.id);
         await fetchFollowersPosts();
         await fetchAllPosts();
+        await fetchTags()
 
         return !!res
 
@@ -207,9 +211,9 @@ export const usePostStore = defineStore(
     }
 
     //コメント追加
-    async function addComment(postId, {content:text}) {
+    async function addComment(postId, { content: text }) {
       console.log("メソッド")
-      await axios.post(`/posts/${postId}/comments/${userStore.id}`, {content:text})
+      await axios.post(`/posts/${postId}/comments/${userStore.id}`, { content: text })
       console.log("メソッド２")
       // "/{postId}/comments/{userId}"
       // ここで fetchAllPosts() は呼ばない
@@ -253,8 +257,8 @@ export const usePostStore = defineStore(
 
 
     // 全タグ一覧取得
-    async function getTags() {
-      const res = await axios.post(`/api/posts/tags`)
+    async function fetchTags() {
+      const res = await axios.get(`/posts/tags`)
       tags.value = res.data
       return res
     }
@@ -265,7 +269,8 @@ export const usePostStore = defineStore(
       allPosts,
       followersPosts,
       myPosts,
-      userPosts, // 追加
+      userPosts,
+      tags,
       fetchAllPosts,
       fetchFollowersPosts,
       fetchMyPosts,
@@ -277,7 +282,7 @@ export const usePostStore = defineStore(
       searchUsers,
       searchPosts,
       searchTags,
-      getTags,
+      fetchTags,
     }
   },
   // 必要であればPinia persistの設定を再検討
